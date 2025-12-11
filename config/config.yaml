@@ -1,0 +1,139 @@
+# Harmonix Audio Splitter Configuration
+
+# Server settings
+server:
+  host: "0.0.0.0"
+  port: 8000
+  workers: 4
+  reload: false
+  log_level: "info"
+
+# Processing settings
+processing:
+  max_file_size_mb: 500
+  max_duration_seconds: 600
+  temp_dir: "data/temp"
+  output_dir: "data/outputs"
+  cleanup_after_hours: 24
+  
+  # Quality modes
+  quality_modes:
+    fast:
+      model: "htdemucs"
+      shifts: 1
+      overlap: 0.25
+      split: true
+    studio:
+      model: "htdemucs_ft"
+      shifts: 10
+      overlap: 0.5
+      split: true
+  
+  # Default settings
+  default_mode: "fast"
+  default_sample_rate: 44100
+  default_format: "wav"
+  export_mp3: true
+  mp3_bitrate: 320
+
+# Instrument detection thresholds
+instrument_detection:
+  enabled: true
+  
+  # Confidence thresholds (0-1 scale)
+  thresholds:
+    vocals: 0.5
+    drums: 0.5
+    bass: 0.5
+    guitar: 0.5
+    piano: 0.5
+    strings: 0.6
+    synth: 0.7
+    brass: 0.65
+    woodwinds: 0.65
+  
+  # Processing modes
+  modes:
+    default: "grouped"      # 4-stem output (vocals/drums/bass/other)
+    advanced: "per_instrument"  # Individual instrument stems
+  
+  # Supported instruments
+  supported_instruments:
+    - vocals
+    - drums
+    - bass
+    - guitar
+    - piano
+    - strings
+    - synth
+    - brass
+    - woodwinds
+    - fx
+
+# Model settings
+models:
+  demucs:
+    device: "auto"  # auto, cuda, cpu
+    num_workers: 4
+    cache_dir: "models/weights"
+    
+  instrument_detector:
+    model_path: "models/instrument_classifier.h5"
+    input_duration: 30  # seconds to analyze
+    hop_length: 512
+
+# Storage settings
+storage:
+  type: "local"  # local, s3
+  
+  local:
+    base_path: "data"
+  
+  s3:
+    bucket_name: "harmonix-stems"
+    region: "us-east-1"
+    endpoint_url: null  # For S3-compatible services
+    presigned_url_expiry: 3600
+
+# Redis/Celery (for async processing)
+redis:
+  host: "localhost"
+  port: 6379
+  db: 0
+  password: null
+
+celery:
+  broker_url: "redis://localhost:6379/0"
+  result_backend: "redis://localhost:6379/0"
+  task_track_started: true
+  task_time_limit: 3600
+
+# API settings
+api:
+  enable_cors: true
+  cors_origins:
+    - "http://localhost:3000"
+    - "http://localhost:5173"
+  max_concurrent_jobs: 10
+  rate_limit: "100/minute"
+
+# Logging
+logging:
+  level: "INFO"
+  format: "json"
+  file: "logs/harmonix.log"
+  max_bytes: 10485760  # 10MB
+  backup_count: 5
+  
+  # Sentry integration (optional)
+  sentry:
+    enabled: false
+    dsn: null
+    environment: "development"
+
+# Feature flags
+features:
+  batch_processing: true
+  real_time_processing: false  # Phase 2
+  gpu_acceleration: true
+  advanced_analysis: true
