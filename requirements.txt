@@ -13,6 +13,9 @@ soundfile>=0.12.0
 numpy>=1.24.0
 scipy>=1.11.0
 
+# Speech-to-text / Lyrics extraction
+openai-whisper>=20231117
+
 # Instrument detection
 tensorflow>=2.14.0  # For instrument detection models
 pandas>=2.0.0

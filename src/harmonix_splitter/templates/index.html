@@ -318,6 +318,98 @@
             border-top-color: white;
             animation: spin 1s linear infinite;
         }
+
+        .history-item {
+            background: #f8f9ff;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+
+        .history-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .history-item.failed {
+            border-left-color: #ff4757;
+        }
+
+        .history-item.completed {
+            border-left-color: #2ecc71;
+        }
+
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .history-filename {
+            font-weight: bold;
+            font-size: 16px;
+            color: #333;
+        }
+
+        .history-status {
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .history-status.completed {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .history-status.failed {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .history-status.processing {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .history-details {
+            font-size: 14px;
+            color: #666;
+            margin: 8px 0;
+        }
+
+        .history-stems {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+
+        .history-stem-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.2s;
+        }
+
+        .history-stem-btn:hover {
+            background: #764ba2;
+            transform: translateY(-2px);
+        }
+
+        .empty-history {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
     </style>
 </head>
 <body>
@@ -362,6 +454,15 @@
                 </div>
             </div>
 
+            <div class="option-group">
+                <label for="outputName">Output Folder & Track Name (Optional)</label>
+                <input type="text" id="outputName" placeholder="Leave empty to use original filename" 
+                       style="width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px;">
+                <p style="color: #666; font-size: 14px; margin-top: 5px;">
+                    📁 Example: "MySong" → MySong_vocals.wav, MySong_bass.wav, etc.
+                </p>
+            </div>
+
             <div class="option-group" id="instrumentsSection" style="display: none;">
                 <label>Target Instruments (Optional)</label>
                 <div class="checkbox-group">
@@ -394,6 +495,20 @@
                     🚀 Start Processing
                 </button>
             </div>
+        </div>
+
+        <!-- History Card - Now at the top -->
+        <div class="card" id="historyCard">
+            <h2>📜 Processing History</h2>
+            <p style="color: #666; margin-bottom: 20px;">View and access your processed audio files</p>
+            
+            <div style="text-align: right; margin-bottom: 15px;">
+                <button class="btn" onclick="loadHistory()" style="padding: 8px 16px;">
+                    🔄 Refresh
+                </button>
+            </div>
+            
+            <div id="historyList"></div>
         </div>
 
         <!-- Progress Card -->
@@ -500,6 +615,12 @@
             formData.append('file', selectedFile);
             formData.append('quality', qualitySelect.value);
             formData.append('mode', modeSelect.value);
+            
+            // Add custom output name if provided
+            const outputName = document.getElementById('outputName').value.trim();
+            if (outputName) {
+                formData.append('output_name', outputName);
+            }
 
             // Get selected instruments
             const selectedInstruments = Array.from(
@@ -601,6 +722,9 @@
                 detectedDiv.innerHTML = '<span class="instrument-tag">N/A</span>';
             }
 
+            // Get original filename without extension
+            const originalName = job.filename.replace(/\.[^/.]+$/, '');
+
             // Display stems
             const stemGrid = document.getElementById('stemGrid');
             stemGrid.innerHTML = '';
@@ -609,13 +733,16 @@
                 const stemCard = document.createElement('div');
                 stemCard.className = 'stem-card';
                 
+                // Create display name: originalfilename_stemname
+                const displayName = `${originalName}_${stemName}`;
+                
                 stemCard.innerHTML = `
-                    <div class="stem-name">🎵 ${stemName}</div>
+                    <div class="stem-name">🎵 ${displayName}</div>
                     <audio controls class="audio-player" preload="metadata">
                         <source src="${stemUrl}" type="audio/wav">
                         Your browser does not support the audio element.
                     </audio>
-                    <button class="download-btn" onclick="downloadStem('${stemUrl}', '${stemName}')">
+                    <button class="download-btn" onclick="downloadStem('${stemUrl}', '${displayName}')">
                         ⬇️ Download
                     </button>
                 `;
@@ -648,7 +775,100 @@
             fileInput.value = '';
             
             document.querySelectorAll('.checkbox-label input').forEach(cb => cb.checked = false);
+            
+            // Reload history
+            loadHistory();
         }
+
+        // History functions
+        async function loadHistory() {
+            try {
+                const response = await fetch('/jobs');
+                const data = await response.json();
+                displayHistory(data.jobs);
+            } catch (error) {
+                console.error('Failed to load history:', error);
+            }
+        }
+
+        function displayHistory(jobs) {
+            const historyList = document.getElementById('historyList');
+            
+            if (!jobs || jobs.length === 0) {
+                historyList.innerHTML = '<div class="empty-history">📭 No processing history yet</div>';
+                return;
+            }
+
+            historyList.innerHTML = jobs.map(job => {
+                const date = new Date(job.created_at);
+                const timeStr = date.toLocaleString();
+                
+                // Use display_name if available, otherwise use filename
+                const displayName = job.display_name || job.filename.replace(/\.[^/.]+$/, '');
+                
+                let stemsHtml = '';
+                if (job.status === 'completed' && job.stems) {
+                    stemsHtml = `
+                        <div class="history-stems" id="stems-${job.job_id}" style="display: none; margin-top: 15px;">
+                            <div style="font-weight: bold; margin-bottom: 10px; color: #667eea;">🎵 Available Stems:</div>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 10px;">
+                                ${Object.entries(job.stems).map(([stemName, stemUrl]) => `
+                                    <div style="background: white; padding: 10px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                                        <div style="font-weight: bold; margin-bottom: 8px; color: #333;">
+                                            🎵 ${displayName}_${stemName}
+                                        </div>
+                                        <audio controls style="width: 100%; margin-bottom: 8px;" preload="metadata">
+                                            <source src="${stemUrl}" type="audio/wav">
+                                        </audio>
+                                        <button class="history-stem-btn" onclick="downloadStem('${stemUrl}', '${displayName}_${stemName}')" style="width: 100%;">
+                                            ⬇️ Download
+                                        </button>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `;
+                }
+
+                let errorHtml = '';
+                if (job.status === 'failed' && job.error) {
+                    errorHtml = `<div style="color: #dc3545; margin-top: 8px;">❌ ${job.error}</div>`;
+                }
+
+                const clickHandler = job.status === 'completed' ? `onclick="toggleStems('${job.job_id}')"` : '';
+                const cursorStyle = job.status === 'completed' ? 'cursor: pointer;' : '';
+
+                return `
+                    <div class="history-item ${job.status}" ${clickHandler} style="${cursorStyle}">
+                        <div class="history-header">
+                            <span class="history-filename">📄 ${job.filename}</span>
+                            <span class="history-status ${job.status}">${job.status.toUpperCase()}</span>
+                        </div>
+                        <div class="history-details">
+                            ⏰ ${timeStr}
+                            ${job.processing_time ? ` | ⚡ ${job.processing_time.toFixed(2)}s` : ''}
+                            ${job.progress ? ` | 📊 ${job.progress}%` : ''}
+                            ${job.status === 'completed' ? ' | 👆 Click to view stems' : ''}
+                        </div>
+                        ${errorHtml}
+                        ${stemsHtml}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function toggleStems(jobId) {
+            const stemsDiv = document.getElementById(`stems-${jobId}`);
+            if (stemsDiv) {
+                stemsDiv.style.display = stemsDiv.style.display === 'none' ? 'block' : 'none';
+            }
+        }
+
+        // Load history on page load
+        window.addEventListener('load', () => {
+            loadHistory();
+        });
     </script>
 </body>
 </html>
+

@@ -6,6 +6,8 @@ Core separation engine using Demucs v4 with GPU acceleration
 import torch
 import torchaudio
 import numpy as np
+import librosa
+import soundfile as sf
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Union
 import logging
@@ -26,6 +28,7 @@ class SeparationMode(Enum):
     """Separation granularity modes"""
     GROUPED = "grouped"  # Standard 4-stem
     PER_INSTRUMENT = "per_instrument"  # Individual instrument stems
+    KARAOKE = "karaoke"  # 2-stem: Vocals + Instrumental
 
 
 @dataclass
@@ -38,6 +41,11 @@ class SeparationConfig:
     sample_rate: int = 44100
     segment_duration: Optional[int] = None  # Auto-segment for long files
     overlap: float = 0.25  # Overlap ratio for segments
+    
+    # Studio quality settings
+    shifts: int = 1  # Number of random shifts for TTA (test-time augmentation)
+    split: bool = True  # Split audio into segments
+    jobs: int = 0  # Number of parallel jobs (0=auto)
 
 
 @dataclass
@@ -80,13 +88,22 @@ class HarmonixSeparator:
         )
     
     def _setup_device(self) -> torch.device:
-        """Setup computation device (GPU/CPU)"""
-        if self.config.use_gpu and torch.cuda.is_available():
-            device = torch.device("cuda")
-            logger.info(f"GPU detected: {torch.cuda.get_device_name(0)}")
-        else:
-            device = torch.device("cpu")
-            logger.info("Using CPU for processing")
+        """Setup computation device (GPU/MPS/CPU)"""
+        if self.config.use_gpu:
+            # Check for NVIDIA CUDA GPU
+            if torch.cuda.is_available():
+                device = torch.device("cuda")
+                logger.info(f"Using NVIDIA GPU: {torch.cuda.get_device_name(0)}")
+                return device
+            
+            # Check for Apple Silicon MPS (Metal Performance Shaders)
+            if torch.backends.mps.is_available():
+                device = torch.device("mps")
+                logger.info("Using Apple Silicon GPU (MPS) for acceleration")
+                return device
+        
+        device = torch.device("cpu")
+        logger.info("Using CPU for processing")
         return device
     
     def _load_models(self):
@@ -124,11 +141,35 @@ class HarmonixSeparator:
     def _get_model_name(self) -> str:
         """Get Demucs model name based on quality setting"""
         quality_map = {
-            QualityMode.FAST: "htdemucs_ft",
-            QualityMode.BALANCED: "htdemucs",
-            QualityMode.STUDIO: "htdemucs_6s"  # 6-source model for better quality
+            QualityMode.FAST: "htdemucs",       # Standard model, fast
+            QualityMode.BALANCED: "htdemucs_ft", # Fine-tuned, better quality
+            QualityMode.STUDIO: "htdemucs_6s"   # 6-source model, highest quality
         }
         return quality_map[self.config.quality]
+    
+    def _get_separation_params(self) -> Dict:
+        """Get separation parameters based on quality mode"""
+        if self.config.quality == QualityMode.FAST:
+            return {
+                'shifts': 0,           # No augmentation
+                'overlap': 0.1,        # Minimal overlap
+                'split': True,
+                'segment': 7.8,        # Shorter segments
+            }
+        elif self.config.quality == QualityMode.BALANCED:
+            return {
+                'shifts': 1,           # 1 shift for TTA
+                'overlap': 0.25,       # Standard overlap
+                'split': True,
+                'segment': None,       # Default segmentation
+            }
+        else:  # STUDIO
+            return {
+                'shifts': 5,           # Multiple shifts for best quality
+                'overlap': 0.5,        # High overlap for better blending
+                'split': True,
+                'segment': None,       # Full processing
+            }
     
     def _load_refinement_models(self):
         """Load specialized models for instrument-level separation"""
@@ -140,7 +181,8 @@ class HarmonixSeparator:
     def separate(
         self, 
         audio_path: Union[str, Path],
-        output_dir: Optional[Union[str, Path]] = None
+        output_dir: Optional[Union[str, Path]] = None,
+        custom_name: Optional[str] = None
     ) -> Dict[str, StemOutput]:
         """
         Separate audio file into stems
@@ -148,6 +190,7 @@ class HarmonixSeparator:
         Args:
             audio_path: Path to input audio file
             output_dir: Optional directory to save stems
+            custom_name: Optional custom name for output files
             
         Returns:
             Dictionary mapping stem name to StemOutput
@@ -164,13 +207,18 @@ class HarmonixSeparator:
         # Perform primary separation
         stems = self._separate_primary(audio, sr)
         
-        # Refine to instrument level if needed
-        if self.config.mode == SeparationMode.PER_INSTRUMENT:
+        # Handle different separation modes
+        if self.config.mode == SeparationMode.KARAOKE:
+            # Create karaoke 2-stem output: vocals + instrumental
+            stems = self._create_karaoke_stems(stems)
+        elif self.config.mode == SeparationMode.PER_INSTRUMENT:
             stems = self._refine_instruments(stems)
         
         # Save stems if output directory specified
         if output_dir:
-            self._save_stems(stems, output_dir, audio_path.stem)
+            # Use custom name if provided, otherwise use audio filename
+            save_name = custom_name if custom_name else audio_path.stem
+            self._save_stems(stems, output_dir, save_name)
         
         logger.info(f"Separation complete: {len(stems)} stems extracted")
         return stems
@@ -186,16 +234,13 @@ class HarmonixSeparator:
             Tuple of (audio tensor, sample rate)
         """
         try:
-            # Load audio with torchaudio
-            audio, sr = torchaudio.load(str(path))
+            # Load audio with librosa (more compatible than torchaudio)
+            audio_np, sr = librosa.load(str(path), sr=self.config.sample_rate, mono=False)
             
-            # Resample if needed
-            if sr != self.config.sample_rate:
-                resampler = torchaudio.transforms.Resample(
-                    sr, self.config.sample_rate
-                )
-                audio = resampler(audio)
-                sr = self.config.sample_rate
+            # Convert to tensor
+            if audio_np.ndim == 1:
+                audio_np = np.stack([audio_np, audio_np])  # Mono to stereo
+            audio = torch.from_numpy(audio_np).float()
             
             # Convert to stereo if mono
             if audio.shape[0] == 1:
@@ -230,19 +275,25 @@ class HarmonixSeparator:
         Returns:
             Dictionary of stem outputs
         """
-        logger.info("Running primary separation (4-stem)")
+        quality_name = self.config.quality.value.upper()
+        logger.info(f"Running {quality_name} quality separation")
+        
+        # Get quality-specific parameters
+        params = self._get_separation_params()
         
         with torch.no_grad():
             # Add batch dimension
             audio_batch = audio.unsqueeze(0)
             
-            # Apply model
+            # Apply model with quality-specific settings
             sources = self._apply_model(
                 self.models['primary'],
                 audio_batch,
                 device=self.device,
-                segment=self.config.segment_duration,
-                overlap=self.config.overlap
+                shifts=params.get('shifts', 1),
+                split=params.get('split', True),
+                overlap=params.get('overlap', 0.25),
+                segment=params.get('segment', self.config.segment_duration)
             )
             
             # Remove batch dimension
@@ -263,13 +314,82 @@ class HarmonixSeparator:
                 confidence=1.0,
                 metadata={
                     'model': self._get_model_name(),
-                    'quality': self.config.quality.value
+                    'quality': self.config.quality.value,
+                    'shifts': params.get('shifts', 1),
+                    'overlap': params.get('overlap', 0.25)
                 }
             )
             
             logger.debug(f"Extracted stem: {name} - {audio_np.shape}")
         
         return stems
+    
+    def _create_karaoke_stems(
+        self,
+        stems: Dict[str, StemOutput]
+    ) -> Dict[str, StemOutput]:
+        """
+        Create karaoke 2-stem output: Vocals + Instrumental
+        
+        Instrumental is created by mixing drums + bass + other for highest quality
+        
+        Args:
+            stems: Initial 4-stem separation
+            
+        Returns:
+            Dictionary with 'vocals' and 'instrumental' stems
+        """
+        logger.info("Creating karaoke stems (Vocals + Instrumental)")
+        
+        karaoke_stems = {}
+        
+        # Keep vocals as-is
+        if "vocals" in stems:
+            karaoke_stems["vocals"] = stems["vocals"]
+        
+        # Create instrumental by mixing all non-vocal stems
+        # This gives better quality than using a direct 2-stem model
+        instrumental_parts = []
+        sr = None
+        
+        for key in ["drums", "bass", "other", "guitar", "piano"]:
+            if key in stems:
+                instrumental_parts.append(stems[key].audio)
+                sr = stems[key].sample_rate
+        
+        if instrumental_parts and sr:
+            # Mix all parts
+            max_len = max(part.shape[-1] for part in instrumental_parts)
+            
+            # Pad if needed and sum
+            instrumental_mix = np.zeros_like(instrumental_parts[0])
+            if instrumental_mix.shape[-1] < max_len:
+                instrumental_mix = np.zeros((instrumental_parts[0].shape[0], max_len))
+            
+            for part in instrumental_parts:
+                if part.shape[-1] < max_len:
+                    # Pad
+                    padded = np.zeros((part.shape[0], max_len))
+                    padded[:, :part.shape[-1]] = part
+                    instrumental_mix += padded
+                else:
+                    instrumental_mix += part
+            
+            karaoke_stems["instrumental"] = StemOutput(
+                name="instrumental",
+                audio=instrumental_mix,
+                sample_rate=sr,
+                confidence=1.0,
+                metadata={
+                    'model': self._get_model_name(),
+                    'quality': self.config.quality.value,
+                    'type': 'karaoke_instrumental',
+                    'components': list(stems.keys())
+                }
+            )
+        
+        logger.info(f"Karaoke stems created: {list(karaoke_stems.keys())}")
+        return karaoke_stems
     
     def _refine_instruments(
         self, 
@@ -362,25 +482,32 @@ class HarmonixSeparator:
         Args:
             stems: Dictionary of stem outputs
             output_dir: Output directory
-            base_name: Base filename for stems
+            base_name: Base filename for stems (should be original audio filename or custom name)
         """
         output_dir = Path(output_dir)
         output_dir.mkdir(parents=True, exist_ok=True)
         
+        # Check if base_name has job_id prefix (format: jobid_filename)
+        # If so, extract just the filename part
+        if '_' in base_name and len(base_name.split('_')[0]) > 30:  # job_id is UUID (>30 chars)
+            parts = base_name.split('_', 1)
+            if len(parts) > 1:
+                clean_name = parts[1]  # Get everything after first underscore
+            else:
+                clean_name = base_name
+        else:
+            clean_name = base_name
+        
         for name, stem in stems.items():
-            # Save as WAV
-            wav_path = output_dir / f"{base_name}_{name}.wav"
+            # Save as: name_stemname.wav (e.g., mysong_vocals.wav)
+            wav_path = output_dir / f"{clean_name}_{name}.wav"
             
-            # Convert to tensor
-            audio_tensor = torch.from_numpy(stem.audio).float()
-            
-            # Save
-            torchaudio.save(
+            # Use soundfile instead of torchaudio to avoid torchcodec
+            sf.write(
                 str(wav_path),
-                audio_tensor,
+                stem.audio.T,  # Transpose to (samples, channels)
                 stem.sample_rate,
-                encoding="PCM_S",
-                bits_per_sample=16
+                subtype='PCM_16'
             )
             
             logger.debug(f"Saved: {wav_path}")
@@ -409,7 +536,7 @@ class HarmonixSeparator:
     def estimate_processing_time(
         self, 
         audio_duration: float
-    ) -> float:
+    ) -> Dict[str, any]:
         """
         Estimate processing time for given audio duration
         
@@ -417,29 +544,63 @@ class HarmonixSeparator:
             audio_duration: Duration in seconds
             
         Returns:
-            Estimated processing time in seconds
+            Dictionary with time estimates and breakdown
         """
-        # Rough estimates based on quality and device
+        # Base ratios based on quality and device
         if self.device.type == 'cuda':
             ratios = {
-                QualityMode.FAST: 0.3,
-                QualityMode.BALANCED: 0.5,
-                QualityMode.STUDIO: 0.8
+                QualityMode.FAST: 0.2,      # 5x faster than realtime
+                QualityMode.BALANCED: 0.5,  # 2x faster than realtime
+                QualityMode.STUDIO: 2.0     # 0.5x realtime (takes 2x duration)
             }
         else:
             ratios = {
-                QualityMode.FAST: 2.0,
-                QualityMode.BALANCED: 3.5,
-                QualityMode.STUDIO: 5.0
+                QualityMode.FAST: 1.5,      # 1.5x audio duration
+                QualityMode.BALANCED: 4.0,  # 4x audio duration
+                QualityMode.STUDIO: 12.0    # 12x audio duration (very slow on CPU)
             }
         
         base_time = audio_duration * ratios[self.config.quality]
+        
+        # Add overhead for TTA shifts in studio mode
+        params = self._get_separation_params()
+        shifts = params.get('shifts', 1)
+        if shifts > 1:
+            base_time *= (1 + (shifts - 1) * 0.3)  # Each shift adds ~30%
         
         # Add overhead for per-instrument mode
         if self.config.mode == SeparationMode.PER_INSTRUMENT:
             base_time *= 1.5
         
-        return base_time
+        # Analysis time
+        analysis_time = min(30, audio_duration * 0.05)
+        
+        total_time = base_time + analysis_time
+        
+        return {
+            'separation_seconds': round(base_time, 1),
+            'analysis_seconds': round(analysis_time, 1),
+            'total_seconds': round(total_time, 1),
+            'separation_formatted': self._format_time(base_time),
+            'analysis_formatted': self._format_time(analysis_time),
+            'total_formatted': self._format_time(total_time),
+            'quality': self.config.quality.value,
+            'device': str(self.device),
+            'shifts': shifts
+        }
+    
+    def _format_time(self, seconds: float) -> str:
+        """Format seconds into human readable string"""
+        if seconds < 60:
+            return f"{int(seconds)}s"
+        elif seconds < 3600:
+            mins = int(seconds // 60)
+            secs = int(seconds % 60)
+            return f"{mins}m {secs}s"
+        else:
+            hours = int(seconds // 3600)
+            mins = int((seconds % 3600) // 60)
+            return f"{hours}h {mins}m"
 
 
 def create_separator(

@@ -26,7 +26,7 @@ fi
 echo "🚀 Starting Harmonix Dashboard..."
 echo ""
 echo "   Open your browser to:"
-echo "   👉 http://localhost:5000"
+echo "   👉 http://localhost:5001"
 echo ""
 echo "   Press Ctrl+C to stop"
 echo ""

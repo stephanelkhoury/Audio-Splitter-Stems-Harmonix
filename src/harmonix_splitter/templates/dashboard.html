@@ -1,0 +1,2803 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Harmonix Audio Splitter - Professional Dashboard</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://unpkg.com/wavesurfer.js@7"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #667eea;
+            --secondary: #764ba2;
+            --dark: #1a1a2e;
+            --darker: #16213e;
+            --light: #f8f9fa;
+            --success: #2ecc71;
+            --danger: #e74c3c;
+            --warning: #f39c12;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--dark);
+            color: #fff;
+            overflow-x: hidden;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 260px;
+            height: 100vh;
+            background: var(--darker);
+            padding: 20px;
+            overflow-y: auto;
+            z-index: 1000;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.3);
+        }
+
+        .logo {
+            font-size: 22px;
+            font-weight: bold;
+            margin-bottom: 30px;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .nav-section {
+            margin-bottom: 25px;
+        }
+
+        .nav-title {
+            font-size: 11px;
+            text-transform: uppercase;
+            color: #666;
+            margin-bottom: 10px;
+            font-weight: 600;
+            letter-spacing: 1px;
+        }
+
+        .nav-item {
+            padding: 12px 15px;
+            margin-bottom: 5px;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: all 0.2s;
+            color: #aaa;
+        }
+
+        .nav-item:hover {
+            background: rgba(102, 126, 234, 0.15);
+            color: #fff;
+        }
+
+        .nav-item.active {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+        }
+
+        .nav-item i {
+            width: 20px;
+            text-align: center;
+        }
+
+        /* Main Content */
+        .main-content {
+            margin-left: 260px;
+            padding: 25px;
+            min-height: 100vh;
+        }
+
+        /* Page Header */
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .page-title {
+            font-size: 24px;
+            font-weight: 600;
+        }
+
+        .page-title i {
+            margin-right: 10px;
+            color: var(--primary);
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 10px 20px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: rgba(255,255,255,0.1);
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255,255,255,0.2);
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        /* Content Sections */
+        .content-section {
+            display: none;
+        }
+
+        .content-section.active {
+            display: block;
+        }
+
+        /* Cards */
+        .card {
+            background: var(--darker);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+        }
+
+        /* Upload Area */
+        .upload-area {
+            background: var(--darker);
+            border: 3px dashed rgba(102, 126, 234, 0.5);
+            border-radius: 20px;
+            padding: 60px 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .upload-area:hover, .upload-area.dragover {
+            border-color: var(--primary);
+            background: rgba(102, 126, 234, 0.05);
+        }
+
+        .upload-icon {
+            font-size: 50px;
+            color: var(--primary);
+            margin-bottom: 20px;
+        }
+
+        .upload-area h3 {
+            margin-bottom: 10px;
+            font-size: 18px;
+        }
+
+        .upload-area p {
+            color: #666;
+            font-size: 14px;
+        }
+
+        /* Form Controls */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #aaa;
+            font-size: 13px;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 15px;
+            background: var(--dark);
+            border: 2px solid rgba(102, 126, 234, 0.2);
+            border-radius: 8px;
+            color: white;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        /* Settings Grid */
+        .settings-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-top: 25px;
+        }
+
+        /* Track List */
+        .track-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .track-item {
+            background: var(--darker);
+            border-radius: 12px;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .track-item:hover {
+            transform: translateX(5px);
+            background: rgba(102, 126, 234, 0.1);
+        }
+
+        .track-artwork {
+            width: 60px;
+            height: 60px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            flex-shrink: 0;
+            position: relative;
+        }
+
+        .lyrics-badge {
+            position: absolute;
+            bottom: -4px;
+            right: -4px;
+            background: #ffd700;
+            color: #333;
+            font-size: 10px;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid var(--card);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .track-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .track-name {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 5px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .track-meta {
+            color: #666;
+            font-size: 13px;
+        }
+
+        .track-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        /* Icon Button */
+        .icon-btn {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.1);
+            border: none;
+            color: #aaa;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .icon-btn:hover {
+            background: var(--primary);
+            color: white;
+            transform: scale(1.1);
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+        }
+
+        .empty-state i {
+            font-size: 60px;
+            margin-bottom: 20px;
+            opacity: 0.3;
+        }
+
+        .empty-state h3 {
+            margin-bottom: 10px;
+            color: #888;
+        }
+
+        /* Progress */
+        .progress-container {
+            background: var(--darker);
+            border-radius: 12px;
+            padding: 25px;
+            margin-top: 25px;
+        }
+
+        .progress-bar {
+            height: 10px;
+            background: var(--dark);
+            border-radius: 5px;
+            overflow: hidden;
+            margin: 15px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            border-radius: 5px;
+            transition: width 0.5s ease;
+        }
+
+        .progress-text {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+            color: #888;
+        }
+
+        /* Player Container */
+        .player-container {
+            background: var(--darker);
+            border-radius: 20px;
+            padding: 30px;
+        }
+
+        .player-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        .now-playing {
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .now-playing i {
+            color: var(--primary);
+            margin-right: 10px;
+        }
+
+        /* Master Controls */
+        .master-controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            padding: 25px;
+            background: var(--dark);
+            border-radius: 15px;
+            margin-bottom: 25px;
+        }
+
+        .play-btn {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border: none;
+            color: white;
+            font-size: 22px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .play-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 5px 25px rgba(102, 126, 234, 0.5);
+        }
+
+        .time-display {
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            color: #888;
+            min-width: 180px;
+            text-align: center;
+            background: rgba(0,0,0,0.3);
+            padding: 8px 15px;
+            border-radius: 8px;
+        }
+
+        .time-display .current {
+            color: var(--primary);
+            font-weight: bold;
+        }
+
+        .time-display .ms {
+            font-size: 11px;
+            color: #666;
+        }
+
+        /* Global Timeline */
+        .global-timeline {
+            background: rgba(0,0,0,0.4);
+            border-radius: 10px;
+            padding: 15px 20px;
+            margin-bottom: 20px;
+        }
+
+        .timeline-bar {
+            height: 8px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 4px;
+            cursor: pointer;
+            position: relative;
+            margin-top: 10px;
+        }
+
+        .timeline-progress {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            border-radius: 4px;
+            transition: width 0.1s linear;
+        }
+
+        .timeline-cursor {
+            position: absolute;
+            top: -4px;
+            width: 16px;
+            height: 16px;
+            background: white;
+            border-radius: 50%;
+            transform: translateX(-50%);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+            cursor: grab;
+        }
+
+        /* Stem Tracks */
+        .stems-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .stem-track {
+            background: var(--dark);
+            border-radius: 12px;
+            padding: 15px 20px;
+        }
+
+        .stem-track.muted {
+            opacity: 0.5;
+        }
+
+        .stem-track.solo {
+            border: 2px solid var(--warning);
+        }
+
+        .stem-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .stem-name {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 600;
+        }
+
+        .stem-time {
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            color: #666;
+            margin-left: 10px;
+            min-width: 90px;
+        }
+
+        .sync-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-left: 8px;
+            background: var(--success);
+            transition: background 0.2s;
+        }
+
+        .sync-indicator.warning {
+            background: var(--warning);
+        }
+
+        .sync-indicator.error {
+            background: var(--danger);
+        }
+
+        .drift-display {
+            font-family: 'Courier New', monospace;
+            font-size: 10px;
+            color: #555;
+            margin-left: 5px;
+        }
+
+        .stem-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* Mute/Solo Buttons */
+        .mute-btn, .solo-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            background: rgba(255,255,255,0.1);
+            border: none;
+            color: #aaa;
+            cursor: pointer;
+            font-size: 11px;
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+
+        .mute-btn:hover, .solo-btn:hover {
+            background: rgba(255,255,255,0.2);
+        }
+
+        .mute-btn.active {
+            background: var(--danger);
+            color: white;
+        }
+
+        .solo-btn.active {
+            background: var(--warning);
+            color: black;
+        }
+
+        .volume-slider {
+            width: 100px;
+            height: 6px;
+            -webkit-appearance: none;
+            background: rgba(255,255,255,0.1);
+            border-radius: 3px;
+            cursor: pointer;
+        }
+
+        .volume-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 14px;
+            height: 14px;
+            background: var(--primary);
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .waveform-container {
+            height: 70px;
+            border-radius: 8px;
+            overflow: hidden;
+            background: rgba(0,0,0,0.3);
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .stat-card {
+            background: var(--darker);
+            padding: 25px;
+            border-radius: 15px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 36px;
+            font-weight: bold;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 14px;
+        }
+
+        /* Music Info Panel */
+        .music-info-panel {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .music-info-card {
+            background: var(--dark);
+            border-radius: 12px;
+            padding: 15px 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            min-width: 140px;
+        }
+
+        .music-info-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+
+        .music-info-icon.tempo {
+            background: rgba(231, 76, 60, 0.2);
+            color: #e74c3c;
+        }
+
+        .music-info-icon.key {
+            background: rgba(155, 89, 182, 0.2);
+            color: #9b59b6;
+        }
+
+        .music-info-icon.time {
+            background: rgba(52, 152, 219, 0.2);
+            color: #3498db;
+        }
+
+        .music-info-value {
+            font-size: 18px;
+            font-weight: 700;
+            line-height: 1.2;
+        }
+
+        .music-info-label {
+            font-size: 11px;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .music-info-confidence {
+            font-size: 10px;
+            color: #888;
+            margin-top: 2px;
+        }
+
+        /* Estimated Time Banner */
+        .estimate-banner {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.15), rgba(118, 75, 162, 0.15));
+            border: 1px solid rgba(102, 126, 234, 0.3);
+            border-radius: 12px;
+            padding: 15px 20px;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .estimate-banner.show {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .estimate-banner i {
+            font-size: 24px;
+            color: var(--primary);
+        }
+
+        .estimate-content {
+            flex: 1;
+        }
+
+        .estimate-time {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .estimate-note {
+            font-size: 12px;
+            color: #888;
+            margin-top: 3px;
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: var(--darker);
+            padding: 15px 25px;
+            border-radius: 12px;
+            box-shadow: 0 5px 30px rgba(0,0,0,0.5);
+            display: none;
+            z-index: 9999;
+            border-left: 4px solid var(--primary);
+        }
+
+        .toast.show {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            animation: slideIn 0.3s ease;
+        }
+
+        .toast.error {
+            border-left-color: var(--danger);
+        }
+
+        .toast.success {
+            border-left-color: var(--success);
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(100px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        /* Selected File Preview */
+        .selected-file {
+            background: var(--darker);
+            border-radius: 12px;
+            padding: 15px 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .selected-file .file-icon {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .selected-file .file-info {
+            flex: 1;
+        }
+
+        .selected-file .file-name {
+            font-weight: 600;
+            margin-bottom: 3px;
+        }
+
+        .selected-file .file-size {
+            color: #666;
+            font-size: 13px;
+        }
+
+        /* Pitch Control */
+        .pitch-control {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            background: var(--dark);
+            padding: 15px 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+
+        .pitch-control label {
+            font-weight: 600;
+            color: #aaa;
+            white-space: nowrap;
+        }
+
+        .pitch-slider {
+            flex: 1;
+            height: 8px;
+            -webkit-appearance: none;
+            background: rgba(255,255,255,0.1);
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .pitch-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            background: var(--primary);
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.5);
+        }
+
+        .pitch-value {
+            min-width: 50px;
+            text-align: center;
+            font-weight: 600;
+            color: var(--primary);
+            font-family: 'Courier New', monospace;
+        }
+
+        .pitch-reset {
+            padding: 8px 15px;
+            background: rgba(255,255,255,0.1);
+            border: none;
+            border-radius: 6px;
+            color: #aaa;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .pitch-reset:hover {
+            background: rgba(255,255,255,0.2);
+            color: white;
+        }
+
+        /* Lyrics Panel */
+        .lyrics-panel {
+            background: var(--dark);
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 20px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .lyrics-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .lyrics-title {
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .lyrics-controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        .lyrics-line {
+            padding: 8px 12px;
+            margin: 4px 0;
+            border-radius: 6px;
+            transition: all 0.2s;
+            font-size: 15px;
+            line-height: 1.6;
+        }
+
+        .lyrics-line.current {
+            background: rgba(102, 126, 234, 0.3);
+            color: white;
+            font-weight: 600;
+        }
+
+        .lyrics-line.past {
+            color: #666;
+        }
+
+        .lyrics-line .word {
+            display: inline;
+            transition: color 0.1s;
+        }
+
+        .lyrics-line .word.highlight {
+            color: var(--primary);
+            text-shadow: 0 0 10px var(--primary);
+        }
+
+        .extract-lyrics-btn {
+            background: linear-gradient(135deg, #9b59b6, #8e44ad);
+        }
+
+        .extract-lyrics-btn:hover {
+            box-shadow: 0 5px 20px rgba(155, 89, 182, 0.4);
+        }
+
+        /* Language Select */
+        .language-select {
+            padding: 8px 12px;
+            background: var(--dark);
+            border: 2px solid rgba(102, 126, 234, 0.2);
+            border-radius: 6px;
+            color: white;
+            font-size: 13px;
+            cursor: pointer;
+        }
+
+        .language-select:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        /* Karaoke Mode Toggle */
+        .mode-toggle {
+            display: flex;
+            background: var(--dark);
+            border-radius: 10px;
+            padding: 4px;
+            gap: 4px;
+        }
+
+        .mode-toggle-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            background: transparent;
+            color: #888;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .mode-toggle-btn.active {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+        }
+
+        .mode-toggle-btn:hover:not(.active) {
+            color: white;
+            background: rgba(255,255,255,0.1);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            .main-content {
+                margin-left: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="logo">
+            <i class="fas fa-music"></i>
+            Harmonix Pro
+        </div>
+
+        <div class="nav-section">
+            <div class="nav-title">Main</div>
+            <div class="nav-item active" data-section="library">
+                <i class="fas fa-folder-open"></i>
+                <span>Library</span>
+            </div>
+            <div class="nav-item" data-section="upload">
+                <i class="fas fa-cloud-upload-alt"></i>
+                <span>Upload & Process</span>
+            </div>
+            <div class="nav-item" data-section="player">
+                <i class="fas fa-play-circle"></i>
+                <span>Player</span>
+            </div>
+        </div>
+
+        <div class="nav-section">
+            <div class="nav-title">Info</div>
+            <div class="nav-item" data-section="stats">
+                <i class="fas fa-chart-bar"></i>
+                <span>Statistics</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        
+        <!-- Library Section -->
+        <div id="section-library" class="content-section active">
+            <div class="page-header">
+                <h1 class="page-title"><i class="fas fa-folder-open"></i> Your Library</h1>
+                <button class="btn btn-secondary" id="refreshLibraryBtn">
+                    <i class="fas fa-sync-alt"></i> Refresh
+                </button>
+            </div>
+            <div id="libraryContent" class="track-list"></div>
+        </div>
+
+        <!-- Upload Section -->
+        <div id="section-upload" class="content-section">
+            <div class="page-header">
+                <h1 class="page-title"><i class="fas fa-cloud-upload-alt"></i> Upload & Process</h1>
+            </div>
+
+            <div class="upload-area" id="uploadZone">
+                <div class="upload-icon">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                </div>
+                <h3>Drop your audio file here</h3>
+                <p>or click to browse • MP3, WAV, FLAC, M4A, OGG (Max 500MB)</p>
+            </div>
+            <input type="file" id="fileInput" style="display: none;" accept=".mp3,.wav,.flac,.m4a,.ogg,.aac">
+
+            <div id="selectedFilePreview" class="selected-file" style="display: none;">
+                <div class="file-icon"><i class="fas fa-file-audio"></i></div>
+                <div class="file-info">
+                    <div class="file-name" id="selectedFileName"></div>
+                    <div class="file-size" id="selectedFileSize"></div>
+                </div>
+                <button class="icon-btn" id="removeFileBtn" title="Remove">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <div class="settings-grid">
+                <div class="card">
+                    <div class="form-group">
+                        <label>Custom Output Name (Optional)</label>
+                        <input type="text" class="form-control" id="outputName" placeholder="Leave empty to use original filename">
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="form-group">
+                        <label>Quality Mode</label>
+                        <select class="form-control" id="qualitySelect">
+                            <option value="fast">Fast (Quick Processing)</option>
+                            <option value="balanced" selected>Balanced (Recommended)</option>
+                            <option value="studio">Studio (Highest Quality)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="form-group">
+                        <label>Separation Mode</label>
+                        <select class="form-control" id="modeSelect">
+                            <option value="grouped" selected>Grouped (4 Stems)</option>
+                            <option value="karaoke">Karaoke (Vocals + Instrumental)</option>
+                            <option value="per_instrument">Per-Instrument (Detailed)</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div style="text-align: center; margin-top: 30px;">
+                <button class="btn btn-primary" id="processBtn" disabled style="padding: 15px 40px; font-size: 16px;">
+                    <i class="fas fa-magic"></i> Start Processing
+                </button>
+            </div>
+
+            <div id="estimateBanner" class="estimate-banner">
+                <i class="fas fa-clock"></i>
+                <div class="estimate-content">
+                    <div class="estimate-time" id="estimatedTime">~2-3 minutes</div>
+                    <div class="estimate-note" id="estimateNote">Processing time depends on file length and system resources</div>
+                </div>
+            </div>
+
+            <div id="processingProgress" class="progress-container" style="display: none;">
+                <h3><i class="fas fa-spinner fa-spin"></i> Processing Audio...</h3>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+                </div>
+                <div class="progress-text">
+                    <span id="progressStatus">Starting...</span>
+                    <span id="progressPercent">0%</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Player Section -->
+        <div id="section-player" class="content-section">
+            <div class="page-header">
+                <h1 class="page-title"><i class="fas fa-play-circle"></i> Stem Player</h1>
+            </div>
+            <div id="playerContent">
+                <div class="empty-state">
+                    <i class="fas fa-play-circle"></i>
+                    <h3>No track loaded</h3>
+                    <p>Select a track from your library to start playing</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats Section -->
+        <div id="section-stats" class="content-section">
+            <div class="page-header">
+                <h1 class="page-title"><i class="fas fa-chart-bar"></i> Statistics</h1>
+            </div>
+            <div id="statsContent" class="stats-grid"></div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div class="toast" id="toast"></div>
+
+    <script>
+        // ==================== STATE ====================
+        let allTracks = [];
+        let selectedFile = null;
+        let currentJobId = null;
+        let statusInterval = null;
+        let wavesurfers = {};
+        let isPlaying = false;
+        let currentTrack = null;
+        let masterDuration = 0;
+        let masterTime = 0;
+        let isSeeking = false;
+        let soloStems = new Set();
+        let mutedStems = new Set();
+        let animationFrameId = null;
+        let audioContext = null;
+        let masterStartTime = 0;  // AudioContext time when playback started
+        let pausedAt = 0;         // Time position when paused
+        let syncTolerance = 0.01; // 10ms sync tolerance
+        let lastSyncCheck = 0;
+        let currentPitch = 0;     // Current pitch shift in semitones (-4 to +4)
+        let currentLyrics = null; // Current lyrics data
+        let lyricsVisible = false;
+
+        // ==================== INITIALIZATION ====================
+        document.addEventListener('DOMContentLoaded', function() {
+            initNavigation();
+            initUpload();
+            loadLibrary();
+            loadStats();
+        });
+
+        // ==================== NAVIGATION ====================
+        function initNavigation() {
+            document.querySelectorAll('.nav-item').forEach(function(item) {
+                item.addEventListener('click', function() {
+                    var sectionId = this.getAttribute('data-section');
+                    navigateTo(sectionId);
+                });
+            });
+
+            document.getElementById('refreshLibraryBtn').addEventListener('click', loadLibrary);
+        }
+
+        function navigateTo(sectionId) {
+            // Update nav items
+            document.querySelectorAll('.nav-item').forEach(function(item) {
+                item.classList.remove('active');
+                if (item.getAttribute('data-section') === sectionId) {
+                    item.classList.add('active');
+                }
+            });
+
+            // Update sections
+            document.querySelectorAll('.content-section').forEach(function(section) {
+                section.classList.remove('active');
+            });
+            
+            var targetSection = document.getElementById('section-' + sectionId);
+            if (targetSection) {
+                targetSection.classList.add('active');
+            }
+
+            // Load data for section
+            if (sectionId === 'library') {
+                loadLibrary();
+            } else if (sectionId === 'stats') {
+                loadStats();
+            }
+        }
+
+        // ==================== UPLOAD ====================
+        function initUpload() {
+            var uploadZone = document.getElementById('uploadZone');
+            var fileInput = document.getElementById('fileInput');
+
+            uploadZone.addEventListener('click', function() {
+                fileInput.click();
+            });
+
+            uploadZone.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                uploadZone.classList.add('dragover');
+            });
+
+            uploadZone.addEventListener('dragleave', function() {
+                uploadZone.classList.remove('dragover');
+            });
+
+            uploadZone.addEventListener('drop', function(e) {
+                e.preventDefault();
+                uploadZone.classList.remove('dragover');
+                if (e.dataTransfer.files.length > 0) {
+                    selectFile(e.dataTransfer.files[0]);
+                }
+            });
+
+            fileInput.addEventListener('change', function(e) {
+                if (e.target.files.length > 0) {
+                    selectFile(e.target.files[0]);
+                }
+            });
+
+            document.getElementById('removeFileBtn').addEventListener('click', clearFile);
+            document.getElementById('processBtn').addEventListener('click', startProcessing);
+            
+            // Update estimate when quality changes
+            document.getElementById('qualitySelect').addEventListener('change', updateEstimate);
+        }
+
+        function updateEstimate() {
+            if (!selectedFile) {
+                document.getElementById('estimateBanner').classList.remove('show');
+                return;
+            }
+
+            var quality = document.getElementById('qualitySelect').value;
+            
+            // Create an audio element to get duration
+            var audio = new Audio();
+            var reader = new FileReader();
+            
+            reader.onload = function(e) {
+                audio.src = e.target.result;
+                audio.addEventListener('loadedmetadata', function() {
+                    var duration = audio.duration;
+                    
+                    fetch('/estimate-time', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ duration: duration, quality: quality })
+                    })
+                    .then(function(response) { return response.json(); })
+                    .then(function(data) {
+                        if (data.total_formatted) {
+                            document.getElementById('estimatedTime').textContent = '~' + data.total_formatted;
+                            
+                            var note = '';
+                            if (quality === 'studio') {
+                                note = 'Studio quality uses multiple passes for best results' + (data.has_gpu ? '' : ' (CPU mode)');
+                            } else if (quality === 'balanced') {
+                                note = 'Balanced mode offers good quality with reasonable speed';
+                            } else {
+                                note = 'Fast mode for quick previews';
+                            }
+                            document.getElementById('estimateNote').textContent = note;
+                            document.getElementById('estimateBanner').classList.add('show');
+                        }
+                    })
+                    .catch(function(error) {
+                        console.error('Failed to get estimate:', error);
+                    });
+                });
+            };
+            
+            // Only read first bit to get metadata
+            reader.readAsDataURL(selectedFile.slice(0, 10 * 1024 * 1024)); // First 10MB
+        }
+
+        function selectFile(file) {
+            selectedFile = file;
+            document.getElementById('selectedFileName').textContent = file.name;
+            document.getElementById('selectedFileSize').textContent = formatFileSize(file.size);
+            document.getElementById('selectedFilePreview').style.display = 'flex';
+            document.getElementById('processBtn').disabled = false;
+            updateEstimate();
+        }
+
+        function clearFile() {
+            selectedFile = null;
+            document.getElementById('selectedFilePreview').style.display = 'none';
+            document.getElementById('processBtn').disabled = true;
+            document.getElementById('fileInput').value = '';
+            document.getElementById('estimateBanner').classList.remove('show');
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            var k = 1024;
+            var sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            var i = Math.floor(Math.log(bytes) / Math.log(k));
+            return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+        }
+
+        function startProcessing() {
+            if (!selectedFile) return;
+
+            var formData = new FormData();
+            formData.append('file', selectedFile);
+            formData.append('quality', document.getElementById('qualitySelect').value);
+            formData.append('mode', document.getElementById('modeSelect').value);
+
+            var outputName = document.getElementById('outputName').value.trim();
+            if (outputName) {
+                formData.append('output_name', outputName);
+            }
+
+            document.getElementById('processBtn').disabled = true;
+            document.getElementById('processingProgress').style.display = 'block';
+            updateProgress(0, 'Uploading...');
+
+            fetch('/upload', {
+                method: 'POST',
+                body: formData
+            })
+            .then(function(response) {
+                return response.json().then(function(data) {
+                    if (!response.ok) {
+                        throw new Error(data.error || 'Upload failed');
+                    }
+                    return data;
+                });
+            })
+            .then(function(data) {
+                currentJobId = data.job_id;
+                showToast('Processing started!', 'success');
+                startStatusPolling();
+            })
+            .catch(function(error) {
+                showToast('Error: ' + error.message, 'error');
+                document.getElementById('processingProgress').style.display = 'none';
+                document.getElementById('processBtn').disabled = false;
+            });
+        }
+
+        function startStatusPolling() {
+            statusInterval = setInterval(checkStatus, 2000);
+        }
+
+        function checkStatus() {
+            if (!currentJobId) return;
+
+            fetch('/status/' + currentJobId)
+            .then(function(response) {
+                return response.json();
+            })
+            .then(function(job) {
+                updateProgress(job.progress || 0, job.status);
+
+                if (job.status === 'completed') {
+                    clearInterval(statusInterval);
+                    showToast('Processing completed!', 'success');
+                    resetUploadForm();
+                    loadLibrary();
+                    navigateTo('library');
+                } else if (job.status === 'failed') {
+                    clearInterval(statusInterval);
+                    showToast('Processing failed: ' + (job.error || 'Unknown error'), 'error');
+                    document.getElementById('processingProgress').style.display = 'none';
+                    document.getElementById('processBtn').disabled = false;
+                }
+            })
+            .catch(function(error) {
+                console.error('Status check failed:', error);
+            });
+        }
+
+        function updateProgress(percent, status) {
+            document.getElementById('progressFill').style.width = percent + '%';
+            document.getElementById('progressPercent').textContent = percent + '%';
+            document.getElementById('progressStatus').textContent = status || 'Processing...';
+        }
+
+        function resetUploadForm() {
+            clearFile();
+            currentJobId = null;
+            document.getElementById('processingProgress').style.display = 'none';
+            document.getElementById('outputName').value = '';
+        }
+
+        // ==================== LIBRARY ====================
+        function loadLibrary() {
+            fetch('/jobs')
+            .then(function(response) {
+                return response.json();
+            })
+            .then(function(data) {
+                allTracks = (data.jobs || []).filter(function(job) {
+                    return job.status === 'completed';
+                });
+                renderLibrary();
+            })
+            .catch(function(error) {
+                console.error('Failed to load library:', error);
+                showToast('Failed to load library', 'error');
+            });
+        }
+
+        function renderLibrary() {
+            var container = document.getElementById('libraryContent');
+
+            if (allTracks.length === 0) {
+                container.innerHTML = '<div class="empty-state">' +
+                    '<i class="fas fa-folder-open"></i>' +
+                    '<h3>No tracks yet</h3>' +
+                    '<p>Upload and process your first audio file to get started</p>' +
+                    '</div>';
+                return;
+            }
+
+            var html = '';
+            allTracks.forEach(function(track) {
+                var displayName = track.display_name || track.filename.replace(/\.[^/.]+$/, '');
+                var stemCount = Object.keys(track.stems || {}).length;
+                var date = new Date(track.created_at).toLocaleDateString();
+                var lyricsIndicator = track.has_lyrics ? '<span class="lyrics-badge" title="Lyrics available"><i class="fas fa-closed-captioning"></i></span>' : '';
+
+                html += '<div class="track-item" data-job-id="' + track.job_id + '">' +
+                    '<div class="track-artwork"><i class="fas fa-music"></i>' + lyricsIndicator + '</div>' +
+                    '<div class="track-info">' +
+                    '<div class="track-name">' + displayName + '</div>' +
+                    '<div class="track-meta">' + stemCount + ' stems • ' + date + (track.has_lyrics ? ' • <i class="fas fa-closed-captioning" style="color: #667eea;"></i> Lyrics' : '') + '</div>' +
+                    '</div>' +
+                    '<div class="track-actions">' +
+                    '<button class="icon-btn play-track-btn" title="Play"><i class="fas fa-play"></i></button>' +
+                    '<button class="icon-btn download-track-btn" title="Download All"><i class="fas fa-download"></i></button>' +
+                    '</div>' +
+                    '</div>';
+            });
+
+            container.innerHTML = html;
+
+            // Attach event listeners
+            container.querySelectorAll('.track-item').forEach(function(item) {
+                var jobId = item.getAttribute('data-job-id');
+
+                item.querySelector('.play-track-btn').addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    loadPlayer(jobId);
+                });
+
+                item.querySelector('.download-track-btn').addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    downloadAllStems(jobId);
+                });
+
+                item.addEventListener('click', function() {
+                    loadPlayer(jobId);
+                });
+            });
+        }
+
+        // ==================== PLAYER ====================
+        function loadPlayer(jobId) {
+            console.log('loadPlayer called with jobId:', jobId);
+            console.log('allTracks:', allTracks);
+            
+            var track = null;
+            for (var i = 0; i < allTracks.length; i++) {
+                if (allTracks[i].job_id === jobId) {
+                    track = allTracks[i];
+                    break;
+                }
+            }
+
+            console.log('Found track:', track);
+            
+            if (!track) {
+                showToast('Track not found', 'error');
+                return;
+            }
+
+            // Cleanup previous wavesurfers and state
+            cleanupPlayer();
+            currentTrack = track;
+
+            var displayName = track.display_name || track.filename.replace(/\.[^/.]+$/, '');
+            var stems = track.stems || {};
+            
+            console.log('Track stems:', stems);
+            
+            // Filter out invalid stems (pitch-shifted cache files, etc.)
+            var validStemTypes = ['vocals', 'drums', 'bass', 'guitar', 'piano', 'other', 'instrumental'];
+            var stemKeys = Object.keys(stems).filter(function(key) {
+                return validStemTypes.indexOf(key.toLowerCase()) !== -1 && 
+                       key.indexOf('pitch') === -1 && 
+                       key.indexOf('+') === -1 &&
+                       key.indexOf('.') === -1;
+            });
+
+            console.log('Filtered stemKeys:', stemKeys);
+
+            if (stemKeys.length === 0) {
+                showToast('No stems available for this track', 'error');
+                return;
+            }
+
+            // Build player UI with global timeline and controls
+            var playerContent = document.getElementById('playerContent');
+            playerContent.innerHTML = '<div class="player-container">' +
+                '<div class="player-header">' +
+                '<div class="now-playing"><i class="fas fa-music"></i> ' + displayName + '</div>' +
+                '<button class="btn btn-secondary" id="downloadAllBtn"><i class="fas fa-download"></i> Download All</button>' +
+                '</div>' +
+                
+                // Music Info Panel (tempo, key, time signature)
+                '<div class="music-info-panel" id="musicInfoPanel">' +
+                '<div class="music-info-card">' +
+                '<div class="music-info-icon tempo"><i class="fas fa-heartbeat"></i></div>' +
+                '<div><div class="music-info-value" id="tempoValue">--</div><div class="music-info-label">BPM</div><div class="music-info-confidence" id="tempoConfidence"></div></div>' +
+                '</div>' +
+                '<div class="music-info-card">' +
+                '<div class="music-info-icon key"><i class="fas fa-music"></i></div>' +
+                '<div><div class="music-info-value" id="keyValue">--</div><div class="music-info-label">Key</div><div class="music-info-confidence" id="keyConfidence"></div></div>' +
+                '</div>' +
+                '<div class="music-info-card">' +
+                '<div class="music-info-icon time"><i class="fas fa-clock"></i></div>' +
+                '<div><div class="music-info-value" id="timeSigValue">--</div><div class="music-info-label">Time Sig</div></div>' +
+                '</div>' +
+                '</div>' +
+                
+                // Global Timeline
+                '<div class="global-timeline">' +
+                '<div style="display: flex; justify-content: space-between; align-items: center;">' +
+                '<div style="display: flex; align-items: center; gap: 10px;">' +
+                '<span style="font-size: 12px; color: #888;">TIMELINE</span>' +
+                '<span class="sync-indicator" id="globalSyncIndicator" title="Global sync status"></span>' +
+                '<span class="drift-display" id="globalDrift" style="font-size: 11px;"></span>' +
+                '</div>' +
+                '<div class="time-display">' +
+                '<span class="current" id="currentTime">00:00</span>' +
+                '<span class="ms" id="currentMs">.000</span>' +
+                ' / ' +
+                '<span id="totalTime">00:00</span>' +
+                '<span class="ms" id="totalMs">.000</span>' +
+                '</div>' +
+                '</div>' +
+                '<div class="timeline-bar" id="globalTimeline">' +
+                '<div class="timeline-progress" id="timelineProgress"></div>' +
+                '<div class="timeline-cursor" id="timelineCursor" style="left: 0%"></div>' +
+                '</div>' +
+                '</div>' +
+                
+                // Master Controls
+                '<div class="master-controls">' +
+                '<button class="icon-btn" id="skipStartBtn" title="Go to Start"><i class="fas fa-step-backward"></i></button>' +
+                '<button class="icon-btn" id="skipBackBtn" title="Back 5s"><i class="fas fa-backward"></i></button>' +
+                '<button class="play-btn" id="masterPlayBtn"><i class="fas fa-play"></i></button>' +
+                '<button class="icon-btn" id="skipForwardBtn" title="Forward 5s"><i class="fas fa-forward"></i></button>' +
+                '<button class="icon-btn" id="skipEndBtn" title="Go to End"><i class="fas fa-step-forward"></i></button>' +
+                '<div style="width: 1px; height: 30px; background: rgba(255,255,255,0.2); margin: 0 15px;"></div>' +
+                '<button class="icon-btn" id="syncBtn" title="Sync All Tracks" style="background: var(--primary);"><i class="fas fa-link"></i></button>' +
+                '</div>' +
+                
+                // Pitch Control (real-time transposition)
+                '<div class="pitch-control">' +
+                '<label><i class="fas fa-music"></i> Transpose</label>' +
+                '<span class="pitch-value" id="pitchDown">-4</span>' +
+                '<input type="range" class="pitch-slider" id="pitchSlider" min="-4" max="4" step="0.5" value="0">' +
+                '<span class="pitch-value" id="pitchUp">+4</span>' +
+                '<span class="pitch-value" id="pitchValue" style="min-width: 70px;">0 st</span>' +
+                '<button class="pitch-reset" id="pitchReset"><i class="fas fa-undo"></i> Reset</button>' +
+                '</div>' +
+                
+                // Lyrics Controls
+                '<div style="display: flex; gap: 15px; margin-bottom: 15px;">' +
+                '<button class="btn extract-lyrics-btn" id="extractLyricsBtn">' +
+                '<i class="fas fa-microphone-alt"></i> Extract Lyrics' +
+                '</button>' +
+                '<select class="language-select" id="lyricsLanguage">' +
+                '<option value="auto">Auto Detect</option>' +
+                '<option value="en">English</option>' +
+                '<option value="ar">Arabic</option>' +
+                '<option value="fr">French</option>' +
+                '<option value="es">Spanish</option>' +
+                '</select>' +
+                '<button class="btn btn-secondary" id="toggleLyricsBtn" style="display: none;">' +
+                '<i class="fas fa-closed-captioning"></i> Show Lyrics' +
+                '</button>' +
+                '</div>' +
+                
+                // Lyrics Panel (hidden initially)
+                '<div class="lyrics-panel" id="lyricsPanel" style="display: none;">' +
+                '<div class="lyrics-header">' +
+                '<div class="lyrics-title"><i class="fas fa-music"></i> Lyrics</div>' +
+                '<div class="lyrics-controls">' +
+                '<span id="lyricsLanguageDisplay" style="font-size: 12px; color: #888;"></span>' +
+                '</div>' +
+                '</div>' +
+                '<div id="lyricsContent"></div>' +
+                '</div>' +
+                
+                '<div class="stems-container" id="stemsContainer"></div>' +
+                '</div>';
+
+            // Add stem tracks with mute/solo buttons
+            var stemsContainer = document.getElementById('stemsContainer');
+
+            stemKeys.forEach(function(stemName) {
+                var safeId = sanitizeStemId(stemName);
+                var stemDiv = document.createElement('div');
+                stemDiv.className = 'stem-track';
+                stemDiv.id = 'stem-track-' + safeId;
+                stemDiv.innerHTML = '<div class="stem-header">' +
+                    '<div class="stem-name">' +
+                    '<button class="mute-btn" data-stem="' + stemName + '" title="Mute">M</button>' +
+                    '<button class="solo-btn" data-stem="' + stemName + '" title="Solo">S</button>' +
+                    '<span>' + stemName.toUpperCase() + '</span>' +
+                    '<span class="stem-time" id="time-' + safeId + '">00:00.000</span>' +
+                    '<span class="sync-indicator" id="sync-' + safeId + '" title="Sync status"></span>' +
+                    '<span class="drift-display" id="drift-' + safeId + '"></span>' +
+                    '</div>' +
+                    '<div class="stem-controls">' +
+                    '<i class="fas fa-volume-down" style="color: #666; font-size: 12px;"></i>' +
+                    '<input type="range" class="volume-slider" data-stem="' + stemName + '" min="0" max="100" value="100">' +
+                    '<i class="fas fa-volume-up" style="color: #666; font-size: 12px;"></i>' +
+                    '<button class="icon-btn download-stem-btn" data-stem="' + stemName + '" title="Download"><i class="fas fa-download"></i></button>' +
+                    '</div>' +
+                    '</div>' +
+                    '<div class="waveform-container" id="waveform-' + safeId + '"></div>';
+                stemsContainer.appendChild(stemDiv);
+            });
+
+            // Initialize WaveSurfer instances after DOM is ready
+            setTimeout(function() {
+                var loadedCount = 0;
+                var totalStems = stemKeys.length;
+
+                stemKeys.forEach(function(stemName) {
+                    try {
+                        var safeId = sanitizeStemId(stemName);
+                        var ws = WaveSurfer.create({
+                            container: '#waveform-' + safeId,
+                            waveColor: getStemColor(stemName),
+                            progressColor: getStemProgressColor(stemName),
+                            cursorColor: '#fff',
+                            barWidth: 2,
+                            barRadius: 2,
+                            height: 60,
+                            normalize: true,
+                            interact: true
+                        });
+
+                        ws.load('/download/' + jobId + '/' + stemName);
+
+                        ws.on('ready', function() {
+                            loadedCount++;
+                            var duration = ws.getDuration();
+                            if (duration > masterDuration) {
+                                masterDuration = duration;
+                                updateTotalTime(duration);
+                            }
+                            
+                            if (loadedCount === totalStems) {
+                                showToast('All stems loaded - ready to play!', 'success');
+                                startTimeUpdates();
+                            }
+                        });
+
+                        // Click on waveform seeks all tracks
+                        ws.on('seeking', function(progress) {
+                            if (!isSeeking) {
+                                syncAllToPosition(progress);
+                            }
+                        });
+
+                        ws.on('error', function(err) {
+                            console.error('WaveSurfer error for ' + stemName + ':', err);
+                        });
+
+                        wavesurfers[stemName] = ws;
+                    } catch (err) {
+                        console.error('Failed to create waveform for ' + stemName + ':', err);
+                    }
+                });
+
+                // Attach control events
+                attachPlayerControls(jobId, stemKeys);
+            }, 200);
+
+            navigateTo('player');
+            showToast('Loading track...');
+        }
+
+        function cleanupPlayer() {
+            // Stop animation loop
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+                animationFrameId = null;
+            }
+            
+            // Destroy wavesurfers
+            Object.keys(wavesurfers).forEach(function(key) {
+                try { wavesurfers[key].destroy(); } catch(e) {}
+            });
+            
+            // Cleanup Tone.js players and pitch shifters
+            cleanupTonePlayers();
+            
+            // Reset state
+            wavesurfers = {};
+            isPlaying = false;
+            masterDuration = 0;
+            masterTime = 0;
+            pausedAt = 0;
+            masterStartTime = 0;
+            lastSyncCheck = 0;
+            soloStems.clear();
+            mutedStems.clear();
+            currentPitch = 0;
+        }
+
+        // Sanitize stem name for use in CSS selectors and IDs
+        function sanitizeStemId(stemName) {
+            // Replace special characters that are invalid in CSS selectors
+            return stemName.replace(/[+.\/\\#%&?=:;'"<>|*^$!@()[\]{}]/g, '_');
+        }
+
+        function getStemColor(stemName) {
+            var colors = {
+                vocals: '#e74c3c',
+                drums: '#f39c12',
+                bass: '#9b59b6',
+                guitar: '#3498db',
+                piano: '#1abc9c',
+                other: '#95a5a6'
+            };
+            return colors[stemName.toLowerCase()] || '#667eea';
+        }
+
+        function getStemProgressColor(stemName) {
+            var colors = {
+                vocals: '#c0392b',
+                drums: '#d35400',
+                bass: '#8e44ad',
+                guitar: '#2980b9',
+                piano: '#16a085',
+                other: '#7f8c8d'
+            };
+            return colors[stemName.toLowerCase()] || '#764ba2';
+        }
+
+        function attachPlayerControls(jobId, stemKeys) {
+            // Master play/pause
+            document.getElementById('masterPlayBtn').addEventListener('click', togglePlayAll);
+
+            // Skip controls
+            document.getElementById('skipStartBtn').addEventListener('click', function() {
+                syncAllToTime(0);
+            });
+
+            document.getElementById('skipBackBtn').addEventListener('click', function() {
+                var newTime = Math.max(0, masterTime - 5);
+                syncAllToTime(newTime);
+            });
+
+            document.getElementById('skipForwardBtn').addEventListener('click', function() {
+                var newTime = Math.min(masterDuration, masterTime + 5);
+                syncAllToTime(newTime);
+            });
+
+            document.getElementById('skipEndBtn').addEventListener('click', function() {
+                syncAllToTime(masterDuration);
+            });
+
+            // Sync button
+            document.getElementById('syncBtn').addEventListener('click', function() {
+                syncAllToTime(masterTime);
+                showToast('All tracks synced!', 'success');
+            });
+
+            // Global timeline seek
+            var timeline = document.getElementById('globalTimeline');
+            var cursor = document.getElementById('timelineCursor');
+            
+            timeline.addEventListener('click', function(e) {
+                var rect = timeline.getBoundingClientRect();
+                var progress = (e.clientX - rect.left) / rect.width;
+                progress = Math.max(0, Math.min(1, progress));
+                syncAllToPosition(progress);
+            });
+
+            // Draggable cursor
+            var isDragging = false;
+            
+            cursor.addEventListener('mousedown', function(e) {
+                isDragging = true;
+                e.preventDefault();
+            });
+
+            document.addEventListener('mousemove', function(e) {
+                if (!isDragging) return;
+                var rect = timeline.getBoundingClientRect();
+                var progress = (e.clientX - rect.left) / rect.width;
+                progress = Math.max(0, Math.min(1, progress));
+                updateTimelineVisual(progress);
+            });
+
+            document.addEventListener('mouseup', function(e) {
+                if (isDragging) {
+                    isDragging = false;
+                    var rect = timeline.getBoundingClientRect();
+                    var progress = (e.clientX - rect.left) / rect.width;
+                    progress = Math.max(0, Math.min(1, progress));
+                    syncAllToPosition(progress);
+                }
+            });
+
+            // Download all
+            document.getElementById('downloadAllBtn').addEventListener('click', function() {
+                downloadAllStems(jobId);
+            });
+
+            // Mute buttons
+            document.querySelectorAll('.mute-btn').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    var stemName = btn.getAttribute('data-stem');
+                    toggleMute(stemName);
+                });
+            });
+
+            // Solo buttons
+            document.querySelectorAll('.solo-btn').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    var stemName = btn.getAttribute('data-stem');
+                    toggleSolo(stemName);
+                });
+            });
+
+            // Volume sliders
+            document.querySelectorAll('.volume-slider').forEach(function(slider) {
+                slider.addEventListener('input', function() {
+                    var stemName = slider.getAttribute('data-stem');
+                    var ws = wavesurfers[stemName];
+                    if (ws && !mutedStems.has(stemName)) {
+                        ws.setVolume(slider.value / 100);
+                    }
+                });
+            });
+
+            // Individual download buttons
+            document.querySelectorAll('.download-stem-btn').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    var stemName = btn.getAttribute('data-stem');
+                    downloadStem(jobId, stemName);
+                });
+            });
+
+            // Pitch slider - Real-time pitch control with Tone.js
+            var pitchSlider = document.getElementById('pitchSlider');
+            var pitchValue = document.getElementById('pitchValue');
+            var pitchReset = document.getElementById('pitchReset');
+            var currentStemKeys = stemKeys; // Store for later use
+            
+            pitchSlider.addEventListener('input', async function() {
+                var semitones = parseFloat(pitchSlider.value);
+                currentPitch = semitones;
+                var sign = semitones > 0 ? '+' : '';
+                pitchValue.textContent = sign + semitones + ' st';
+                
+                // Initialize Tone.js on first pitch change (requires user gesture)
+                if (semitones !== 0 && !toneInitialized) {
+                    pitchValue.textContent = 'Loading...';
+                    var success = await ensureToneInitialized(jobId, currentStemKeys);
+                    if (success) {
+                        pitchValue.textContent = sign + semitones + ' st';
+                    } else {
+                        pitchSlider.value = 0;
+                        currentPitch = 0;
+                        pitchValue.textContent = '0 st';
+                        return;
+                    }
+                }
+                
+                // Apply pitch shift immediately (real-time)
+                applyRealtimePitch(semitones);
+            });
+            
+            pitchReset.addEventListener('click', function() {
+                pitchSlider.value = 0;
+                currentPitch = 0;
+                pitchValue.textContent = '0 st';
+                applyRealtimePitch(0);
+                showToast('Pitch reset to original');
+            });
+
+            // Lyrics extraction
+            document.getElementById('extractLyricsBtn').addEventListener('click', function() {
+                var language = document.getElementById('lyricsLanguage').value;
+                extractLyrics(jobId, language);
+            });
+            
+            // Toggle lyrics display
+            document.getElementById('toggleLyricsBtn').addEventListener('click', function() {
+                toggleLyricsPanel();
+            });
+            
+            // Check for existing lyrics
+            checkExistingLyrics(jobId);
+
+            // Fetch and display music analysis
+            fetchMusicAnalysis(jobId);
+        }
+        
+        // ==================== REAL-TIME PITCH SHIFT (Tone.js) ====================
+        // Store Tone.js players and pitch shifters for each stem
+        var tonePlayers = {};
+        var pitchShifters = {};
+        var toneInitialized = false;
+        
+        function initToneForStem(stemName, audioUrl) {
+            return new Promise(function(resolve, reject) {
+                try {
+                    // Create a Tone.js Player for this stem
+                    var player = new Tone.Player({
+                        url: audioUrl,
+                        onload: function() {
+                            // Create pitch shifter
+                            var pitchShift = new Tone.PitchShift(0);
+                            
+                            // Connect: Player -> PitchShift -> Destination
+                            player.connect(pitchShift);
+                            pitchShift.toDestination();
+                            
+                            tonePlayers[stemName] = player;
+                            pitchShifters[stemName] = pitchShift;
+                            
+                            resolve();
+                        },
+                        onerror: function(err) {
+                            console.error('Failed to load audio for Tone.js:', err);
+                            reject(err);
+                        }
+                    });
+                } catch (e) {
+                    reject(e);
+                }
+            });
+        }
+        
+        function applyRealtimePitch(semitones) {
+            // Apply pitch shift to all Tone.js pitch shifters
+            Object.keys(pitchShifters).forEach(function(stemName) {
+                var pitchShift = pitchShifters[stemName];
+                if (pitchShift) {
+                    pitchShift.pitch = semitones;
+                }
+            });
+            
+            // Also adjust WaveSurfer display (keep speed normal for visual sync)
+            Object.keys(wavesurfers).forEach(function(stemName) {
+                var ws = wavesurfers[stemName];
+                if (ws && ws.getMediaElement) {
+                    var media = ws.getMediaElement();
+                    if (media) {
+                        // Keep playback at normal speed for visual timeline
+                        media.playbackRate = 1.0;
+                        media.preservesPitch = true;
+                        // Mute the HTML5 audio since Tone.js handles the sound
+                        if (Object.keys(tonePlayers).length > 0) {
+                            media.muted = true;
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Initialize Tone.js when pitch is first changed from 0
+        async function ensureToneInitialized(jobId, stemKeys) {
+            if (toneInitialized) return true;
+            
+            try {
+                // Start Tone.js audio context (requires user gesture)
+                await Tone.start();
+                
+                // Initialize players for each stem
+                var initPromises = stemKeys.map(function(stemName) {
+                    var audioUrl = '/download/' + jobId + '/' + stemName;
+                    return initToneForStem(stemName, audioUrl);
+                });
+                
+                await Promise.all(initPromises);
+                toneInitialized = true;
+                
+                // Mute WaveSurfer audio elements
+                Object.keys(wavesurfers).forEach(function(stemName) {
+                    var ws = wavesurfers[stemName];
+                    if (ws && ws.getMediaElement) {
+                        ws.getMediaElement().muted = true;
+                    }
+                });
+                
+                showToast('Pitch shift ready!', 'success');
+                return true;
+            } catch (e) {
+                console.error('Failed to initialize Tone.js:', e);
+                showToast('Pitch shift not available', 'error');
+                return false;
+            }
+        }
+        
+        // Play/pause Tone.js players along with WaveSurfer
+        function playTonePlayers() {
+            Object.keys(tonePlayers).forEach(function(stemName) {
+                var player = tonePlayers[stemName];
+                if (player && player.loaded && player.state !== 'started') {
+                    player.start();
+                }
+            });
+        }
+        
+        function pauseTonePlayers() {
+            Object.keys(tonePlayers).forEach(function(stemName) {
+                var player = tonePlayers[stemName];
+                if (player) {
+                    player.stop();
+                }
+            });
+        }
+        
+        function cleanupTonePlayers() {
+            Object.keys(tonePlayers).forEach(function(stemName) {
+                var player = tonePlayers[stemName];
+                if (player) {
+                    player.dispose();
+                }
+            });
+            Object.keys(pitchShifters).forEach(function(stemName) {
+                var shifter = pitchShifters[stemName];
+                if (shifter) {
+                    shifter.dispose();
+                }
+            });
+            tonePlayers = {};
+            pitchShifters = {};
+            toneInitialized = false;
+        }
+        
+        // ==================== LYRICS ====================
+        function extractLyrics(jobId, language) {
+            var btn = document.getElementById('extractLyricsBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Extracting...';
+            
+            showToast('Extracting lyrics (this may take a minute)...');
+            
+            fetch('/extract-lyrics/' + jobId, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({language: language})
+            })
+            .then(function(response) {
+                return response.json();
+            })
+            .then(function(data) {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-microphone-alt"></i> Extract Lyrics';
+                
+                if (data.error) {
+                    showToast('Lyrics extraction failed: ' + data.error, 'error');
+                    return;
+                }
+                
+                currentLyrics = data;
+                displayLyrics(data);
+                document.getElementById('toggleLyricsBtn').style.display = 'inline-flex';
+                document.getElementById('lyricsPanel').style.display = 'block';
+                showToast('Lyrics extracted successfully!', 'success');
+            })
+            .catch(function(err) {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-microphone-alt"></i> Extract Lyrics';
+                showToast('Failed to extract lyrics', 'error');
+                console.error(err);
+            });
+        }
+        
+        function checkExistingLyrics(jobId) {
+            fetch('/lyrics/' + jobId)
+            .then(function(response) {
+                return response.json();
+            })
+            .then(function(data) {
+                if (data && data.available && !data.error) {
+                    currentLyrics = data;
+                    displayLyrics(data);
+                    document.getElementById('toggleLyricsBtn').style.display = 'inline-flex';
+                }
+            })
+            .catch(function() {});
+        }
+        
+        function displayLyrics(data) {
+            var content = document.getElementById('lyricsContent');
+            var langDisplay = document.getElementById('lyricsLanguageDisplay');
+            
+            langDisplay.textContent = 'Language: ' + (data.language || 'Unknown').toUpperCase();
+            
+            var html = '';
+            if (data.lines && data.lines.length > 0) {
+                data.lines.forEach(function(line, idx) {
+                    html += '<div class="lyrics-line" data-start="' + line.start + '" data-end="' + line.end + '" data-idx="' + idx + '">';
+                    
+                    // If word-level timing available
+                    if (line.words && line.words.length > 0) {
+                        line.words.forEach(function(word) {
+                            html += '<span class="word" data-start="' + word.start + '" data-end="' + word.end + '">' + (word.word || word.text || '') + '</span> ';
+                        });
+                    } else {
+                        html += line.text;
+                    }
+                    
+                    html += '</div>';
+                });
+            } else {
+                html = '<p style="color: #666; text-align: center;">No lyrics found</p>';
+            }
+            
+            content.innerHTML = html;
+        }
+        
+        function toggleLyricsPanel() {
+            var panel = document.getElementById('lyricsPanel');
+            var btn = document.getElementById('toggleLyricsBtn');
+            
+            if (panel.style.display === 'none') {
+                panel.style.display = 'block';
+                btn.innerHTML = '<i class="fas fa-closed-captioning"></i> Hide Lyrics';
+                lyricsVisible = true;
+            } else {
+                panel.style.display = 'none';
+                btn.innerHTML = '<i class="fas fa-closed-captioning"></i> Show Lyrics';
+                lyricsVisible = false;
+            }
+        }
+        
+        function updateLyricsHighlight(time) {
+            if (!currentLyrics || !lyricsVisible) return;
+            
+            var lines = document.querySelectorAll('.lyrics-line');
+            lines.forEach(function(line) {
+                var start = parseFloat(line.dataset.start);
+                var end = parseFloat(line.dataset.end);
+                
+                line.classList.remove('current', 'past');
+                
+                if (time >= start && time <= end) {
+                    line.classList.add('current');
+                    
+                    // Scroll into view
+                    line.scrollIntoView({behavior: 'smooth', block: 'center'});
+                    
+                    // Highlight words
+                    var words = line.querySelectorAll('.word');
+                    words.forEach(function(word) {
+                        var wordStart = parseFloat(word.dataset.start);
+                        var wordEnd = parseFloat(word.dataset.end);
+                        
+                        word.classList.remove('highlight');
+                        if (time >= wordStart && time <= wordEnd) {
+                            word.classList.add('highlight');
+                        }
+                    });
+                } else if (time > end) {
+                    line.classList.add('past');
+                }
+            });
+        }
+
+        function fetchMusicAnalysis(jobId) {
+            fetch('/analyze/' + jobId)
+            .then(function(response) {
+                if (!response.ok) return null;
+                return response.json();
+            })
+            .then(function(data) {
+                if (!data || data.error) {
+                    console.log('Music analysis not available:', data ? data.error : 'No response');
+                    return;
+                }
+
+                // Update tempo display
+                var tempoEl = document.getElementById('tempoValue');
+                var tempoConfEl = document.getElementById('tempoConfidence');
+                if (tempoEl && data.tempo) {
+                    tempoEl.textContent = Math.round(data.tempo.bpm);
+                    if (tempoConfEl && data.tempo.confidence !== undefined) {
+                        var confPercent = Math.round(data.tempo.confidence * 100);
+                        tempoConfEl.textContent = confPercent + '% confidence';
+                    }
+                }
+
+                // Update key display
+                var keyEl = document.getElementById('keyValue');
+                var keyConfEl = document.getElementById('keyConfidence');
+                if (keyEl && data.key) {
+                    var keyName = data.key.key;
+                    var mode = data.key.mode || '';
+                    var modeAbbrev = mode === 'major' ? 'maj' : (mode === 'minor' ? 'min' : mode);
+                    keyEl.textContent = keyName + ' ' + modeAbbrev;
+                    if (keyConfEl && data.key.confidence !== undefined) {
+                        var confPercent = Math.round(data.key.confidence * 100);
+                        keyConfEl.textContent = confPercent + '% confidence';
+                    }
+                }
+
+                // Update time signature display
+                var timeSigEl = document.getElementById('timeSigValue');
+                if (timeSigEl && data.time_signature) {
+                    timeSigEl.textContent = data.time_signature.time_signature;
+                }
+            })
+            .catch(function(error) {
+                console.log('Could not fetch music analysis:', error);
+            });
+        }
+
+        // ==================== SYNC & TIME ====================
+        function syncAllToPosition(progress) {
+            isSeeking = true;
+            var targetTime = progress * masterDuration;
+            
+            // Pause all first for accurate sync
+            var wasPlaying = isPlaying;
+            if (wasPlaying) {
+                Object.keys(wavesurfers).forEach(function(key) {
+                    try { wavesurfers[key].pause(); } catch(e) {}
+                });
+            }
+            
+            // Seek all to exact same position
+            Object.keys(wavesurfers).forEach(function(key) {
+                try {
+                    wavesurfers[key].seekTo(progress);
+                } catch(e) {}
+            });
+            
+            masterTime = targetTime;
+            pausedAt = targetTime;
+            updateTimeDisplay(targetTime);
+            updateTimelineVisual(progress);
+            
+            // Resume if was playing
+            if (wasPlaying) {
+                setTimeout(function() {
+                    playAllSynced();
+                }, 50);
+            }
+            
+            setTimeout(function() { isSeeking = false; }, 100);
+        }
+
+        function syncAllToTime(time) {
+            if (masterDuration <= 0) return;
+            var progress = Math.max(0, Math.min(1, time / masterDuration));
+            syncAllToPosition(progress);
+        }
+
+        function playAllSynced() {
+            // Get or create AudioContext for precise timing
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            
+            // Record the start time
+            masterStartTime = audioContext.currentTime;
+            
+            // Start all wavesurfers simultaneously
+            var keys = Object.keys(wavesurfers);
+            keys.forEach(function(key) {
+                try {
+                    wavesurfers[key].play();
+                } catch(e) {}
+            });
+            
+            // Also start Tone.js players if pitch is shifted
+            if (toneInitialized && currentPitch !== 0) {
+                syncTonePlayersToWaveSurfer();
+                playTonePlayers();
+            }
+            
+            isPlaying = true;
+            document.getElementById('masterPlayBtn').querySelector('i').className = 'fas fa-pause';
+            
+            // Start the animation frame loop for updates
+            startAnimationLoop();
+        }
+
+        function pauseAllSynced() {
+            // Stop all wavesurfers
+            Object.keys(wavesurfers).forEach(function(key) {
+                try {
+                    wavesurfers[key].pause();
+                } catch(e) {}
+            });
+            
+            // Also pause Tone.js players
+            if (toneInitialized) {
+                pauseTonePlayers();
+            }
+            
+            // Record where we paused
+            pausedAt = masterTime;
+            isPlaying = false;
+            document.getElementById('masterPlayBtn').querySelector('i').className = 'fas fa-play';
+            
+            // Stop animation loop
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+                animationFrameId = null;
+            }
+        }
+        
+        // Sync Tone.js players to WaveSurfer position
+        function syncTonePlayersToWaveSurfer() {
+            if (Object.keys(tonePlayers).length === 0) return;
+            
+            // Get current time from first wavesurfer
+            var currentTime = 0;
+            var firstWs = Object.values(wavesurfers)[0];
+            if (firstWs) {
+                currentTime = firstWs.getCurrentTime();
+            }
+            
+            // Sync all Tone.js players
+            Object.keys(tonePlayers).forEach(function(stemName) {
+                var player = tonePlayers[stemName];
+                if (player && player.loaded) {
+                    player.seek(currentTime);
+                }
+            });
+        }
+
+        function startAnimationLoop() {
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+            }
+            
+            function updateLoop() {
+                if (!isPlaying && Object.keys(wavesurfers).length === 0) return;
+                
+                // Use high-precision timing from all wavesurfers
+                var times = [];
+                var timesByKey = {};
+                Object.keys(wavesurfers).forEach(function(key) {
+                    var ws = wavesurfers[key];
+                    if (ws) {
+                        var t = ws.getCurrentTime();
+                        times.push(t);
+                        timesByKey[key] = t;
+                    }
+                });
+                
+                if (times.length > 0) {
+                    // Use average time for master display
+                    masterTime = times.reduce(function(a, b) { return a + b; }, 0) / times.length;
+                    
+                    // Calculate max drift
+                    var maxTime = Math.max.apply(null, times);
+                    var minTime = Math.min.apply(null, times);
+                    var maxDrift = maxTime - minTime;
+                    
+                    // Update individual stem times with drift indicator
+                    Object.keys(wavesurfers).forEach(function(key) {
+                        var time = timesByKey[key];
+                        var drift = time - masterTime;
+                        var safeKey = sanitizeStemId(key);
+                        
+                        // Update time display
+                        var timeEl = document.getElementById('time-' + safeKey);
+                        if (timeEl) {
+                            timeEl.textContent = formatTimeWithMicros(time);
+                        }
+                        
+                        // Update sync indicator
+                        var syncEl = document.getElementById('sync-' + safeKey);
+                        var driftEl = document.getElementById('drift-' + safeKey);
+                        
+                        if (syncEl) {
+                            var absDrift = Math.abs(drift);
+                            syncEl.classList.remove('warning', 'error');
+                            
+                            if (absDrift < 0.005) { // < 5ms = green
+                                // Already green by default
+                            } else if (absDrift < 0.02) { // < 20ms = yellow
+                                syncEl.classList.add('warning');
+                            } else { // > 20ms = red
+                                syncEl.classList.add('error');
+                            }
+                        }
+                        
+                        if (driftEl) {
+                            if (Math.abs(drift) > 0.001) {
+                                var sign = drift > 0 ? '+' : '';
+                                driftEl.textContent = sign + (drift * 1000).toFixed(1) + 'ms';
+                            } else {
+                                driftEl.textContent = '';
+                            }
+                        }
+                    });
+                    
+                    // Auto-correct drift if too large during playback
+                    if (isPlaying && maxDrift > syncTolerance && !isSeeking) {
+                        var now = performance.now();
+                        if (now - lastSyncCheck > 500) { // Only check every 500ms
+                            lastSyncCheck = now;
+                            correctDrift(timesByKey);
+                        }
+                    }
+                    
+                    // Update global sync indicator
+                    var globalSyncEl = document.getElementById('globalSyncIndicator');
+                    var globalDriftEl = document.getElementById('globalDrift');
+                    
+                    if (globalSyncEl) {
+                        globalSyncEl.classList.remove('warning', 'error');
+                        if (maxDrift < 0.005) {
+                            // Synced (green)
+                        } else if (maxDrift < 0.02) {
+                            globalSyncEl.classList.add('warning');
+                        } else {
+                            globalSyncEl.classList.add('error');
+                        }
+                    }
+                    
+                    if (globalDriftEl) {
+                        if (maxDrift > 0.001) {
+                            globalDriftEl.textContent = 'Max drift: ' + (maxDrift * 1000).toFixed(1) + 'ms';
+                        } else {
+                            globalDriftEl.textContent = 'Synced';
+                            globalDriftEl.style.color = '#2ecc71';
+                        }
+                    }
+                    
+                    updateTimeDisplay(masterTime);
+                    
+                    // Update lyrics highlighting
+                    updateLyricsHighlight(masterTime);
+                    
+                    if (masterDuration > 0) {
+                        var progress = masterTime / masterDuration;
+                        updateTimelineVisual(progress);
+                    }
+                }
+                
+                animationFrameId = requestAnimationFrame(updateLoop);
+            }
+            
+            animationFrameId = requestAnimationFrame(updateLoop);
+        }
+
+        function correctDrift(timesByKey) {
+            // Find the median time as reference
+            var times = Object.values(timesByKey);
+            var sorted = times.slice().sort(function(a, b) { return a - b; });
+            var medianTime = sorted[Math.floor(sorted.length / 2)];
+            
+            var corrected = 0;
+            Object.keys(timesByKey).forEach(function(key) {
+                var ws = wavesurfers[key];
+                if (!ws) return;
+                
+                var currentTime = timesByKey[key];
+                var drift = Math.abs(currentTime - medianTime);
+                
+                if (drift > syncTolerance) {
+                    // This track has drifted, correct it
+                    var progress = medianTime / masterDuration;
+                    ws.seekTo(Math.max(0, Math.min(1, progress)));
+                    corrected++;
+                }
+            });
+            
+            if (corrected > 0) {
+                console.log('Auto-corrected drift for ' + corrected + ' tracks');
+            }
+        }
+
+        function startTimeUpdates() {
+            // Initial update
+            updateTimeDisplay(0);
+            
+            // Animation loop will handle updates during playback
+            // For idle state, use a slower interval
+            if (!isPlaying) {
+                startAnimationLoop();
+            }
+        }
+
+        function updateTimeDisplay(seconds) {
+            var mins = Math.floor(seconds / 60);
+            var secs = Math.floor(seconds % 60);
+            var ms = Math.floor((seconds % 1) * 1000);
+            
+            var currentTimeEl = document.getElementById('currentTime');
+            var currentMsEl = document.getElementById('currentMs');
+            
+            if (currentTimeEl) {
+                currentTimeEl.textContent = String(mins).padStart(2, '0') + ':' + String(secs).padStart(2, '0');
+            }
+            if (currentMsEl) {
+                currentMsEl.textContent = '.' + String(ms).padStart(3, '0');
+            }
+        }
+
+        function updateTotalTime(seconds) {
+            var mins = Math.floor(seconds / 60);
+            var secs = Math.floor(seconds % 60);
+            var ms = Math.floor((seconds % 1) * 1000);
+            
+            var totalTimeEl = document.getElementById('totalTime');
+            var totalMsEl = document.getElementById('totalMs');
+            
+            if (totalTimeEl) {
+                totalTimeEl.textContent = String(mins).padStart(2, '0') + ':' + String(secs).padStart(2, '0');
+            }
+            if (totalMsEl) {
+                totalMsEl.textContent = '.' + String(ms).padStart(3, '0');
+            }
+        }
+
+        function updateTimelineVisual(progress) {
+            progress = Math.max(0, Math.min(1, progress));
+            var progressEl = document.getElementById('timelineProgress');
+            var cursorEl = document.getElementById('timelineCursor');
+            
+            if (progressEl) {
+                progressEl.style.width = (progress * 100) + '%';
+            }
+            if (cursorEl) {
+                cursorEl.style.left = (progress * 100) + '%';
+            }
+        }
+
+        function formatTimeWithMs(seconds) {
+            if (!seconds || isNaN(seconds)) return '00:00.000';
+            var mins = Math.floor(seconds / 60);
+            var secs = Math.floor(seconds % 60);
+            var ms = Math.floor((seconds % 1) * 1000);
+            return String(mins).padStart(2, '0') + ':' + 
+                   String(secs).padStart(2, '0') + '.' + 
+                   String(ms).padStart(3, '0');
+        }
+
+        function formatTimeWithMicros(seconds) {
+            if (!seconds || isNaN(seconds)) return '00:00.000';
+            var mins = Math.floor(seconds / 60);
+            var secs = Math.floor(seconds % 60);
+            var ms = Math.floor((seconds % 1) * 1000);
+            return String(mins).padStart(2, '0') + ':' + 
+                   String(secs).padStart(2, '0') + '.' + 
+                   String(ms).padStart(3, '0');
+        }
+
+        // ==================== MUTE & SOLO ====================
+        function toggleMute(stemName) {
+            var btn = document.querySelector('.mute-btn[data-stem="' + stemName + '"]');
+            var ws = wavesurfers[stemName];
+            var track = document.getElementById('stem-track-' + stemName);
+            var slider = document.querySelector('.volume-slider[data-stem="' + stemName + '"]');
+            
+            if (!ws || !btn) return;
+            
+            if (mutedStems.has(stemName)) {
+                // Unmute
+                mutedStems.delete(stemName);
+                btn.classList.remove('active');
+                track.classList.remove('muted');
+                ws.setVolume(slider.value / 100);
+            } else {
+                // Mute
+                mutedStems.add(stemName);
+                btn.classList.add('active');
+                track.classList.add('muted');
+                ws.setVolume(0);
+            }
+            
+            updateSoloMuteState();
+        }
+
+        function toggleSolo(stemName) {
+            var btn = document.querySelector('.solo-btn[data-stem="' + stemName + '"]');
+            var track = document.getElementById('stem-track-' + stemName);
+            
+            if (!btn) return;
+            
+            if (soloStems.has(stemName)) {
+                // Unsolo
+                soloStems.delete(stemName);
+                btn.classList.remove('active');
+                track.classList.remove('solo');
+            } else {
+                // Solo
+                soloStems.add(stemName);
+                btn.classList.add('active');
+                track.classList.add('solo');
+            }
+            
+            updateSoloMuteState();
+        }
+
+        function updateSoloMuteState() {
+            var hasSolo = soloStems.size > 0;
+            
+            Object.keys(wavesurfers).forEach(function(stemName) {
+                var ws = wavesurfers[stemName];
+                var slider = document.querySelector('.volume-slider[data-stem="' + stemName + '"]');
+                var track = document.getElementById('stem-track-' + stemName);
+                
+                if (!ws || !slider) return;
+                
+                var shouldBeMuted = mutedStems.has(stemName);
+                var shouldBeSilent = hasSolo && !soloStems.has(stemName);
+                
+                if (shouldBeMuted || shouldBeSilent) {
+                    ws.setVolume(0);
+                    track.style.opacity = '0.5';
+                } else {
+                    ws.setVolume(slider.value / 100);
+                    track.style.opacity = '1';
+                }
+            });
+        }
+
+        function togglePlayAll() {
+            if (isPlaying) {
+                pauseAllSynced();
+            } else {
+                // Sync all to current position before playing
+                var progress = masterDuration > 0 ? pausedAt / masterDuration : 0;
+                
+                Object.keys(wavesurfers).forEach(function(key) {
+                    try {
+                        wavesurfers[key].seekTo(Math.max(0, Math.min(1, progress)));
+                    } catch(e) {}
+                });
+                
+                // Small delay then play all synced
+                setTimeout(function() {
+                    playAllSynced();
+                }, 30);
+            }
+        }
+
+        function formatTime(seconds) {
+            if (!seconds || isNaN(seconds)) return '00:00';
+            var mins = Math.floor(seconds / 60);
+            var secs = Math.floor(seconds % 60);
+            return String(mins).padStart(2, '0') + ':' + String(secs).padStart(2, '0');
+        }
+
+        // ==================== DOWNLOADS ====================
+        function downloadStem(jobId, stemName) {
+            var track = null;
+            for (var i = 0; i < allTracks.length; i++) {
+                if (allTracks[i].job_id === jobId) {
+                    track = allTracks[i];
+                    break;
+                }
+            }
+            var displayName = track ? (track.display_name || track.filename.replace(/\.[^/.]+$/, '')) : 'track';
+            
+            var a = document.createElement('a');
+            a.href = '/download/' + jobId + '/' + stemName;
+            a.download = displayName + '_' + stemName + '.wav';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            showToast('Downloading ' + stemName);
+        }
+
+        function downloadAllStems(jobId) {
+            var track = null;
+            for (var i = 0; i < allTracks.length; i++) {
+                if (allTracks[i].job_id === jobId) {
+                    track = allTracks[i];
+                    break;
+                }
+            }
+            if (!track || !track.stems) return;
+
+            showToast('Downloading all stems...');
+
+            var stemKeys = Object.keys(track.stems);
+            var index = 0;
+
+            function downloadNext() {
+                if (index < stemKeys.length) {
+                    downloadStem(jobId, stemKeys[index]);
+                    index++;
+                    setTimeout(downloadNext, 600);
+                }
+            }
+
+            downloadNext();
+        }
+
+        // ==================== STATS ====================
+        function loadStats() {
+            fetch('/jobs')
+            .then(function(response) {
+                return response.json();
+            })
+            .then(function(data) {
+                var jobs = data.jobs || [];
+
+                var completed = jobs.filter(function(j) { return j.status === 'completed'; }).length;
+                var processing = jobs.filter(function(j) { return j.status === 'processing'; }).length;
+                var failed = jobs.filter(function(j) { return j.status === 'failed'; }).length;
+                var totalStems = jobs.reduce(function(acc, j) { return acc + Object.keys(j.stems || {}).length; }, 0);
+
+                document.getElementById('statsContent').innerHTML = 
+                    '<div class="stat-card"><div class="stat-value">' + completed + '</div><div class="stat-label">Completed Tracks</div></div>' +
+                    '<div class="stat-card"><div class="stat-value">' + processing + '</div><div class="stat-label">Processing</div></div>' +
+                    '<div class="stat-card"><div class="stat-value">' + totalStems + '</div><div class="stat-label">Total Stems</div></div>' +
+                    '<div class="stat-card"><div class="stat-value">' + failed + '</div><div class="stat-label">Failed</div></div>';
+            })
+            .catch(function(error) {
+                console.error('Failed to load stats:', error);
+            });
+        }
+
+        // ==================== TOAST ====================
+        function showToast(message, type) {
+            type = type || 'info';
+            var toast = document.getElementById('toast');
+            var iconClass = type === 'error' ? 'exclamation-circle' : (type === 'success' ? 'check-circle' : 'info-circle');
+            
+            toast.className = 'toast show ' + type;
+            toast.innerHTML = '<i class="fas fa-' + iconClass + '"></i> ' + message;
+
+            setTimeout(function() {
+                toast.className = 'toast';
+            }, 3000);
+        }
+    </script>
+</body>
+</html>

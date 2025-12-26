@@ -72,7 +72,8 @@ class HarmonixOrchestrator:
         quality: Optional[str] = None,
         mode: Optional[str] = None,
         target_instruments: Optional[List[str]] = None,
-        output_dir: Optional[Union[str, Path]] = None
+        output_dir: Optional[Union[str, Path]] = None,
+        custom_name: Optional[str] = None
     ) -> ProcessingResult:
         """
         Process audio file through complete pipeline
@@ -127,10 +128,15 @@ class HarmonixOrchestrator:
             
             # Stage 4: Stem Separation
             logger.info(f"[{job_id}] Stage 4: Stem Separation")
+            
+            # Create job-specific output directory
+            job_output_dir = Path(output_dir or self.settings.output_dir) / job_id
+            
             stems = self._execute_separation(
                 audio_path=audio_path,
                 routing_plan=routing_plan,
-                output_dir=output_dir or self.settings.output_dir
+                output_dir=job_output_dir,
+                custom_name=custom_name
             )
             
             # Calculate processing time
@@ -213,6 +219,8 @@ class HarmonixOrchestrator:
         if not target_instruments:
             if recommended_mode == "per_instrument":
                 target_instruments = detected
+            elif recommended_mode == "karaoke":
+                target_instruments = ["vocals", "instrumental"]
             else:
                 target_instruments = ["vocals", "drums", "bass", "other"]
         
@@ -228,7 +236,8 @@ class HarmonixOrchestrator:
         self,
         audio_path: Path,
         routing_plan: Dict,
-        output_dir: Union[str, Path]
+        output_dir: Union[str, Path],
+        custom_name: Optional[str] = None
     ) -> Dict[str, any]:
         """
         Execute stem separation based on routing plan
@@ -237,6 +246,7 @@ class HarmonixOrchestrator:
             audio_path: Input audio path
             routing_plan: Routing plan from analysis
             output_dir: Output directory
+            custom_name: Optional custom name for output files
             
         Returns:
             Dictionary of separated stems
@@ -253,7 +263,7 @@ class HarmonixOrchestrator:
         separator = HarmonixSeparator(config)
         
         # Perform separation
-        stems = separator.separate(audio_path, output_dir)
+        stems = separator.separate(audio_path, output_dir, custom_name)
         
         return stems
     

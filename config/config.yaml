@@ -11,7 +11,7 @@ server:
 # Processing settings
 processing:
   max_file_size_mb: 500
-  max_duration_seconds: 600
+  max_duration_seconds: 1200
   temp_dir: "data/temp"
   output_dir: "data/outputs"
   cleanup_after_hours: 24

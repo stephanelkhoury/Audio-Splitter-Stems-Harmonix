@@ -53,10 +53,25 @@ class Settings(BaseSettings):
     
     # Processing
     max_file_size_mb: int = Field(default=500, alias="MAX_FILE_SIZE_MB")
+    max_duration: int = Field(default=600, alias="MAX_DURATION")
+    sample_rate: int = Field(default=44100, alias="SAMPLE_RATE")
     temp_dir: str = Field(default="data/temp", alias="TEMP_DIR")
     output_dir: str = Field(default="data/outputs", alias="OUTPUT_DIR")
     
+    # Detection
+    detection_thresholds: Dict[str, float] = Field(
+        default_factory=lambda: {
+            "drums": 0.5,
+            "bass": 0.5,
+            "vocals": 0.5,
+            "guitar": 0.5,
+            "piano": 0.5,
+            "other": 0.5
+        }
+    )
+    
     # GPU
+    use_gpu: bool = Field(default=True, alias="USE_GPU")
     cuda_visible_devices: Optional[str] = Field(default=None, alias="CUDA_VISIBLE_DEVICES")
     torch_device: str = Field(default="auto", alias="TORCH_DEVICE")
     
