@@ -106,6 +106,30 @@ class LyricsExtractor:
         'large': 'large-v3',  # Best quality
     }
     
+    # Known Whisper hallucinations - repetitive promotional/filler text
+    HALLUCINATION_PATTERNS = [
+        'اشتركوا في القناة',  # Arabic: "Subscribe to the channel"
+        'شكرا للمشاهدة',  # Arabic: "Thanks for watching"
+        'لا تنسوا الاشتراك',  # Arabic: "Don't forget to subscribe"
+        'subscribe to the channel',
+        'thanks for watching',
+        'thank you for watching',
+        'don\'t forget to subscribe',
+        'like and subscribe',
+        'please subscribe',
+        'subscribe and like',
+        'مرحبا بكم',  # Arabic: "Welcome"
+        'السلام عليكم',  # Arabic: "Peace be upon you" (only if repeated)
+        '字幕由',  # Chinese: subtitle credits
+        '請訂閱',  # Chinese: please subscribe
+        'チャンネル登録',  # Japanese: channel subscription
+        'ご視聴ありがとう',  # Japanese: thanks for watching
+        'Merci d\'avoir regardé',  # French: thanks for watching
+        'Abonnez-vous',  # French: subscribe
+        'Gracias por ver',  # Spanish: thanks for watching
+        'Suscríbete',  # Spanish: subscribe
+    ]
+    
     def __init__(
         self,
         model_size: str = "medium",
@@ -156,6 +180,79 @@ class LyricsExtractor:
             logger.error("Whisper not installed. Install with: pip install openai-whisper")
             raise ImportError("openai-whisper is required for lyrics extraction")
     
+    def _is_hallucination(self, text: str) -> bool:
+        """
+        Check if text is a known Whisper hallucination
+        
+        Args:
+            text: Text to check
+            
+        Returns:
+            True if text appears to be hallucinated
+        """
+        text_lower = text.lower().strip()
+        
+        # Check against known hallucination patterns
+        for pattern in self.HALLUCINATION_PATTERNS:
+            if pattern.lower() in text_lower:
+                return True
+        
+        return False
+    
+    def _is_repetitive(self, lines: list, threshold: float = 0.5) -> bool:
+        """
+        Check if lyrics are overly repetitive (likely hallucination)
+        
+        Args:
+            lines: List of LyricLine objects
+            threshold: Ratio threshold for considering content repetitive
+            
+        Returns:
+            True if content is too repetitive
+        """
+        if len(lines) < 3:
+            return False
+        
+        # Count unique texts
+        texts = [line.text.strip().lower() for line in lines if line.text.strip()]
+        if not texts:
+            return True
+        
+        unique_texts = set(texts)
+        uniqueness_ratio = len(unique_texts) / len(texts)
+        
+        # If less than threshold of lines are unique, it's likely hallucination
+        if uniqueness_ratio < threshold:
+            logger.warning(f"Detected repetitive content: {uniqueness_ratio:.1%} unique lines")
+            return True
+        
+        return False
+    
+    def _filter_hallucinations(self, lines: list) -> list:
+        """
+        Filter out hallucinated lines from lyrics
+        
+        Args:
+            lines: List of LyricLine objects
+            
+        Returns:
+            Filtered list with hallucinations removed
+        """
+        filtered = []
+        hallucination_count = 0
+        
+        for line in lines:
+            if self._is_hallucination(line.text):
+                hallucination_count += 1
+                logger.debug(f"Filtered hallucination: {line.text}")
+                continue
+            filtered.append(line)
+        
+        if hallucination_count > 0:
+            logger.warning(f"Removed {hallucination_count} hallucinated lines")
+        
+        return filtered
+
     def extract(
         self,
         audio_path: Union[str, Path],
@@ -184,11 +281,17 @@ class LyricsExtractor:
         logger.info(f"Extracting lyrics from: {audio_path}")
         logger.info(f"Language: {language}, Task: {task}")
         
-        # Prepare transcription options
+        # Prepare transcription options with hallucination prevention
         options = {
             'task': task,
             'word_timestamps': word_timestamps,
             'verbose': False,
+            # Hallucination prevention settings
+            'condition_on_previous_text': False,  # Reduces repetition loops
+            'compression_ratio_threshold': 2.4,   # Lower = stricter (default 2.4)
+            'logprob_threshold': -1.0,            # Filter low confidence (default -1.0)
+            'no_speech_threshold': 0.6,           # Higher = stricter silence detection
+            'temperature': 0,                     # Deterministic output
         }
         
         # Set language if not auto
@@ -204,6 +307,11 @@ class LyricsExtractor:
         # Process segments into lyrics lines
         lines = []
         for segment in result.get('segments', []):
+            # Skip segments with high no_speech probability
+            if segment.get('no_speech_prob', 0) > 0.7:
+                logger.debug(f"Skipping segment with high no_speech_prob: {segment.get('text', '')}")
+                continue
+            
             # Get word-level timing if available
             words = []
             if 'words' in segment:
@@ -226,11 +334,23 @@ class LyricsExtractor:
             if line.text:  # Only add non-empty lines
                 lines.append(line)
         
-        # Get full text
-        full_text = result.get('text', '').strip()
+        # Filter out hallucinations
+        lines = self._filter_hallucinations(lines)
+        
+        # Check if remaining content is too repetitive
+        if self._is_repetitive(lines):
+            logger.warning("Lyrics appear to be repetitive hallucinations, returning empty result")
+            lines = []
+        
+        # Get full text from filtered lines
+        full_text = ' '.join([line.text for line in lines]).strip()
         
         # Get duration from last segment
         duration = lines[-1].end_time if lines else 0
+        
+        # Return result with warning if no valid lyrics found
+        if not lines:
+            logger.warning("No valid lyrics detected - audio may be instrumental or unclear")
         
         return LyricsResult(
             text=full_text,

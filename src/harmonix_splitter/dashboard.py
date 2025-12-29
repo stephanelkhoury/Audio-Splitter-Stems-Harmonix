@@ -58,20 +58,29 @@ def scan_existing_outputs():
         if job_dir.is_dir() and not job_dir.name.startswith('.'):
             job_id = job_dir.name
             
-            # Skip if already in storage
-            if job_id in jobs_storage:
+            # Skip if already in storage AND has stems populated
+            if job_id in jobs_storage and jobs_storage[job_id].get('stems'):
                 continue
             
             # Find stem files (exclude pitch-shifted cache files and lyrics files)
-            stem_files = [f for f in job_dir.glob("*.wav") 
+            # Look for both MP3 and WAV files
+            stem_files = [f for f in job_dir.glob("*.mp3") 
                           if '_pitch' not in f.stem 
                           and '_lyrics' not in f.stem
                           and not f.stem.startswith('pitch')]
+            
+            # Also include WAV files
+            wav_files = [f for f in job_dir.glob("*.wav") 
+                          if '_pitch' not in f.stem 
+                          and '_lyrics' not in f.stem
+                          and not f.stem.startswith('pitch')]
+            stem_files.extend(wav_files)
+            
             if not stem_files:
                 continue
             
-            # Valid stem types (filter out any invalid stems)
-            valid_stem_types = {'vocals', 'drums', 'bass', 'guitar', 'piano', 'other', 'instrumental'}
+            # Valid stem types - include all possible Demucs output stems
+            valid_stem_types = {'vocals', 'drums', 'bass', 'guitar', 'piano', 'other', 'instrumental', 'synth', 'strings', 'melody', 'accompaniment', 'percussion', 'lead', 'background'}
             
             # Extract base name and stems from files
             stems = {}
@@ -96,19 +105,26 @@ def scan_existing_outputs():
                 lyrics_files = list(job_dir.glob("*_lyrics.json"))
                 has_lyrics = len(lyrics_files) > 0
                 
-                # Create job record
-                jobs_storage[job_id] = {
-                    'job_id': job_id,
-                    'filename': f"{base_name}.wav",
-                    'display_name': base_name,
-                    'status': 'completed',
-                    'progress': 100,
-                    'stems': stems,
-                    'has_lyrics': has_lyrics,
-                    'created_at': mod_time.isoformat(),
-                    'completed_at': mod_time.isoformat()
-                }
-                logger.info(f"Found existing job: {job_id} ({base_name}) with {len(stems)} stems")
+                # Update existing job or create new record
+                if job_id in jobs_storage:
+                    # Update stems for existing job with empty stems
+                    jobs_storage[job_id]['stems'] = stems
+                    jobs_storage[job_id]['has_lyrics'] = has_lyrics
+                    logger.info(f"Updated job: {job_id} ({base_name}) with {len(stems)} stems")
+                else:
+                    # Create new job record
+                    jobs_storage[job_id] = {
+                        'job_id': job_id,
+                        'filename': f"{base_name}.wav",
+                        'display_name': base_name,
+                        'status': 'completed',
+                        'progress': 100,
+                        'stems': stems,
+                        'has_lyrics': has_lyrics,
+                        'created_at': mod_time.isoformat(),
+                        'completed_at': mod_time.isoformat()
+                    }
+                    logger.info(f"Found existing job: {job_id} ({base_name}) with {len(stems)} stems")
     
     logger.info(f"Scan complete. Found {len(jobs_storage)} existing jobs.")
 
@@ -186,12 +202,26 @@ def process_audio_async(job_id, audio_path, quality, mode, instruments, display_
             jobs_storage[job_id]['stage'] = 'Finalizing...'
         
         if result.status == "completed":
-            # Prepare stem URLs
+            # Prepare stem URLs - use display_name if provided, else original filename
+            base_name = display_name if display_name else Path(audio_path).stem
             stem_urls = {}
             for stem_name in result.stems.keys():
-                stem_file = OUTPUT_DIR / job_id / f"{Path(audio_path).stem}_{stem_name}.wav"
+                # Check for MP3 first, then WAV
+                stem_file = OUTPUT_DIR / job_id / f"{base_name}_{stem_name}.mp3"
+                if not stem_file.exists():
+                    stem_file = OUTPUT_DIR / job_id / f"{base_name}_{stem_name}.wav"
                 if stem_file.exists():
                     stem_urls[stem_name] = f"/download/{job_id}/{stem_name}"
+            
+            # If no stems found with display_name, try original filename
+            if not stem_urls:
+                original_base = Path(audio_path).stem
+                for stem_name in result.stems.keys():
+                    stem_file = OUTPUT_DIR / job_id / f"{original_base}_{stem_name}.mp3"
+                    if not stem_file.exists():
+                        stem_file = OUTPUT_DIR / job_id / f"{original_base}_{stem_name}.wav"
+                    if stem_file.exists():
+                        stem_urls[stem_name] = f"/download/{job_id}/{stem_name}"
             
             with jobs_lock:
                 jobs_storage[job_id].update({
@@ -323,8 +353,12 @@ def download_stem(job_id, stem_name):
     if not job_dir.exists():
         return jsonify({'error': 'Job not found'}), 404
     
-    # Find stem file by searching for matching pattern
-    stem_files = list(job_dir.glob(f"*_{stem_name}.wav"))
+    # Find stem file by searching for matching pattern (MP3 first, then WAV)
+    stem_files = list(job_dir.glob(f"*_{stem_name}.mp3"))
+    mimetype = 'audio/mpeg'
+    if not stem_files:
+        stem_files = list(job_dir.glob(f"*_{stem_name}.wav"))
+        mimetype = 'audio/wav'
     
     if not stem_files:
         return jsonify({'error': f'Stem file not found: {stem_name}'}), 404
@@ -335,7 +369,7 @@ def download_stem(job_id, stem_name):
         stem_file,
         as_attachment=False,  # Allow streaming for player
         download_name=stem_file.name,
-        mimetype='audio/wav'
+        mimetype=mimetype
     )
 
 
@@ -372,6 +406,72 @@ def delete_job(job_id):
         del jobs_storage[job_id]
     
     return jsonify({'message': 'Job deleted successfully'})
+
+
+@app.route('/rename/<job_id>', methods=['PUT'])
+def rename_job(job_id):
+    """Rename a job/track"""
+    try:
+        data = request.get_json()
+        new_name = data.get('name', '').strip()
+        
+        if not new_name:
+            return jsonify({'error': 'Name is required'}), 400
+        
+        with jobs_lock:
+            job = jobs_storage.get(job_id)
+            if not job:
+                return jsonify({'error': 'Job not found'}), 404
+            
+            old_name = job.get('display_name', job.get('filename', ''))
+            
+            # Update display name in storage
+            jobs_storage[job_id]['display_name'] = new_name
+            
+            # Rename files on disk
+            job_dir = OUTPUT_DIR / job_id
+            if job_dir.exists():
+                # Find old base name from files
+                old_base = None
+                for f in job_dir.glob("*.mp3"):
+                    parts = f.stem.rsplit('_', 1)
+                    if len(parts) == 2:
+                        old_base = parts[0]
+                        break
+                
+                # If no mp3, check wav
+                if not old_base:
+                    for f in job_dir.glob("*.wav"):
+                        if '_pitch' not in f.stem and '_lyrics' not in f.stem:
+                            parts = f.stem.rsplit('_', 1)
+                            if len(parts) == 2:
+                                old_base = parts[0]
+                                break
+                
+                if old_base:
+                    # Rename all stem files
+                    for ext in ['*.mp3', '*.wav']:
+                        for f in job_dir.glob(ext):
+                            if '_pitch' in f.stem or '_lyrics' in f.stem:
+                                continue
+                            parts = f.stem.rsplit('_', 1)
+                            if len(parts) == 2:
+                                stem_type = parts[1]
+                                new_filename = f"{new_name}_{stem_type}{f.suffix}"
+                                new_path = job_dir / new_filename
+                                f.rename(new_path)
+                    
+                    # Rename lyrics files if they exist
+                    for lrc in job_dir.glob("*_lyrics.*"):
+                        new_lrc_name = f"{new_name}_vocals_lyrics{lrc.suffix}"
+                        lrc.rename(job_dir / new_lrc_name)
+        
+        logger.info(f"Renamed job {job_id}: '{old_name}' -> '{new_name}'")
+        return jsonify({'message': 'Track renamed successfully', 'new_name': new_name})
+        
+    except Exception as e:
+        logger.error(f"Failed to rename job: {e}")
+        return jsonify({'error': str(e)}), 500
 
 
 @app.route('/analyze', methods=['POST'])
@@ -598,12 +698,14 @@ def pitch_shift_stem(job_id, stem_name):
             # No pitch shift, serve original file
             return download_stem(job_id, stem_name)
         
-        # Find stem file
+        # Find stem file (MP3 first, then WAV)
         job_dir = OUTPUT_DIR / job_id
         if not job_dir.exists():
             return jsonify({'error': 'Job not found'}), 404
         
-        stem_files = list(job_dir.glob(f"*_{stem_name}.wav"))
+        stem_files = list(job_dir.glob(f"*_{stem_name}.mp3"))
+        if not stem_files:
+            stem_files = list(job_dir.glob(f"*_{stem_name}.wav"))
         if not stem_files:
             return jsonify({'error': f'Stem not found: {stem_name}'}), 404
         
@@ -663,7 +765,10 @@ def extract_lyrics(job_id):
         if not job_dir.exists():
             return jsonify({'error': 'Job not found'}), 404
         
-        vocals_files = list(job_dir.glob("*_vocals.wav"))
+        # Find vocals file (check MP3 first, then WAV)
+        vocals_files = list(job_dir.glob("*_vocals.mp3"))
+        if not vocals_files:
+            vocals_files = list(job_dir.glob("*_vocals.wav"))
         if not vocals_files:
             return jsonify({'error': 'Vocals stem not found'}), 404
         

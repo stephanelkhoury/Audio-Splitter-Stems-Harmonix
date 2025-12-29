@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Harmonix Audio Splitter - Professional Dashboard</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎵</text></svg>">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <script src="https://unpkg.com/wavesurfer.js@7"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.min.js"></script>
@@ -303,6 +304,141 @@
             justify-content: center;
             border: 2px solid var(--card);
             box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .header-controls {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .search-box {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .search-box i {
+            position: absolute;
+            left: 12px;
+            color: #666;
+        }
+
+        .search-box input {
+            background: var(--card);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px;
+            padding: 10px 15px 10px 40px;
+            color: white;
+            font-size: 14px;
+            width: 250px;
+            transition: all 0.3s ease;
+        }
+
+        .search-box input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+        }
+
+        .search-box input::placeholder {
+            color: #666;
+        }
+
+        .track-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .track-actions .icon-btn.edit-btn {
+            background: rgba(52, 152, 219, 0.2);
+        }
+
+        .track-actions .icon-btn.edit-btn:hover {
+            background: rgba(52, 152, 219, 0.4);
+        }
+
+        .track-actions .icon-btn.delete-btn {
+            background: rgba(231, 76, 60, 0.2);
+        }
+
+        .track-actions .icon-btn.delete-btn:hover {
+            background: rgba(231, 76, 60, 0.4);
+        }
+
+        /* Edit Modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.7);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--card);
+            border-radius: 15px;
+            padding: 25px;
+            width: 400px;
+            max-width: 90%;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-header h3 {
+            margin: 0;
+            font-size: 18px;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: #999;
+            font-size: 20px;
+            cursor: pointer;
+        }
+
+        .modal-close:hover {
+            color: white;
+        }
+
+        .modal-body {
+            margin-bottom: 20px;
+        }
+
+        .modal-body input {
+            width: 100%;
+            background: var(--bg);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px;
+            padding: 12px 15px;
+            color: white;
+            font-size: 14px;
+        }
+
+        .modal-body input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
         }
 
         .track-info {
@@ -1020,6 +1156,24 @@
     </style>
 </head>
 <body>
+    <!-- Edit Modal -->
+    <div class="modal-overlay" id="editModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-edit"></i> Edit Track Name</h3>
+                <button class="modal-close" onclick="closeEditModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <input type="text" id="editTrackName" placeholder="Enter new name...">
+                <input type="hidden" id="editTrackJobId">
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeEditModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="saveTrackName()">Save</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Sidebar -->
     <div class="sidebar">
         <div class="logo">
@@ -1059,9 +1213,15 @@
         <div id="section-library" class="content-section active">
             <div class="page-header">
                 <h1 class="page-title"><i class="fas fa-folder-open"></i> Your Library</h1>
-                <button class="btn btn-secondary" id="refreshLibraryBtn">
-                    <i class="fas fa-sync-alt"></i> Refresh
-                </button>
+                <div class="header-controls">
+                    <div class="search-box">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="librarySearch" placeholder="Search tracks...">
+                    </div>
+                    <button class="btn btn-secondary" id="refreshLibraryBtn">
+                        <i class="fas fa-sync-alt"></i> Refresh
+                    </button>
+                </div>
             </div>
             <div id="libraryContent" class="track-list"></div>
         </div>
@@ -1191,11 +1351,49 @@
         let audioContext = null;
         let masterStartTime = 0;  // AudioContext time when playback started
         let pausedAt = 0;         // Time position when paused
-        let syncTolerance = 0.01; // 10ms sync tolerance
+        let syncTolerance = 0.05; // 50ms sync tolerance (increased for stability)
         let lastSyncCheck = 0;
         let currentPitch = 0;     // Current pitch shift in semitones (-4 to +4)
         let currentLyrics = null; // Current lyrics data
         let lyricsVisible = false;
+        
+        // Debug mode - set to true for verbose logging
+        let DEBUG = true;
+        let debugStats = {
+            playCount: 0,
+            pauseCount: 0,
+            seekCount: 0,
+            driftCorrections: 0,
+            lastDriftValues: [],
+            stateChanges: []
+        };
+        
+        // Debug logging helper
+        function debugLog(category, message, data) {
+            if (!DEBUG) return;
+            var timestamp = new Date().toISOString().substr(11, 12);
+            var prefix = '[' + timestamp + '] [' + category + ']';
+            if (data !== undefined) {
+                console.log(prefix, message, data);
+            } else {
+                console.log(prefix, message);
+            }
+        }
+        
+        function debugState(action) {
+            if (!DEBUG) return;
+            debugStats.stateChanges.push({
+                time: Date.now(),
+                action: action,
+                isPlaying: isPlaying,
+                masterTime: masterTime.toFixed(3),
+                pausedAt: pausedAt.toFixed(3)
+            });
+            // Keep only last 20 state changes
+            if (debugStats.stateChanges.length > 20) {
+                debugStats.stateChanges.shift();
+            }
+        }
 
         // ==================== INITIALIZATION ====================
         document.addEventListener('DOMContentLoaded', function() {
@@ -1215,6 +1413,16 @@
             });
 
             document.getElementById('refreshLibraryBtn').addEventListener('click', loadLibrary);
+            
+            // Search functionality
+            var searchInput = document.getElementById('librarySearch');
+            var searchTimeout;
+            searchInput.addEventListener('input', function() {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(function() {
+                    renderLibrary(searchInput.value);
+                }, 300);
+            });
         }
 
         function navigateTo(sectionId) {
@@ -1461,8 +1669,25 @@
             });
         }
 
-        function renderLibrary() {
+        function renderLibrary(searchQuery) {
             var container = document.getElementById('libraryContent');
+            searchQuery = (searchQuery || '').toLowerCase().trim();
+
+            // Filter tracks based on search
+            var filteredTracks = allTracks.filter(function(track) {
+                if (!searchQuery) return true;
+                var name = (track.display_name || track.filename || '').toLowerCase();
+                return name.indexOf(searchQuery) !== -1;
+            });
+
+            if (filteredTracks.length === 0 && allTracks.length > 0) {
+                container.innerHTML = '<div class="empty-state">' +
+                    '<i class="fas fa-search"></i>' +
+                    '<h3>No matches found</h3>' +
+                    '<p>Try a different search term</p>' +
+                    '</div>';
+                return;
+            }
 
             if (allTracks.length === 0) {
                 container.innerHTML = '<div class="empty-state">' +
@@ -1474,7 +1699,7 @@
             }
 
             var html = '';
-            allTracks.forEach(function(track) {
+            filteredTracks.forEach(function(track) {
                 var displayName = track.display_name || track.filename.replace(/\.[^/.]+$/, '');
                 var stemCount = Object.keys(track.stems || {}).length;
                 var date = new Date(track.created_at).toLocaleDateString();
@@ -1488,7 +1713,9 @@
                     '</div>' +
                     '<div class="track-actions">' +
                     '<button class="icon-btn play-track-btn" title="Play"><i class="fas fa-play"></i></button>' +
+                    '<button class="icon-btn edit-btn" title="Edit Name"><i class="fas fa-edit"></i></button>' +
                     '<button class="icon-btn download-track-btn" title="Download All"><i class="fas fa-download"></i></button>' +
+                    '<button class="icon-btn delete-btn" title="Delete"><i class="fas fa-trash"></i></button>' +
                     '</div>' +
                     '</div>';
             });
@@ -1504,9 +1731,19 @@
                     loadPlayer(jobId);
                 });
 
+                item.querySelector('.edit-btn').addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    openEditModal(jobId);
+                });
+
                 item.querySelector('.download-track-btn').addEventListener('click', function(e) {
                     e.stopPropagation();
                     downloadAllStems(jobId);
+                });
+
+                item.querySelector('.delete-btn').addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    deleteTrack(jobId);
                 });
 
                 item.addEventListener('click', function() {
@@ -1514,6 +1751,97 @@
                 });
             });
         }
+
+        // ==================== DELETE TRACK ====================
+        function deleteTrack(jobId) {
+            var track = allTracks.find(function(t) { return t.job_id === jobId; });
+            var trackName = track ? (track.display_name || track.filename) : 'this track';
+            
+            if (!confirm('Are you sure you want to delete "' + trackName + '"? This action cannot be undone.')) {
+                return;
+            }
+            
+            fetch('/delete/' + jobId, {
+                method: 'DELETE'
+            })
+            .then(function(response) {
+                return response.json();
+            })
+            .then(function(data) {
+                if (data.error) {
+                    showToast('Failed to delete: ' + data.error, 'error');
+                    return;
+                }
+                showToast('Track deleted successfully', 'success');
+                loadLibrary();
+            })
+            .catch(function(err) {
+                showToast('Failed to delete track', 'error');
+                console.error(err);
+            });
+        }
+
+        // ==================== EDIT TRACK NAME ====================
+        function openEditModal(jobId) {
+            var track = allTracks.find(function(t) { return t.job_id === jobId; });
+            if (!track) return;
+            
+            var currentName = track.display_name || track.filename.replace(/\.[^/.]+$/, '');
+            document.getElementById('editTrackName').value = currentName;
+            document.getElementById('editTrackJobId').value = jobId;
+            document.getElementById('editModal').classList.add('active');
+            document.getElementById('editTrackName').focus();
+        }
+
+        function closeEditModal() {
+            document.getElementById('editModal').classList.remove('active');
+        }
+
+        function saveTrackName() {
+            var jobId = document.getElementById('editTrackJobId').value;
+            var newName = document.getElementById('editTrackName').value.trim();
+            
+            if (!newName) {
+                showToast('Please enter a name', 'error');
+                return;
+            }
+            
+            fetch('/rename/' + jobId, {
+                method: 'PUT',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({name: newName})
+            })
+            .then(function(response) {
+                return response.json();
+            })
+            .then(function(data) {
+                if (data.error) {
+                    showToast('Failed to rename: ' + data.error, 'error');
+                    return;
+                }
+                showToast('Track renamed successfully', 'success');
+                closeEditModal();
+                loadLibrary();
+            })
+            .catch(function(err) {
+                showToast('Failed to rename track', 'error');
+                console.error(err);
+            });
+        }
+
+        // Close modal on escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeEditModal();
+            }
+            // Spacebar to play/pause (only when not typing in an input)
+            if (e.key === ' ' && e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
+                e.preventDefault(); // Prevent page scroll
+                if (Object.keys(wavesurfers).length > 0) {
+                    togglePlayAll();
+                }
+            }
+        });
 
         // ==================== PLAYER ====================
         function loadPlayer(jobId) {
@@ -1545,7 +1873,8 @@
             console.log('Track stems:', stems);
             
             // Filter out invalid stems (pitch-shifted cache files, etc.)
-            var validStemTypes = ['vocals', 'drums', 'bass', 'guitar', 'piano', 'other', 'instrumental'];
+            // Include all possible Demucs output stems
+            var validStemTypes = ['vocals', 'drums', 'bass', 'guitar', 'piano', 'other', 'instrumental', 'synth', 'strings', 'melody', 'accompaniment', 'percussion', 'lead', 'background'];
             var stemKeys = Object.keys(stems).filter(function(key) {
                 return validStemTypes.indexOf(key.toLowerCase()) !== -1 && 
                        key.indexOf('pitch') === -1 && 
@@ -1722,9 +2051,38 @@
                             }
                         });
 
+                        // Handle end of playback
+                        ws.on('finish', function() {
+                            // Check if ALL wavesurfers have finished
+                            var allFinished = true;
+                            Object.values(wavesurfers).forEach(function(otherWs) {
+                                if (otherWs && otherWs.isPlaying && otherWs.isPlaying()) {
+                                    allFinished = false;
+                                }
+                            });
+                            
+                            if (allFinished && isPlaying) {
+                                // Reset to beginning
+                                pausedAt = 0;
+                                masterTime = 0;
+                                isPlaying = false;
+                                document.getElementById('masterPlayBtn').querySelector('i').className = 'fas fa-play';
+                                updateTimeDisplay(0);
+                                updateTimelineVisual(0);
+                                
+                                // Reset all to beginning
+                                Object.keys(wavesurfers).forEach(function(k) {
+                                    try { wavesurfers[k].seekTo(0); } catch(e) {}
+                                });
+                            }
+                        });
+
                         // Click on waveform seeks all tracks
-                        ws.on('seeking', function(progress) {
+                        // Use 'interaction' event for click-to-seek (more reliable than 'seeking')
+                        ws.on('interaction', function() {
                             if (!isSeeking) {
+                                var progress = ws.getCurrentTime() / ws.getDuration();
+                                debugLog('WAVEFORM', '👆 Waveform clicked: ' + stemName + ' at ' + (progress * 100).toFixed(1) + '%');
                                 syncAllToPosition(progress);
                             }
                         });
@@ -1830,6 +2188,7 @@
 
             // Sync button
             document.getElementById('syncBtn').addEventListener('click', function() {
+                debugLog('UI', '🔄 Manual sync button clicked');
                 syncAllToTime(masterTime);
                 showToast('All tracks synced!', 'success');
             });
@@ -1842,6 +2201,7 @@
                 var rect = timeline.getBoundingClientRect();
                 var progress = (e.clientX - rect.left) / rect.width;
                 progress = Math.max(0, Math.min(1, progress));
+                debugLog('TIMELINE', '👆 Timeline clicked at ' + (progress * 100).toFixed(1) + '%');
                 syncAllToPosition(progress);
             });
 
@@ -1851,6 +2211,7 @@
             cursor.addEventListener('mousedown', function(e) {
                 isDragging = true;
                 e.preventDefault();
+                debugLog('TIMELINE', '🔘 Started dragging cursor');
             });
 
             document.addEventListener('mousemove', function(e) {
@@ -1859,6 +2220,9 @@
                 var progress = (e.clientX - rect.left) / rect.width;
                 progress = Math.max(0, Math.min(1, progress));
                 updateTimelineVisual(progress);
+                // Update time display while dragging (preview)
+                var previewTime = progress * masterDuration;
+                updateTimeDisplay(previewTime);
             });
 
             document.addEventListener('mouseup', function(e) {
@@ -1867,6 +2231,7 @@
                     var rect = timeline.getBoundingClientRect();
                     var progress = (e.clientX - rect.left) / rect.width;
                     progress = Math.max(0, Math.min(1, progress));
+                    debugLog('TIMELINE', '🔘 Finished dragging at ' + (progress * 100).toFixed(1) + '%');
                     syncAllToPosition(progress);
                 }
             });
@@ -1980,15 +2345,31 @@
                     var player = new Tone.Player({
                         url: audioUrl,
                         onload: function() {
-                            // Create pitch shifter
-                            var pitchShift = new Tone.PitchShift(0);
+                            // Create high-quality pitch shifter with optimized settings
+                            // windowSize: larger = smoother but more latency (default 0.1)
+                            // delayTime: affects the delay of the effect
+                            // feedback: should be 0 for pure pitch shift
+                            var pitchShift = new Tone.PitchShift({
+                                pitch: 0,
+                                windowSize: 0.15,      // Larger window for smoother sound
+                                delayTime: 0,          // No additional delay
+                                feedback: 0,           // No feedback (pure pitch shift)
+                                wet: 1                 // 100% wet signal
+                            });
                             
-                            // Connect: Player -> PitchShift -> Destination
+                            // Add a limiter to prevent clipping from pitch shifting
+                            var limiter = new Tone.Limiter(-1);
+                            
+                            // Connect: Player -> PitchShift -> Limiter -> Destination
                             player.connect(pitchShift);
-                            pitchShift.toDestination();
+                            pitchShift.connect(limiter);
+                            limiter.toDestination();
                             
                             tonePlayers[stemName] = player;
-                            pitchShifters[stemName] = pitchShift;
+                            pitchShifters[stemName] = {
+                                shifter: pitchShift,
+                                limiter: limiter
+                            };
                             
                             resolve();
                         },
@@ -2006,9 +2387,10 @@
         function applyRealtimePitch(semitones) {
             // Apply pitch shift to all Tone.js pitch shifters
             Object.keys(pitchShifters).forEach(function(stemName) {
-                var pitchShift = pitchShifters[stemName];
-                if (pitchShift) {
-                    pitchShift.pitch = semitones;
+                var pitchData = pitchShifters[stemName];
+                if (pitchData && pitchData.shifter) {
+                    // Smoothly ramp to the new pitch value to avoid clicks
+                    pitchData.shifter.pitch = semitones;
                 }
             });
             
@@ -2035,8 +2417,13 @@
             if (toneInitialized) return true;
             
             try {
+                // Configure Tone.js for high quality audio
+                // Use 'playback' latency hint for better quality (vs 'interactive' for lower latency)
+                Tone.context.latencyHint = 'playback';
+                
                 // Start Tone.js audio context (requires user gesture)
                 await Tone.start();
+                console.log('Tone.js started with sample rate:', Tone.context.sampleRate);
                 
                 // Initialize players for each stem
                 var initPromises = stemKeys.map(function(stemName) {
@@ -2091,9 +2478,10 @@
                 }
             });
             Object.keys(pitchShifters).forEach(function(stemName) {
-                var shifter = pitchShifters[stemName];
-                if (shifter) {
-                    shifter.dispose();
+                var pitchData = pitchShifters[stemName];
+                if (pitchData) {
+                    if (pitchData.shifter) pitchData.shifter.dispose();
+                    if (pitchData.limiter) pitchData.limiter.dispose();
                 }
             });
             tonePlayers = {};
@@ -2233,6 +2621,7 @@
         }
 
         function fetchMusicAnalysis(jobId) {
+            // Music analysis endpoint - silently skip if not available
             fetch('/analyze/' + jobId)
             .then(function(response) {
                 if (!response.ok) return null;
@@ -2240,7 +2629,7 @@
             })
             .then(function(data) {
                 if (!data || data.error) {
-                    console.log('Music analysis not available:', data ? data.error : 'No response');
+                    // Silently ignore - analysis not available for this track
                     return;
                 }
 
@@ -2276,43 +2665,79 @@
                 }
             })
             .catch(function(error) {
-                console.log('Could not fetch music analysis:', error);
+                // Silently ignore - analysis endpoint not available
             });
         }
 
         // ==================== SYNC & TIME ====================
+        let seekDebounceTimer = null;
+        let lastSeekProgress = -1;
+        
         function syncAllToPosition(progress) {
+            // Debounce rapid seeks (prevent multiple triggers)
+            if (seekDebounceTimer) {
+                clearTimeout(seekDebounceTimer);
+            }
+            
+            // Skip if same position (within 0.5%)
+            if (Math.abs(progress - lastSeekProgress) < 0.005) {
+                debugLog('SEEK', 'Skipping duplicate seek');
+                return;
+            }
+            lastSeekProgress = progress;
+            
+            debugLog('SEEK', '🎯 syncAllToPosition called', { 
+                progress: (progress * 100).toFixed(1) + '%', 
+                targetTime: (progress * masterDuration).toFixed(3) + 's',
+                wasPlaying: isPlaying 
+            });
+            debugStats.seekCount++;
+            
             isSeeking = true;
             var targetTime = progress * masterDuration;
             
-            // Pause all first for accurate sync
+            // Record if was playing
             var wasPlaying = isPlaying;
+            
+            // Pause all first for accurate sync
             if (wasPlaying) {
+                debugLog('SEEK', 'Pausing for seek');
+                isPlaying = false;
                 Object.keys(wavesurfers).forEach(function(key) {
                     try { wavesurfers[key].pause(); } catch(e) {}
                 });
             }
             
             // Seek all to exact same position
+            debugLog('SEEK', 'Seeking ' + Object.keys(wavesurfers).length + ' wavesurfers to ' + targetTime.toFixed(3) + 's');
             Object.keys(wavesurfers).forEach(function(key) {
                 try {
                     wavesurfers[key].seekTo(progress);
-                } catch(e) {}
+                } catch(e) {
+                    debugLog('ERROR', 'Failed to seek ' + key, e);
+                }
             });
             
+            // Update state
             masterTime = targetTime;
             pausedAt = targetTime;
             updateTimeDisplay(targetTime);
             updateTimelineVisual(progress);
+            debugState('seek');
             
-            // Resume if was playing
-            if (wasPlaying) {
-                setTimeout(function() {
+            debugLog('SEEK', '✅ Seek complete to ' + targetTime.toFixed(3) + 's');
+            
+            // Use debounce timer to resume playback (prevents rapid fire)
+            seekDebounceTimer = setTimeout(function() {
+                isSeeking = false;
+                lastSeekProgress = -1; // Reset for next seek
+                
+                // Resume if was playing
+                if (wasPlaying) {
+                    debugLog('SEEK', 'Resuming playback after seek');
                     playAllSynced();
-                }, 50);
-            }
-            
-            setTimeout(function() { isSeeking = false; }, 100);
+                }
+            }, 100);
         }
 
         function syncAllToTime(time) {
@@ -2322,9 +2747,19 @@
         }
 
         function playAllSynced() {
-            // Get or create AudioContext for precise timing
+            debugLog('PLAY', '▶️ playAllSynced called', { pausedAt: pausedAt, masterTime: masterTime });
+            debugStats.playCount++;
+            
+            // Get or create AudioContext for precise timing (must be after user gesture)
             if (!audioContext) {
                 audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                debugLog('AUDIO', 'Created new AudioContext');
+            }
+            
+            // Resume AudioContext if suspended (browser autoplay policy)
+            if (audioContext.state === 'suspended') {
+                audioContext.resume();
+                debugLog('AUDIO', 'Resumed suspended AudioContext');
             }
             
             // Record the start time
@@ -2332,26 +2767,43 @@
             
             // Start all wavesurfers simultaneously
             var keys = Object.keys(wavesurfers);
+            debugLog('PLAY', 'Starting ' + keys.length + ' wavesurfers');
             keys.forEach(function(key) {
                 try {
                     wavesurfers[key].play();
-                } catch(e) {}
+                } catch(e) {
+                    debugLog('ERROR', 'Failed to play ' + key, e);
+                }
             });
             
             // Also start Tone.js players if pitch is shifted
             if (toneInitialized && currentPitch !== 0) {
+                debugLog('TONE', 'Syncing Tone.js players (pitch: ' + currentPitch + ')');
                 syncTonePlayersToWaveSurfer();
                 playTonePlayers();
             }
             
             isPlaying = true;
             document.getElementById('masterPlayBtn').querySelector('i').className = 'fas fa-pause';
+            debugState('play');
             
             // Start the animation frame loop for updates
             startAnimationLoop();
         }
 
         function pauseAllSynced() {
+            debugLog('PAUSE', '⏸️ pauseAllSynced called', { isPlaying: isPlaying, masterTime: masterTime });
+            debugStats.pauseCount++;
+            
+            // Record current position FIRST before pausing
+            var currentTime = 0;
+            var firstWs = Object.values(wavesurfers)[0];
+            if (firstWs) {
+                currentTime = firstWs.getCurrentTime();
+            }
+            
+            debugLog('PAUSE', 'Captured position: ' + currentTime.toFixed(3) + 's');
+            
             // Stop all wavesurfers
             Object.keys(wavesurfers).forEach(function(key) {
                 try {
@@ -2365,15 +2817,21 @@
             }
             
             // Record where we paused
-            pausedAt = masterTime;
+            pausedAt = currentTime;
+            masterTime = currentTime;
             isPlaying = false;
             document.getElementById('masterPlayBtn').querySelector('i').className = 'fas fa-play';
+            debugState('pause');
+            debugLog('PAUSE', 'Paused at ' + pausedAt.toFixed(3) + 's');
             
-            // Stop animation loop
-            if (animationFrameId) {
-                cancelAnimationFrame(animationFrameId);
-                animationFrameId = null;
+            // Update display immediately
+            updateTimeDisplay(pausedAt);
+            if (masterDuration > 0) {
+                updateTimelineVisual(pausedAt / masterDuration);
             }
+            
+            // Keep animation loop running for display updates
+            // (It will detect isPlaying=false and show pausedAt time)
         }
         
         // Sync Tone.js players to WaveSurfer position
@@ -2387,6 +2845,8 @@
                 currentTime = firstWs.getCurrentTime();
             }
             
+            debugLog('TONE', 'Syncing Tone players to ' + currentTime.toFixed(3) + 's');
+            
             // Sync all Tone.js players
             Object.keys(tonePlayers).forEach(function(stemName) {
                 var player = tonePlayers[stemName];
@@ -2397,12 +2857,28 @@
         }
 
         function startAnimationLoop() {
+            debugLog('LOOP', 'Starting animation loop');
             if (animationFrameId) {
                 cancelAnimationFrame(animationFrameId);
             }
             
             function updateLoop() {
-                if (!isPlaying && Object.keys(wavesurfers).length === 0) return;
+                // Exit if no wavesurfers at all
+                if (Object.keys(wavesurfers).length === 0) {
+                    animationFrameId = requestAnimationFrame(updateLoop);
+                    return;
+                }
+                
+                // If not playing, just display pausedAt time and continue loop
+                if (!isPlaying) {
+                    updateTimeDisplay(pausedAt);
+                    if (masterDuration > 0) {
+                        var progress = pausedAt / masterDuration;
+                        updateTimelineVisual(progress);
+                    }
+                    animationFrameId = requestAnimationFrame(updateLoop);
+                    return;
+                }
                 
                 // Use high-precision timing from all wavesurfers
                 var times = [];
@@ -2464,11 +2940,20 @@
                         }
                     });
                     
-                    // Auto-correct drift if too large during playback
+                    // Store drift for debugging
+                    debugStats.lastDriftValues.push(maxDrift * 1000);
+                    if (debugStats.lastDriftValues.length > 100) {
+                        debugStats.lastDriftValues.shift();
+                    }
+                    
+                    // Auto-correct drift if too large during playback (more conservative)
+                    // Only correct if drift is significant AND consistent
                     if (isPlaying && maxDrift > syncTolerance && !isSeeking) {
                         var now = performance.now();
-                        if (now - lastSyncCheck > 500) { // Only check every 500ms
+                        // Increase debounce to 2 seconds for stability
+                        if (now - lastSyncCheck > 2000) {
                             lastSyncCheck = now;
+                            debugLog('DRIFT', '⚠️ Drift detected: ' + (maxDrift * 1000).toFixed(1) + 'ms', timesByKey);
                             correctDrift(timesByKey);
                         }
                     }
@@ -2515,12 +3000,14 @@
         }
 
         function correctDrift(timesByKey) {
-            // Find the median time as reference
+            // Find the median time as reference (more stable than average)
             var times = Object.values(timesByKey);
             var sorted = times.slice().sort(function(a, b) { return a - b; });
             var medianTime = sorted[Math.floor(sorted.length / 2)];
             
             var corrected = 0;
+            var driftDetails = [];
+            
             Object.keys(timesByKey).forEach(function(key) {
                 var ws = wavesurfers[key];
                 if (!ws) return;
@@ -2528,28 +3015,27 @@
                 var currentTime = timesByKey[key];
                 var drift = Math.abs(currentTime - medianTime);
                 
-                if (drift > syncTolerance) {
-                    // This track has drifted, correct it
+                // Only correct if drift is significant (more than 100ms)
+                if (drift > 0.1) {
                     var progress = medianTime / masterDuration;
                     ws.seekTo(Math.max(0, Math.min(1, progress)));
                     corrected++;
+                    driftDetails.push(key + ': ' + (drift * 1000).toFixed(0) + 'ms');
                 }
             });
             
             if (corrected > 0) {
-                console.log('Auto-corrected drift for ' + corrected + ' tracks');
+                debugStats.driftCorrections++;
+                debugLog('DRIFT', '🔧 Corrected ' + corrected + ' tracks to ' + medianTime.toFixed(3) + 's', driftDetails);
             }
         }
 
         function startTimeUpdates() {
             // Initial update
-            updateTimeDisplay(0);
+            updateTimeDisplay(pausedAt);
             
-            // Animation loop will handle updates during playback
-            // For idle state, use a slower interval
-            if (!isPlaying) {
-                startAnimationLoop();
-            }
+            // Start animation loop (handles both playing and paused states)
+            startAnimationLoop();
         }
 
         function updateTimeDisplay(seconds) {
@@ -2688,11 +3174,14 @@
         }
 
         function togglePlayAll() {
+            debugLog('TOGGLE', '🔄 togglePlayAll called', { isPlaying: isPlaying, pausedAt: pausedAt });
+            
             if (isPlaying) {
                 pauseAllSynced();
             } else {
                 // Sync all to current position before playing
                 var progress = masterDuration > 0 ? pausedAt / masterDuration : 0;
+                debugLog('TOGGLE', 'Syncing to progress: ' + progress.toFixed(3) + ' (' + pausedAt.toFixed(3) + 's)');
                 
                 Object.keys(wavesurfers).forEach(function(key) {
                     try {
@@ -2706,6 +3195,26 @@
                 }, 30);
             }
         }
+        
+        // Debug helper - show stats in console
+        function showDebugStats() {
+            console.log('=== DEBUG STATS ===');
+            console.log('Play count:', debugStats.playCount);
+            console.log('Pause count:', debugStats.pauseCount);
+            console.log('Seek count:', debugStats.seekCount);
+            console.log('Drift corrections:', debugStats.driftCorrections);
+            console.log('Current state:', { isPlaying: isPlaying, masterTime: masterTime, pausedAt: pausedAt });
+            console.log('Recent state changes:', debugStats.stateChanges.slice(-5));
+            if (debugStats.lastDriftValues.length > 0) {
+                var avgDrift = debugStats.lastDriftValues.reduce(function(a, b) { return a + b; }, 0) / debugStats.lastDriftValues.length;
+                console.log('Average drift (last ' + debugStats.lastDriftValues.length + ' samples):', avgDrift.toFixed(2) + 'ms');
+            }
+            console.log('==================');
+        }
+        
+        // Expose debug function globally
+        window.showDebugStats = showDebugStats;
+        window.debugStats = debugStats;
 
         function formatTime(seconds) {
             if (!seconds || isNaN(seconds)) return '00:00';

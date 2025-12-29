@@ -499,18 +499,43 @@ class HarmonixSeparator:
             clean_name = base_name
         
         for name, stem in stems.items():
-            # Save as: name_stemname.wav (e.g., mysong_vocals.wav)
-            wav_path = output_dir / f"{clean_name}_{name}.wav"
+            # Save as MP3 for smaller file size (320kbps for high quality)
+            mp3_path = output_dir / f"{clean_name}_{name}.mp3"
             
-            # Use soundfile instead of torchaudio to avoid torchcodec
+            # First save as WAV temp file, then convert to MP3
+            import tempfile
+            import subprocess
+            
+            with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as tmp:
+                tmp_wav_path = tmp.name
+            
+            # Save temporary WAV
             sf.write(
-                str(wav_path),
+                tmp_wav_path,
                 stem.audio.T,  # Transpose to (samples, channels)
                 stem.sample_rate,
                 subtype='PCM_16'
             )
             
-            logger.debug(f"Saved: {wav_path}")
+            # Convert to MP3 using ffmpeg (320kbps VBR for high quality)
+            try:
+                subprocess.run([
+                    'ffmpeg', '-y', '-i', tmp_wav_path,
+                    '-codec:a', 'libmp3lame',
+                    '-b:a', '320k',
+                    '-q:a', '0',  # Highest quality VBR
+                    str(mp3_path)
+                ], check=True, capture_output=True)
+                
+                # Remove temp WAV
+                Path(tmp_wav_path).unlink()
+                logger.debug(f"Saved MP3: {mp3_path}")
+            except (subprocess.CalledProcessError, FileNotFoundError) as e:
+                # Fallback to WAV if ffmpeg not available
+                logger.warning(f"FFmpeg not available, saving as WAV instead: {e}")
+                wav_path = output_dir / f"{clean_name}_{name}.wav"
+                Path(tmp_wav_path).rename(wav_path)
+                logger.debug(f"Saved WAV: {wav_path}")
         
         logger.info(f"All stems saved to: {output_dir}")
     
