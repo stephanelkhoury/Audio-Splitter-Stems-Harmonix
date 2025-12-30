@@ -1,21 +1,180 @@
-# MIT License
+# PROPRIETARY SOFTWARE LICENSE
 
-Copyright (c) 2025 Stephan El Khoury
+## Harmonix Audio Splitter - All Rights Reserved
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+**Copyright © 2025 Stephane El Khoury. All Rights Reserved.**
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+---
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+## NOTICE
+
+This software and all associated files, documentation, source code, and materials 
+(collectively, the "Software") are the exclusive property of **Stephane El Khoury** 
+(the "Owner").
+
+---
+
+## RESTRICTIONS
+
+### 1. No Permission Granted
+
+**NO LICENSE IS GRANTED** to any person or entity to use, copy, modify, merge, 
+publish, distribute, sublicense, sell, or otherwise exploit this Software in any 
+form without **explicit written permission** from the Owner.
+
+### 2. Prohibited Activities
+
+Without prior written authorization from the Owner, you **MAY NOT**:
+
+- ❌ Copy, reproduce, or duplicate the Software or any portion thereof
+- ❌ Modify, adapt, translate, or create derivative works based on the Software
+- ❌ Distribute, transfer, sublicense, lease, lend, or rent the Software
+- ❌ Reverse engineer, disassemble, decompile, or attempt to derive the source code
+- ❌ Remove, alter, or obscure any proprietary notices, labels, or marks
+- ❌ Use the Software for any commercial purpose
+- ❌ Make the Software available on any network where it could be accessed by others
+- ❌ Use any component, library, or asset from this Software in other projects
+- ❌ Claim ownership or authorship of the Software or any part of it
+- ❌ Use the Software to train AI/ML models or for data mining purposes
+
+### 3. Source Code Access
+
+If you have access to the source code of this Software, such access does not 
+constitute permission to use, modify, or distribute the code. The source code 
+is provided for **review purposes only** and remains fully protected under this 
+license.
+
+---
+
+## OWNERSHIP
+
+### Sole Proprietorship
+
+The Software, including but not limited to:
+
+- All source code (Python, JavaScript, HTML, CSS, and any other languages)
+- All documentation and specifications
+- All design assets, icons, and visual elements
+- All configuration files and scripts
+- All algorithms and business logic
+- The name "Harmonix Audio Splitter" and associated branding
+
+...is and shall remain the **sole and exclusive property** of Stephane El Khoury.
+
+### Intellectual Property
+
+All intellectual property rights, including but not limited to copyrights, 
+trademarks, trade secrets, and patents (if any), in and to the Software are 
+owned exclusively by the Owner.
+
+---
+
+## REQUESTING PERMISSION
+
+If you wish to use, modify, distribute, or license this Software for any purpose, 
+you **MUST** obtain explicit written permission from the Owner.
+
+### Contact for Licensing Inquiries:
+
+**Stephane El Khoury**  
+- Email: [Contact Owner for email]
+- Subject Line: "Harmonix Audio Splitter - License Request"
+
+### Information Required:
+
+1. Your full name and/or organization name
+2. Intended use of the Software
+3. Scope and duration of requested usage
+4. Commercial or non-commercial nature of use
+5. Any modifications you intend to make
+
+---
+
+## LEGAL ENFORCEMENT
+
+### Violations
+
+Any unauthorized use, reproduction, modification, or distribution of this 
+Software constitutes:
+
+1. **Copyright Infringement** under applicable copyright laws
+2. **Breach of this License Agreement**
+3. Potential **violation of trade secret laws**
+
+### Remedies
+
+The Owner reserves the right to:
+
+- Seek injunctive relief to prevent further unauthorized use
+- Pursue monetary damages, including but not limited to:
+  - Actual damages and lost profits
+  - Statutory damages where applicable
+  - Attorney's fees and legal costs
+- Report violations to appropriate legal authorities
+- Terminate any permission previously granted
+
+---
+
+## DISCLAIMER OF WARRANTY
+
+THE SOFTWARE IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, EXPRESS OR 
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, 
+FITNESS FOR A PARTICULAR PURPOSE, AND NONINFRINGEMENT.
+
+THE OWNER DOES NOT WARRANT THAT THE SOFTWARE WILL BE ERROR-FREE OR THAT 
+DEFECTS WILL BE CORRECTED.
+
+---
+
+## LIMITATION OF LIABILITY
+
+IN NO EVENT SHALL THE OWNER BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, 
+SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, 
+PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; 
+OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR 
+OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF 
+ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+---
+
+## GOVERNING LAW
+
+This License shall be governed by and construed in accordance with the laws 
+applicable in the jurisdiction where the Owner resides, without regard to 
+conflict of law provisions.
+
+---
+
+## SEVERABILITY
+
+If any provision of this License is held to be unenforceable or invalid, such 
+provision shall be modified to the minimum extent necessary to make it 
+enforceable, and the remaining provisions shall continue in full force and effect.
+
+---
+
+## ENTIRE AGREEMENT
+
+This License constitutes the entire agreement between you and the Owner 
+regarding the Software and supersedes all prior or contemporaneous understandings, 
+communications, or agreements, written or oral.
+
+---
+
+## ACKNOWLEDGMENT
+
+By accessing, viewing, or possessing any copy of this Software, you acknowledge 
+that you have read this License, understand it, and agree to be bound by its 
+terms and conditions.
+
+---
+
+**© 2025 Stephane El Khoury. All Rights Reserved.**
+
+*Unauthorized use is strictly prohibited. Violators will be prosecuted to the 
+fullest extent of the law.*
+
+---
+
+Last Updated: December 30, 2025

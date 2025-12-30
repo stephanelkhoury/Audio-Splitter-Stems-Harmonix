@@ -595,6 +595,9 @@
         </div>
         
         <div class="admin-nav-title">System</div>
+        <div class="admin-nav-item" data-section="backup" onclick="showSection('backup')">
+            <i class="fas fa-download"></i> Backup & Export
+        </div>
         <a href="/dashboard" class="admin-nav-item">
             <i class="fas fa-desktop"></i> Main App
         </a>
@@ -852,6 +855,104 @@
                     <p>Contact form submissions will appear here</p>
                 </div>
                 {% endif %}
+            </div>
+        </div>
+        
+        <!-- Backup Section -->
+        <div id="section-backup" class="admin-section">
+            <div class="admin-header">
+                <h1><i class="fas fa-download"></i> Backup & Export</h1>
+            </div>
+            
+            <div class="stats-grid" style="grid-template-columns: repeat(2, 1fr);">
+                <div class="stat-card purple">
+                    <div class="stat-card-header">
+                        <div class="stat-icon purple"><i class="fas fa-database"></i></div>
+                    </div>
+                    <div class="stat-value">{{ stats.total_users }}</div>
+                    <div class="stat-label">Total Users</div>
+                </div>
+                <div class="stat-card green">
+                    <div class="stat-card-header">
+                        <div class="stat-icon green"><i class="fas fa-music"></i></div>
+                    </div>
+                    <div class="stat-value">{{ stats.total_jobs }}</div>
+                    <div class="stat-label">Total Jobs Processed</div>
+                </div>
+            </div>
+            
+            <div class="data-card">
+                <div class="data-card-header">
+                    <h2><i class="fas fa-shield-alt"></i> Backup Options</h2>
+                </div>
+                <div style="padding: 30px;">
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 25px;">
+                        <!-- Full Backup -->
+                        <div style="background: var(--bg-darker); border: 1px solid var(--border); border-radius: 16px; padding: 25px;">
+                            <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 15px;">
+                                <div class="stat-icon purple"><i class="fas fa-archive"></i></div>
+                                <div>
+                                    <h3 style="font-size: 18px; margin: 0;">Full Backup</h3>
+                                    <p style="color: var(--text-muted); font-size: 13px; margin: 5px 0 0;">All data, configs, and user files</p>
+                                </div>
+                            </div>
+                            <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 20px;">
+                                Creates a complete backup of the entire project including user data, configuration files, 
+                                processed audio stems, and logs. Recommended for full system recovery.
+                            </p>
+                            <button onclick="createBackup('full')" class="btn btn-primary" style="width: 100%;">
+                                <i class="fas fa-download"></i> Download Full Backup
+                            </button>
+                        </div>
+                        
+                        <!-- Data Only Backup -->
+                        <div style="background: var(--bg-darker); border: 1px solid var(--border); border-radius: 16px; padding: 25px;">
+                            <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 15px;">
+                                <div class="stat-icon blue"><i class="fas fa-users"></i></div>
+                                <div>
+                                    <h3 style="font-size: 18px; margin: 0;">Data Only</h3>
+                                    <p style="color: var(--text-muted); font-size: 13px; margin: 5px 0 0;">User accounts and settings</p>
+                                </div>
+                            </div>
+                            <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 20px;">
+                                Exports only user data including accounts, preferences, contact messages, and configuration. 
+                                Smaller file size, ideal for transferring user data.
+                            </p>
+                            <button onclick="createBackup('data')" class="btn btn-secondary" style="width: 100%;">
+                                <i class="fas fa-download"></i> Download Data Backup
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-top: 30px; padding: 20px; background: rgba(124, 58, 237, 0.1); border-radius: 12px; border: 1px solid rgba(124, 58, 237, 0.2);">
+                        <div style="display: flex; align-items: flex-start; gap: 15px;">
+                            <i class="fas fa-info-circle" style="color: var(--primary); font-size: 20px; margin-top: 2px;"></i>
+                            <div>
+                                <h4 style="margin: 0 0 10px; color: var(--primary-light);">Backup Information</h4>
+                                <ul style="color: var(--text-muted); font-size: 14px; margin: 0; padding-left: 20px; line-height: 1.8;">
+                                    <li>Backups are created as ZIP files and downloaded to your device</li>
+                                    <li>Full backups include processed audio stems (may be large)</li>
+                                    <li>Store backups in a secure location</li>
+                                    <li>Automatic backups are created when stopping the server via <code style="background: var(--bg-darker); padding: 2px 8px; border-radius: 4px;">./scripts/stop.sh</code></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Recent Backups -->
+            <div class="data-card">
+                <div class="data-card-header">
+                    <h2><i class="fas fa-history"></i> Backup Status</h2>
+                </div>
+                <div style="padding: 30px;">
+                    <div id="backupStatus" style="text-align: center; padding: 40px;">
+                        <i class="fas fa-check-circle" style="font-size: 48px; color: #10b981; margin-bottom: 15px;"></i>
+                        <h3 style="margin: 0 0 10px;">System Ready</h3>
+                        <p style="color: var(--text-muted);">Click a backup button above to create a new backup</p>
+                    </div>
+                </div>
             </div>
         </div>
     </main>
@@ -1304,6 +1405,61 @@
                 }
             })
             .catch(err => alert('Error: ' + err.message));
+    }
+    
+    // Backup Functions
+    function createBackup(type) {
+        var statusDiv = document.getElementById('backupStatus');
+        statusDiv.innerHTML = `
+            <div style="display: inline-block; animation: spin 1s linear infinite;">
+                <i class="fas fa-spinner" style="font-size: 48px; color: var(--primary);"></i>
+            </div>
+            <h3 style="margin: 15px 0 10px;">Creating Backup...</h3>
+            <p style="color: var(--text-muted);">Please wait while we prepare your ${type === 'full' ? 'full' : 'data'} backup</p>
+        `;
+        
+        fetch('/admin/backup', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ type: type })
+        })
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(data => {
+                    throw new Error(data.error || 'Backup failed');
+                });
+            }
+            return response.blob();
+        })
+        .then(blob => {
+            // Create download link
+            var url = window.URL.createObjectURL(blob);
+            var a = document.createElement('a');
+            a.href = url;
+            var date = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+            a.download = 'harmonix_' + type + '_backup_' + date + '.zip';
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            a.remove();
+            
+            statusDiv.innerHTML = `
+                <i class="fas fa-check-circle" style="font-size: 48px; color: #10b981; margin-bottom: 15px;"></i>
+                <h3 style="margin: 0 0 10px;">Backup Complete!</h3>
+                <p style="color: var(--text-muted);">Your ${type === 'full' ? 'full' : 'data'} backup has been downloaded</p>
+                <p style="color: var(--text-dim); font-size: 13px; margin-top: 15px;">Created: ${new Date().toLocaleString()}</p>
+            `;
+        })
+        .catch(err => {
+            statusDiv.innerHTML = `
+                <i class="fas fa-exclamation-circle" style="font-size: 48px; color: var(--danger); margin-bottom: 15px;"></i>
+                <h3 style="margin: 0 0 10px;">Backup Failed</h3>
+                <p style="color: var(--text-muted);">${err.message}</p>
+                <button onclick="createBackup('${type}')" class="btn btn-primary" style="margin-top: 20px;">
+                    <i class="fas fa-redo"></i> Try Again
+                </button>
+            `;
+        });
     }
     
     // Close modals on overlay click

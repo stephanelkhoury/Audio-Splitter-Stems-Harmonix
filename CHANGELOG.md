@@ -5,6 +5,49 @@ All notable changes to Harmonix Audio Splitter will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+---
+
+## [1.1.0] - 2025-12-30
+
+### Added
+
+#### Documentation
+- **DOCUMENTATION.md** - Comprehensive project documentation covering all aspects of the application
+- **docs/API_REFERENCE.md** - Complete API documentation with all endpoints, request/response formats, and code examples
+- **docs/DEVELOPER_GUIDE.md** - Developer guide for contributing to the project
+- **docs/DESIGN_SYSTEM.md** - Complete design system documentation with colors, typography, spacing, and components
+
+#### Frontend Improvements
+- Unified form input styling across all pages (login, register, account, contact)
+- Light theme support for all form elements
+- Focus states with purple glow effect on inputs
+- Improved textarea and select styling
+- Consistent `.form-control` and `.form-input` class support
+- Dashboard standalone backup (dashboard_standalone.html)
+
+#### Design System
+- CSS custom properties for all design tokens
+- Complete color palette documentation
+- Typography scale (xs to 4xl)
+- Spacing scale based on 4px grid
+- Shadow and effect tokens
+- Border radius scale
+- Animation timing functions and duration tokens
+
+### Changed
+- **components.css** - Extended form styling to support both `.form-control` and `.form-input` classes
+- **login.html** - Updated form styling with proper background colors and focus states
+- **register.html** - Updated form styling to match login page
+- **account.html** - Added comprehensive form styles in extra_styles block
+
+### Fixed
+- Form input fields appearing transparent/invisible on account and contact pages
+- Inconsistent form styling between authentication and account management pages
+- Missing light theme support for form inputs
+- Placeholder text color visibility issues
+
+---
+
 ## [1.0.0] - 2025-12-10
 
 ### Added

@@ -43,10 +43,10 @@ class SeparationConfig:
     segment_duration: Optional[int] = None  # Auto-segment for long files
     overlap: float = 0.25  # Overlap ratio for segments
     
-    # Output format settings
-    output_format: str = "wav"  # "wav" (lossless) or "mp3" (compressed)
+    # Output format settings - MP3 by default for smaller files
+    output_format: str = "mp3"  # "mp3" (compressed) or "wav" (lossless)
     bit_depth: int = 24  # 16, 24, or 32 for WAV
-    mp3_bitrate: int = 320  # kbps for MP3
+    mp3_bitrate: int = 320  # kbps for MP3 (320 = highest quality)
     
     # Studio quality settings
     shifts: int = 1  # Number of random shifts for TTA (test-time augmentation)

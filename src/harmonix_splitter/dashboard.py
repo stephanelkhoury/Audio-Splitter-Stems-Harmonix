@@ -620,6 +620,83 @@ def admin_delete_contact(contact_id):
     return jsonify({'error': 'Failed to delete contact'}), 400
 
 
+@app.route('/admin/backup', methods=['POST'])
+def admin_backup():
+    """Create and download backup ZIP file"""
+    import zipfile
+    import io
+    from datetime import datetime
+    
+    if 'user_id' not in session or session.get('user_role') != 'admin':
+        return jsonify({'error': 'Unauthorized'}), 403
+    
+    data = request.get_json() or {}
+    backup_type = data.get('type', 'full')
+    
+    try:
+        # Create ZIP in memory
+        memory_file = io.BytesIO()
+        
+        with zipfile.ZipFile(memory_file, 'w', zipfile.ZIP_DEFLATED) as zf:
+            # Add users.json
+            users_file = DATA_DIR / 'users.json'
+            if users_file.exists():
+                zf.write(users_file, 'data/users.json')
+            
+            # Add config
+            config_dir = BASE_DIR.parent.parent.parent / 'config'
+            if config_dir.exists():
+                for f in config_dir.glob('*'):
+                    if f.is_file():
+                        zf.write(f, f'config/{f.name}')
+            
+            if backup_type == 'full':
+                # Add user outputs (audio files)
+                outputs_dir = DATA_DIR / 'outputs' / 'users'
+                if outputs_dir.exists():
+                    for user_dir in outputs_dir.iterdir():
+                        if user_dir.is_dir():
+                            for job_dir in user_dir.iterdir():
+                                if job_dir.is_dir():
+                                    for f in job_dir.glob('*'):
+                                        if f.is_file():
+                                            arcname = f'data/outputs/users/{user_dir.name}/{job_dir.name}/{f.name}'
+                                            zf.write(f, arcname)
+                
+                # Add recent logs (last 5)
+                logs_dir = BASE_DIR.parent.parent.parent / 'logs'
+                if logs_dir.exists():
+                    log_files = sorted(logs_dir.glob('*.log'), key=lambda x: x.stat().st_mtime, reverse=True)[:5]
+                    for log_file in log_files:
+                        zf.write(log_file, f'logs/{log_file.name}')
+            
+            # Add backup metadata
+            metadata = {
+                'backup_type': backup_type,
+                'created_at': datetime.now().isoformat(),
+                'version': '1.1.0',
+                'created_by': session.get('user_email', 'admin')
+            }
+            zf.writestr('backup_info.json', json.dumps(metadata, indent=2))
+        
+        memory_file.seek(0)
+        
+        # Generate filename
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        filename = f'harmonix_{backup_type}_backup_{timestamp}.zip'
+        
+        return send_file(
+            memory_file,
+            mimetype='application/zip',
+            as_attachment=True,
+            download_name=filename
+        )
+        
+    except Exception as e:
+        logger.error(f"Backup error: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
 # ==================== STATIC PAGES ====================
 
 @app.route('/features')
@@ -1317,7 +1394,7 @@ def get_status(job_id):
 
 @app.route('/download/<job_id>/<stem_name>')
 def download_stem(job_id, stem_name):
-    """Download a specific stem - serves lossless WAV by default"""
+    """Download a specific stem - serves MP3 by default for smaller files"""
     username = session.get('user_id')
     user_role = session.get('user_role')
     
@@ -1349,7 +1426,7 @@ def download_stem(job_id, stem_name):
         if original_files:
             stem_file = original_files[0]
             ext = stem_file.suffix.lower()
-            mimetype = 'audio/wav' if ext == '.wav' else 'audio/mpeg' if ext == '.mp3' else 'audio/mp4'
+            mimetype = 'audio/mpeg' if ext == '.mp3' else 'audio/wav' if ext == '.wav' else 'audio/mp4'
             return send_file(
                 stem_file,
                 as_attachment=False,
@@ -1358,14 +1435,14 @@ def download_stem(job_id, stem_name):
             )
         return jsonify({'error': 'Original audio not found'}), 404
     
-    # Find stem file - prefer WAV (lossless) over MP3
-    stem_files = list(job_dir.glob(f"*_{stem_name}.wav"))
-    mimetype = 'audio/wav'
+    # Find stem file - prefer MP3 (compressed, faster to load) over WAV
+    stem_files = list(job_dir.glob(f"*_{stem_name}.mp3"))
+    mimetype = 'audio/mpeg'
     
     if not stem_files:
-        # Fallback to MP3 if WAV not found
-        stem_files = list(job_dir.glob(f"*_{stem_name}.mp3"))
-        mimetype = 'audio/mpeg'
+        # Fallback to WAV if MP3 not found
+        stem_files = list(job_dir.glob(f"*_{stem_name}.wav"))
+        mimetype = 'audio/wav'
     
     if not stem_files:
         return jsonify({'error': f'Stem file not found: {stem_name}'}), 404
