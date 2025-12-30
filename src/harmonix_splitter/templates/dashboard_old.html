@@ -16,24 +16,18 @@
         }
 
         :root {
-            --primary: #7c3aed;
-            --primary-light: #a78bfa;
-            --primary-dark: #6d28d9;
-            --secondary: #06b6d4;
-            --dark: #0a0a0f;
-            --darker: #050508;
-            --card: #12121a;
+            --primary: #667eea;
+            --secondary: #764ba2;
+            --dark: #1a1a2e;
+            --darker: #16213e;
             --light: #f8f9fa;
-            --success: #10b981;
-            --danger: #ef4444;
-            --warning: #f59e0b;
-            --border: rgba(255, 255, 255, 0.1);
-            --text-muted: #a1a1aa;
-            --text-dim: #71717a;
+            --success: #2ecc71;
+            --danger: #e74c3c;
+            --warning: #f39c12;
         }
 
         body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: var(--dark);
             color: #fff;
             overflow-x: hidden;
@@ -51,7 +45,6 @@
             overflow-y: auto;
             z-index: 1000;
             box-shadow: 2px 0 10px rgba(0,0,0,0.3);
-            border-right: 1px solid var(--border);
         }
 
         .logo {
@@ -90,7 +83,7 @@
         }
 
         .nav-item:hover {
-            background: rgba(124, 58, 237, 0.15);
+            background: rgba(102, 126, 234, 0.15);
             color: #fff;
         }
 
@@ -152,7 +145,7 @@
 
         .btn-primary:hover {
             transform: translateY(-2px);
-            box-shadow: 0 5px 20px rgba(124, 58, 237, 0.4);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
         }
 
         .btn-secondary {
@@ -194,7 +187,7 @@
         /* Upload Area */
         .upload-area {
             background: var(--darker);
-            border: 3px dashed rgba(124, 58, 237, 0.5);
+            border: 3px dashed rgba(102, 126, 234, 0.5);
             border-radius: 20px;
             padding: 60px 40px;
             text-align: center;
@@ -204,7 +197,7 @@
 
         .upload-area:hover, .upload-area.dragover {
             border-color: var(--primary);
-            background: rgba(124, 58, 237, 0.05);
+            background: rgba(102, 126, 234, 0.05);
         }
 
         .upload-icon {
@@ -234,7 +227,7 @@
             flex: 1;
             padding: 15px 25px;
             background: var(--darker);
-            border: 2px solid rgba(124, 58, 237, 0.2);
+            border: 2px solid rgba(102, 126, 234, 0.2);
             border-radius: 12px;
             color: #aaa;
             font-size: 14px;
@@ -273,7 +266,7 @@
         /* URL Upload Area */
         .url-upload-area {
             background: var(--darker);
-            border: 3px dashed rgba(124, 58, 237, 0.5);
+            border: 3px dashed rgba(102, 126, 234, 0.5);
             border-radius: 20px;
             padding: 40px;
             text-align: center;
@@ -358,7 +351,7 @@
             width: 100%;
             padding: 12px 15px;
             background: var(--dark);
-            border: 2px solid rgba(124, 58, 237, 0.2);
+            border: 2px solid rgba(102, 126, 234, 0.2);
             border-radius: 8px;
             color: white;
             font-size: 14px;
@@ -398,7 +391,7 @@
 
         .track-item:hover {
             transform: translateX(5px);
-            background: rgba(124, 58, 237, 0.1);
+            background: rgba(102, 126, 234, 0.1);
         }
 
         .track-artwork {
@@ -463,7 +456,7 @@
         .search-box input:focus {
             outline: none;
             border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.2);
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
         }
 
         .search-box input::placeholder {
@@ -712,7 +705,7 @@
 
         .play-btn:hover {
             transform: scale(1.1);
-            box-shadow: 0 5px 25px rgba(124, 58, 237, 0.5);
+            box-shadow: 0 5px 25px rgba(102, 126, 234, 0.5);
         }
 
         .time-display {
@@ -957,7 +950,7 @@
 
         .music-info-icon.tempo {
             background: rgba(231, 76, 60, 0.2);
-            color: #ef4444;
+            color: #e74c3c;
         }
 
         .music-info-icon.key {
@@ -991,8 +984,8 @@
 
         /* Estimated Time Banner */
         .estimate-banner {
-            background: linear-gradient(135deg, rgba(124, 58, 237, 0.15), rgba(6, 182, 212, 0.15));
-            border: 1px solid rgba(124, 58, 237, 0.3);
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.15), rgba(118, 75, 162, 0.15));
+            border: 1px solid rgba(102, 126, 234, 0.3);
             border-radius: 12px;
             padding: 15px 20px;
             margin-top: 20px;
@@ -1129,7 +1122,7 @@
             background: var(--primary);
             border-radius: 50%;
             cursor: pointer;
-            box-shadow: 0 2px 8px rgba(124, 58, 237, 0.5);
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.5);
         }
 
         .pitch-value {
@@ -1196,7 +1189,7 @@
         }
 
         .lyrics-line.current {
-            background: rgba(124, 58, 237, 0.3);
+            background: rgba(102, 126, 234, 0.3);
             color: white;
             font-weight: 600;
         }
@@ -1227,7 +1220,7 @@
         .language-select {
             padding: 8px 12px;
             background: var(--dark);
-            border: 2px solid rgba(124, 58, 237, 0.2);
+            border: 2px solid rgba(102, 126, 234, 0.2);
             border-radius: 6px;
             color: white;
             font-size: 13px;
@@ -1280,7 +1273,7 @@
             height: 45px;
             border-radius: 10px;
             background: var(--darker);
-            border: 1px solid rgba(124, 58, 237, 0.3);
+            border: 1px solid rgba(102, 126, 234, 0.3);
             color: white;
             font-size: 20px;
             cursor: pointer;
@@ -1835,7 +1828,7 @@
         <!-- Plan Usage Info -->
         <div class="nav-section" style="margin-top: auto; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.1);">
             <div class="nav-title">Your Plan</div>
-            <div id="planUsageBox" style="background: rgba(124, 58, 237, 0.1); border-radius: 10px; padding: 15px; margin-top: 10px;">
+            <div id="planUsageBox" style="background: rgba(102, 126, 234, 0.1); border-radius: 10px; padding: 15px; margin-top: 10px;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                     <span id="planName" style="font-weight: 600; color: var(--primary);">Free</span>
                     <span id="planSongsUsed" style="font-size: 12px; color: #999;">0/3 songs</span>
@@ -2703,7 +2696,7 @@
                     '<div class="track-artwork"><i class="fas fa-music"></i>' + lyricsIndicator + '</div>' +
                     '<div class="track-info">' +
                     '<div class="track-name">' + displayName + '</div>' +
-                    '<div class="track-meta">' + stemCount + ' stems • ' + date + (track.has_lyrics ? ' • <i class="fas fa-closed-captioning" style="color: #7c3aed;"></i> Lyrics' : '') + '</div>' +
+                    '<div class="track-meta">' + stemCount + ' stems • ' + date + (track.has_lyrics ? ' • <i class="fas fa-closed-captioning" style="color: #667eea;"></i> Lyrics' : '') + '</div>' +
                     '</div>' +
                     '<div class="track-actions">' +
                     '<button class="icon-btn play-track-btn" title="Play"><i class="fas fa-play"></i></button>' +
@@ -3135,16 +3128,16 @@
 
         function getStemColor(stemName) {
             var colors = {
-                vocals: '#ef4444',
-                drums: '#f59e0b',
+                vocals: '#e74c3c',
+                drums: '#f39c12',
                 bass: '#9b59b6',
                 guitar: '#3498db',
                 piano: '#1abc9c',
                 other: '#95a5a6',
-                original: '#7c3aed',
+                original: '#667eea',
                 instrumental: '#27ae60'
             };
-            return colors[stemName.toLowerCase()] || '#7c3aed';
+            return colors[stemName.toLowerCase()] || '#667eea';
         }
 
         function getStemProgressColor(stemName) {
@@ -3155,10 +3148,10 @@
                 guitar: '#2980b9',
                 piano: '#16a085',
                 other: '#7f8c8d',
-                original: '#7c3aed',
+                original: '#5a67d8',
                 instrumental: '#1e8449'
             };
-            return colors[stemName.toLowerCase()] || '#7c3aed';
+            return colors[stemName.toLowerCase()] || '#764ba2';
         }
 
         function attachPlayerControls(jobId, stemKeys) {
@@ -3976,7 +3969,7 @@
                             globalDriftEl.textContent = 'Max drift: ' + (maxDrift * 1000).toFixed(1) + 'ms';
                         } else {
                             globalDriftEl.textContent = 'Synced';
-                            globalDriftEl.style.color = '#10b981';
+                            globalDriftEl.style.color = '#2ecc71';
                         }
                     }
                     

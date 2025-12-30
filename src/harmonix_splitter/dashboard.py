@@ -331,7 +331,13 @@ def login():
         password = request.form.get('password', '')
         remember = request.form.get('remember', False)
         
+        # Debug logging
+        import logging
+        logging.info(f"Login attempt - email: '{email}', password length: {len(password)}")
+        
         user = authenticate_user(email, password)
+        logging.info(f"Auth result: {user is not None}")
+        
         if user:
             session['user_id'] = user.get('username')
             session['user_email'] = user.get('email')

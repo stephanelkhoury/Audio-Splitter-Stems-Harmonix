@@ -6,6 +6,54 @@
 {% block extra_styles %}
 <style>
     .text-muted { color: var(--text-muted); }
+    
+    /* Form Controls for Account Page */
+    .form-group {
+        margin-bottom: 20px;
+    }
+    .form-group label {
+        display: block;
+        font-size: 14px;
+        font-weight: 500;
+        margin-bottom: 8px;
+        color: var(--text);
+    }
+    .form-control {
+        width: 100%;
+        padding: 14px 16px;
+        background: var(--bg-input);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        font-size: 15px;
+        font-family: inherit;
+        color: var(--text);
+        transition: all 0.3s;
+    }
+    .form-control:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.15);
+        background: var(--bg-card);
+    }
+    .form-control::placeholder {
+        color: var(--text-dim);
+    }
+    [data-theme="light"] .form-control {
+        background: #fff;
+        border-color: rgba(0, 0, 0, 0.15);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    }
+    [data-theme="light"] .form-control:focus {
+        background: #fff;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
+    }
+    textarea.form-control {
+        min-height: 100px;
+        resize: vertical;
+        line-height: 1.6;
+    }
+    
     .account-layout {
         display: grid;
         grid-template-columns: 250px 1fr;
