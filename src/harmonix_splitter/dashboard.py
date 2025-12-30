@@ -777,6 +777,20 @@ def terms():
     return render_template('terms.html')
 
 
+# ==================== MUSICIAN CORNER ====================
+
+@app.route('/tuner')
+def tuner():
+    """Instrument tuner page"""
+    return render_template('tuner.html')
+
+
+@app.route('/transposer')
+def transposer():
+    """Chord transposer page"""
+    return render_template('transposer.html')
+
+
 @app.route('/account')
 def account():
     """User account page"""

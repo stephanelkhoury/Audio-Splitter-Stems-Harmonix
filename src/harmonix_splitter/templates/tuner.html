@@ -1,0 +1,177 @@
+{% extends "base.html" %}
+
+{% block title %}Instrument Tuner - Harmonix{% endblock %}
+{% block description %}Free online instrument tuner for guitar, bass, violin, saxophone, and more. Uses your microphone for real-time pitch detection.{% endblock %}
+
+{% block extra_styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/tuner.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="tuner-page">
+    <div class="container">
+        <!-- Page Header -->
+        <div class="page-header">
+            <h1 class="page-title">
+                <i class="fas fa-sliders-h"></i>
+                Instrument Tuner
+            </h1>
+            <p class="page-subtitle">
+                Tune your instrument using your microphone. Select your instrument below and start tuning!
+            </p>
+        </div>
+
+        <!-- Tuner Container -->
+        <div class="tuner-container">
+            <!-- Instrument Selection -->
+            <div class="instrument-selector">
+                <label class="selector-label">Select Instrument</label>
+                <div class="instrument-grid">
+                    <button class="instrument-btn active" data-instrument="guitar">
+                        <i class="fas fa-guitar"></i>
+                        <span>Guitar</span>
+                    </button>
+                    <button class="instrument-btn" data-instrument="bass">
+                        <i class="fas fa-guitar"></i>
+                        <span>Bass</span>
+                    </button>
+                    <button class="instrument-btn" data-instrument="violin">
+                        <i class="fas fa-violin"></i>
+                        <span>Violin</span>
+                    </button>
+                    <button class="instrument-btn" data-instrument="viola">
+                        <i class="fas fa-violin"></i>
+                        <span>Viola</span>
+                    </button>
+                    <button class="instrument-btn" data-instrument="cello">
+                        <i class="fas fa-violin"></i>
+                        <span>Cello</span>
+                    </button>
+                    <button class="instrument-btn" data-instrument="ukulele">
+                        <i class="fas fa-guitar"></i>
+                        <span>Ukulele</span>
+                    </button>
+                    <button class="instrument-btn" data-instrument="saxophone">
+                        <i class="fas fa-music"></i>
+                        <span>Saxophone</span>
+                    </button>
+                    <button class="instrument-btn" data-instrument="trumpet">
+                        <i class="fas fa-music"></i>
+                        <span>Trumpet</span>
+                    </button>
+                    <button class="instrument-btn" data-instrument="chromatic">
+                        <i class="fas fa-wave-square"></i>
+                        <span>Chromatic</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Tuning Display -->
+            <div class="tuner-display">
+                <!-- Microphone Status -->
+                <div class="mic-status" id="micStatus">
+                    <i class="fas fa-microphone-slash"></i>
+                    <span>Click "Start Tuning" to begin</span>
+                </div>
+
+                <!-- Main Tuner Gauge -->
+                <div class="tuner-gauge" id="tunerGauge">
+                    <!-- Gauge Background -->
+                    <svg class="gauge-svg" viewBox="0 0 300 180">
+                        <defs>
+                            <linearGradient id="gaugeGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                                <stop offset="0%" style="stop-color: #ef4444" />
+                                <stop offset="35%" style="stop-color: #f59e0b" />
+                                <stop offset="50%" style="stop-color: #10b981" />
+                                <stop offset="65%" style="stop-color: #f59e0b" />
+                                <stop offset="100%" style="stop-color: #ef4444" />
+                            </linearGradient>
+                        </defs>
+                        <!-- Gauge Arc -->
+                        <path class="gauge-arc" d="M 30 150 A 120 120 0 0 1 270 150" stroke="url(#gaugeGradient)" stroke-width="20" fill="none" stroke-linecap="round"/>
+                        <!-- Center Mark -->
+                        <line x1="150" y1="50" x2="150" y2="70" stroke="var(--accent)" stroke-width="3"/>
+                        <!-- Needle -->
+                        <line class="gauge-needle" id="gaugeNeedle" x1="150" y1="150" x2="150" y2="50" stroke="var(--text-primary)" stroke-width="4" stroke-linecap="round"/>
+                        <circle cx="150" cy="150" r="12" fill="var(--bg-tertiary)" stroke="var(--text-primary)" stroke-width="2"/>
+                    </svg>
+                    
+                    <!-- Cents Display -->
+                    <div class="cents-display">
+                        <span class="cents-value" id="centsValue">0</span>
+                        <span class="cents-label">cents</span>
+                    </div>
+                </div>
+
+                <!-- Note Display -->
+                <div class="note-display">
+                    <div class="detected-note" id="detectedNote">--</div>
+                    <div class="detected-frequency" id="detectedFrequency">-- Hz</div>
+                </div>
+
+                <!-- Tuning Status -->
+                <div class="tuning-status" id="tuningStatus">
+                    <span class="status-text">Waiting for signal...</span>
+                </div>
+
+                <!-- Target Notes for selected instrument -->
+                <div class="target-notes" id="targetNotes">
+                    <label class="selector-label">Target Notes</label>
+                    <div class="notes-grid" id="notesGrid">
+                        <!-- Populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Controls -->
+            <div class="tuner-controls">
+                <button class="btn btn-primary btn-lg" id="startTunerBtn">
+                    <i class="fas fa-play"></i>
+                    Start Tuning
+                </button>
+                <button class="btn btn-ghost" id="stopTunerBtn" style="display: none;">
+                    <i class="fas fa-stop"></i>
+                    Stop
+                </button>
+            </div>
+
+            <!-- Reference A4 Setting -->
+            <div class="reference-setting">
+                <label class="selector-label">Reference Pitch (A4)</label>
+                <div class="reference-control">
+                    <button class="ref-btn" id="refMinus">-</button>
+                    <span class="ref-value" id="refValue">440</span>
+                    <span class="ref-unit">Hz</span>
+                    <button class="ref-btn" id="refPlus">+</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Info Section -->
+        <div class="info-section">
+            <div class="info-card">
+                <h3><i class="fas fa-info-circle"></i> How to Use</h3>
+                <ol>
+                    <li>Select your instrument from the options above</li>
+                    <li>Click "Start Tuning" to allow microphone access</li>
+                    <li>Play a single note on your instrument</li>
+                    <li>Adjust your tuning until the needle is centered and green</li>
+                </ol>
+            </div>
+            <div class="info-card">
+                <h3><i class="fas fa-lightbulb"></i> Tips</h3>
+                <ul>
+                    <li>Use in a quiet environment for best results</li>
+                    <li>Play notes clearly and let them ring</li>
+                    <li>The chromatic mode detects any pitch</li>
+                    <li>Adjust reference pitch if your ensemble uses non-standard tuning</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/tuner.js') }}"></script>
+{% endblock %}

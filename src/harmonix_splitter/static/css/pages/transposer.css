@@ -1,0 +1,618 @@
+/**
+ * Chord Transposer Page Styles
+ */
+
+.transposer-page {
+    padding: 120px 0 80px;
+    min-height: 100vh;
+}
+
+.page-header {
+    text-align: center;
+    margin-bottom: 48px;
+}
+
+.page-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 16px;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.page-title i {
+    margin-right: 12px;
+    -webkit-text-fill-color: var(--primary);
+}
+
+.page-subtitle {
+    font-size: 1.1rem;
+    color: var(--text-secondary);
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+/* Transposer Container */
+.transposer-container {
+    max-width: 1000px;
+    margin: 0 auto;
+    background: var(--bg-secondary);
+    border-radius: 24px;
+    padding: 40px;
+    border: 1px solid var(--border);
+}
+
+/* Controls Row */
+.transposer-controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 24px;
+    margin-bottom: 32px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid var(--border);
+}
+
+.control-label {
+    display: block;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 12px;
+}
+
+/* Transpose Control */
+.transpose-control {
+    flex: 1;
+    min-width: 250px;
+}
+
+.transpose-buttons {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--bg-tertiary);
+    padding: 8px 16px;
+    border-radius: 12px;
+}
+
+.transpose-btn {
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-secondary);
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    cursor: pointer;
+    color: var(--text-primary);
+    font-size: 1rem;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+}
+
+.transpose-btn:hover,
+.transpose-btn:active {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: white;
+}
+
+.transpose-value {
+    text-align: center;
+    min-width: 80px;
+    padding: 0 16px;
+}
+
+.transpose-value span:first-child {
+    display: block;
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--primary);
+    font-family: 'JetBrains Mono', monospace;
+}
+
+.transpose-unit {
+    font-size: 0.7rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+}
+
+/* Key Display */
+.key-display {
+    display: flex;
+    align-items: flex-end;
+    gap: 16px;
+}
+
+.key-item {
+    text-align: center;
+}
+
+.key-select {
+    padding: 14px 16px;
+    padding-right: 40px;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    color: var(--text);
+    font-size: var(--font-size-base);
+    font-family: inherit;
+    font-weight: var(--font-weight-medium);
+    cursor: pointer;
+    min-width: 140px;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2371717a' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 16px center;
+    transition: all var(--transition-fast);
+}
+
+.key-select:hover {
+    border-color: var(--border-hover);
+}
+
+.key-select:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.15);
+    background-color: var(--bg-card);
+}
+
+.key-select option {
+    background: var(--bg-card);
+    color: var(--text);
+    padding: 10px;
+}
+
+[data-theme="light"] .key-select {
+    background-color: #fff;
+    border-color: rgba(0, 0, 0, 0.15);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+[data-theme="light"] .key-select:focus {
+    background-color: #fff;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
+}
+
+[data-theme="light"] .key-select option {
+    background: #fff;
+}
+
+.key-arrow {
+    padding-bottom: 12px;
+    color: var(--text-secondary);
+}
+
+.new-key-display {
+    padding: 12px 20px;
+    background: rgba(139, 92, 246, 0.1);
+    border: 2px solid var(--primary);
+    border-radius: 10px;
+    color: var(--primary);
+    font-size: 1.25rem;
+    font-weight: 700;
+    min-width: 80px;
+    font-family: 'JetBrains Mono', monospace;
+}
+
+/* Notation Toggle */
+.notation-toggle {
+    min-width: 150px;
+}
+
+.toggle-buttons {
+    display: flex;
+    gap: 8px;
+}
+
+.toggle-btn {
+    flex: 1;
+    padding: 12px 16px;
+    background: var(--bg-tertiary);
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    cursor: pointer;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+}
+
+.toggle-btn:hover,
+.toggle-btn:active {
+    border-color: var(--primary);
+}
+
+.toggle-btn.active {
+    background: rgba(139, 92, 246, 0.1);
+    border-color: var(--primary);
+    color: var(--primary);
+}
+
+/* Editor Area */
+.editor-area {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin-bottom: 24px;
+}
+
+.editor-panel {
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-tertiary);
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+}
+
+.panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border);
+}
+
+.panel-header h3 {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.panel-header h3 i {
+    margin-right: 8px;
+    color: var(--primary);
+}
+
+.panel-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.panel-btn {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    cursor: pointer;
+    color: var(--text-secondary);
+    transition: all 0.2s ease;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+}
+
+.panel-btn:hover,
+.panel-btn:active {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: white;
+}
+
+.panel-btn.success {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: white;
+}
+
+/* Input/Output */
+.chord-input {
+    flex: 1;
+    min-height: 300px;
+    padding: 20px;
+    background: transparent;
+    border: none;
+    color: var(--text-primary);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.9rem;
+    line-height: 1.8;
+    resize: none;
+}
+
+.chord-input:focus {
+    outline: none;
+}
+
+.chord-input::placeholder {
+    color: var(--text-muted);
+}
+
+.chord-output {
+    flex: 1;
+    min-height: 300px;
+    padding: 20px;
+    overflow-y: auto;
+}
+
+.chord-output pre {
+    margin: 0;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.9rem;
+    line-height: 1.8;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    color: var(--text-primary);
+}
+
+.chord-output .chord {
+    display: inline-block;
+    padding: 2px 8px;
+    margin: 0 2px;
+    background: rgba(139, 92, 246, 0.15);
+    border-radius: 6px;
+    color: var(--primary);
+    font-weight: 600;
+}
+
+.chord-output .placeholder-text {
+    color: var(--text-muted);
+    font-style: italic;
+}
+
+/* Format Options */
+.format-options {
+    margin-bottom: 24px;
+}
+
+.format-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.format-option {
+    flex: 1;
+    min-width: 150px;
+    padding: 12px 16px;
+    background: var(--bg-tertiary);
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.format-option:hover {
+    border-color: var(--primary);
+}
+
+.format-option input {
+    display: none;
+}
+
+.format-option input:checked + .format-example {
+    color: var(--primary);
+}
+
+.format-option:has(input:checked) {
+    background: rgba(139, 92, 246, 0.1);
+    border-color: var(--primary);
+}
+
+.format-example {
+    display: block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+/* Quick Transpose */
+.quick-transpose {
+    margin-bottom: 24px;
+}
+
+.quick-keys {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.quick-key-btn {
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-tertiary);
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    cursor: pointer;
+    color: var(--text-primary);
+    font-size: 1rem;
+    font-weight: 700;
+    font-family: 'JetBrains Mono', monospace;
+    transition: all 0.2s ease;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+}
+
+.quick-key-btn:hover,
+.quick-key-btn:active {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: white;
+}
+
+/* Chord Reference */
+.chord-reference {
+    max-width: 1000px;
+    margin: 48px auto 0;
+}
+
+.chord-reference h3 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 20px;
+    color: var(--text-primary);
+}
+
+.chord-reference h3 i {
+    margin-right: 8px;
+    color: var(--primary);
+}
+
+.reference-table-container {
+    overflow-x: auto;
+    background: var(--bg-secondary);
+    border-radius: 16px;
+    border: 1px solid var(--border);
+}
+
+.reference-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+}
+
+.reference-table th,
+.reference-table td {
+    padding: 12px 16px;
+    text-align: center;
+    border-bottom: 1px solid var(--border);
+}
+
+.reference-table th {
+    background: var(--bg-tertiary);
+    color: var(--text-secondary);
+    font-weight: 600;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+}
+
+.reference-table td {
+    color: var(--text-primary);
+}
+
+.reference-table td:first-child {
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.reference-table tr.active {
+    background: rgba(139, 92, 246, 0.1);
+}
+
+.reference-table tr.active td {
+    color: var(--primary);
+    font-weight: 600;
+}
+
+.reference-table tr:last-child td {
+    border-bottom: none;
+}
+
+/* Info Section */
+.info-section {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 24px;
+    margin-top: 48px;
+    max-width: 1000px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.info-card {
+    background: var(--bg-secondary);
+    border-radius: 16px;
+    padding: 24px;
+    border: 1px solid var(--border);
+}
+
+.info-card h3 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 16px;
+    color: var(--text-primary);
+}
+
+.info-card h3 i {
+    margin-right: 8px;
+    color: var(--primary);
+}
+
+.info-card ol,
+.info-card ul {
+    padding-left: 20px;
+    color: var(--text-secondary);
+    line-height: 1.8;
+}
+
+.info-card li {
+    margin-bottom: 8px;
+}
+
+.chord-types-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.chord-type {
+    padding: 6px 12px;
+    background: var(--bg-tertiary);
+    border-radius: 8px;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    font-family: 'JetBrains Mono', monospace;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+    .editor-area {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .transposer-page {
+        padding: 100px 20px 60px;
+    }
+
+    .transposer-container {
+        padding: 24px;
+    }
+
+    .page-title {
+        font-size: 1.75rem;
+    }
+
+    .transposer-controls {
+        flex-direction: column;
+    }
+
+    .transpose-control,
+    .key-display,
+    .notation-toggle {
+        width: 100%;
+    }
+
+    .key-display {
+        justify-content: center;
+    }
+
+    .chord-input,
+    .chord-output {
+        min-height: 200px;
+    }
+}

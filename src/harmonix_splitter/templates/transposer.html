@@ -1,0 +1,214 @@
+{% extends "base.html" %}
+
+{% block title %}Chord Transposer - Harmonix{% endblock %}
+{% block description %}Free online chord transposer. Transpose song lyrics with chords up or down by any number of semitones.{% endblock %}
+
+{% block extra_styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/transposer.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="transposer-page">
+    <div class="container">
+        <!-- Page Header -->
+        <div class="page-header">
+            <h1 class="page-title">
+                <i class="fas fa-exchange-alt"></i>
+                Chord Transposer
+            </h1>
+            <p class="page-subtitle">
+                Paste your song lyrics with chords and transpose them up or down to any key!
+            </p>
+        </div>
+
+        <!-- Transposer Container -->
+        <div class="transposer-container">
+            <!-- Controls Row -->
+            <div class="transposer-controls">
+                <div class="transpose-control">
+                    <label class="control-label">Transpose</label>
+                    <div class="transpose-buttons">
+                        <button class="transpose-btn" id="transposeDown5" data-semitones="-5">-5</button>
+                        <button class="transpose-btn" id="transposeDown1" data-semitones="-1">-1</button>
+                        <div class="transpose-value">
+                            <span id="transposeValue">0</span>
+                            <span class="transpose-unit">semitones</span>
+                        </div>
+                        <button class="transpose-btn" id="transposeUp1" data-semitones="1">+1</button>
+                        <button class="transpose-btn" id="transposeUp5" data-semitones="5">+5</button>
+                    </div>
+                </div>
+
+                <div class="key-display">
+                    <div class="key-item">
+                        <label class="control-label">Original Key</label>
+                        <select class="key-select" id="originalKey">
+                            <option value="">Auto-detect</option>
+                            <option value="C">C</option>
+                            <option value="C#">C# / Db</option>
+                            <option value="D">D</option>
+                            <option value="D#">D# / Eb</option>
+                            <option value="E">E</option>
+                            <option value="F">F</option>
+                            <option value="F#">F# / Gb</option>
+                            <option value="G">G</option>
+                            <option value="G#">G# / Ab</option>
+                            <option value="A">A</option>
+                            <option value="A#">A# / Bb</option>
+                            <option value="B">B</option>
+                        </select>
+                    </div>
+                    <div class="key-arrow">
+                        <i class="fas fa-arrow-right"></i>
+                    </div>
+                    <div class="key-item">
+                        <label class="control-label">New Key</label>
+                        <div class="new-key-display" id="newKeyDisplay">--</div>
+                    </div>
+                </div>
+
+                <div class="notation-toggle">
+                    <label class="control-label">Notation Style</label>
+                    <div class="toggle-buttons">
+                        <button class="toggle-btn active" data-notation="sharp">♯ Sharp</button>
+                        <button class="toggle-btn" data-notation="flat">♭ Flat</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Editor Area -->
+            <div class="editor-area">
+                <div class="editor-panel input-panel">
+                    <div class="panel-header">
+                        <h3><i class="fas fa-edit"></i> Input</h3>
+                        <div class="panel-actions">
+                            <button class="panel-btn" id="clearBtn" title="Clear">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                            <button class="panel-btn" id="loadSampleBtn" title="Load Sample">
+                                <i class="fas fa-file-alt"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <textarea class="chord-input" id="chordInput" placeholder="Paste your song lyrics with chords here...
+
+Example:
+[C]Amazing grace, how [G]sweet the sound
+That [Am]saved a [F]wretch like [C]me
+I [C]once was lost, but [G]now am found
+Was [Am]blind, but [F]now I [C]see"></textarea>
+                </div>
+
+                <div class="editor-panel output-panel">
+                    <div class="panel-header">
+                        <h3><i class="fas fa-music"></i> Transposed Output</h3>
+                        <div class="panel-actions">
+                            <button class="panel-btn" id="copyBtn" title="Copy to Clipboard">
+                                <i class="fas fa-copy"></i>
+                            </button>
+                            <button class="panel-btn" id="downloadBtn" title="Download">
+                                <i class="fas fa-download"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="chord-output" id="chordOutput">
+                        <p class="placeholder-text">Your transposed chords will appear here...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chord Format Options -->
+            <div class="format-options">
+                <label class="control-label">Chord Format</label>
+                <div class="format-grid">
+                    <label class="format-option">
+                        <input type="radio" name="chordFormat" value="brackets" checked>
+                        <span class="format-example">[Am]Lyrics [G]here</span>
+                    </label>
+                    <label class="format-option">
+                        <input type="radio" name="chordFormat" value="inline">
+                        <span class="format-example">Am Lyrics G here</span>
+                    </label>
+                    <label class="format-option">
+                        <input type="radio" name="chordFormat" value="above">
+                        <span class="format-example">Am&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;G<br>Lyrics here</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Quick Transpose Buttons -->
+            <div class="quick-transpose">
+                <label class="control-label">Quick Transpose to Key</label>
+                <div class="quick-keys">
+                    <button class="quick-key-btn" data-key="C">C</button>
+                    <button class="quick-key-btn" data-key="D">D</button>
+                    <button class="quick-key-btn" data-key="E">E</button>
+                    <button class="quick-key-btn" data-key="F">F</button>
+                    <button class="quick-key-btn" data-key="G">G</button>
+                    <button class="quick-key-btn" data-key="A">A</button>
+                    <button class="quick-key-btn" data-key="B">B</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chord Reference Section -->
+        <div class="chord-reference">
+            <h3><i class="fas fa-list"></i> Chord Reference</h3>
+            <div class="reference-table-container">
+                <table class="reference-table" id="chordReferenceTable">
+                    <thead>
+                        <tr>
+                            <th>Semitones</th>
+                            <th>C</th>
+                            <th>C#/Db</th>
+                            <th>D</th>
+                            <th>D#/Eb</th>
+                            <th>E</th>
+                            <th>F</th>
+                            <th>F#/Gb</th>
+                            <th>G</th>
+                            <th>G#/Ab</th>
+                            <th>A</th>
+                            <th>A#/Bb</th>
+                            <th>B</th>
+                        </tr>
+                    </thead>
+                    <tbody id="referenceTableBody">
+                        <!-- Populated by JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Info Section -->
+        <div class="info-section">
+            <div class="info-card">
+                <h3><i class="fas fa-info-circle"></i> How to Use</h3>
+                <ol>
+                    <li>Paste your song with chords in square brackets (e.g., [Am], [G7], [Cmaj7])</li>
+                    <li>Use the +/- buttons to transpose up or down</li>
+                    <li>Choose sharp (♯) or flat (♭) notation</li>
+                    <li>Copy the transposed result or download as a text file</li>
+                </ol>
+            </div>
+            <div class="info-card">
+                <h3><i class="fas fa-music"></i> Supported Chord Types</h3>
+                <div class="chord-types-grid">
+                    <span class="chord-type">Major (C)</span>
+                    <span class="chord-type">Minor (Cm, Cmin)</span>
+                    <span class="chord-type">7th (C7, Cmaj7, Cmin7)</span>
+                    <span class="chord-type">Dim (Cdim, C°)</span>
+                    <span class="chord-type">Aug (Caug, C+)</span>
+                    <span class="chord-type">Sus (Csus2, Csus4)</span>
+                    <span class="chord-type">Add (Cadd9)</span>
+                    <span class="chord-type">Slash (C/E)</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/transposer.js') }}"></script>
+{% endblock %}

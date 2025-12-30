@@ -18,6 +18,8 @@
     border: none;
     transition: all var(--transition-base);
     white-space: nowrap;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
 }
 
 .btn:disabled {
