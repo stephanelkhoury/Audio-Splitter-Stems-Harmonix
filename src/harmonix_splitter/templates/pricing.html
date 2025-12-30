@@ -1,0 +1,638 @@
+{% extends "base.html" %}
+
+{% block title %}Pricing - Harmonix{% endblock %}
+{% block description %}Choose the perfect plan for your music production needs{% endblock %}
+
+{% block extra_styles %}
+<style>
+    /* Match Landing Page Styles */
+    .pricing-page {
+        padding-top: 40px;
+    }
+    
+    /* Section Header - from landing */
+    .section-header {
+        text-align: center;
+        margin-bottom: 60px;
+    }
+    .section-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: rgba(124, 58, 237, 0.1);
+        border: 1px solid var(--border);
+        padding: 8px 16px;
+        border-radius: 100px;
+        font-size: 13px;
+        color: var(--primary-light);
+        margin-bottom: 20px;
+    }
+    .section-header h1 {
+        font-size: 48px;
+        font-weight: 700;
+        margin-bottom: 15px;
+        background: linear-gradient(135deg, #fff 0%, #a78bfa 50%, #06b6d4 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+    [data-theme="light"] .section-header h1 {
+        background: linear-gradient(135deg, #0f172a 0%, var(--primary) 50%, #0891b2 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+    }
+    .section-header p {
+        font-size: 18px;
+        color: var(--text-muted);
+        max-width: 500px;
+        margin: 0 auto;
+    }
+    
+    /* Billing Toggle */
+    .billing-toggle {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        background: var(--bg-card);
+        padding: 6px;
+        border-radius: 100px;
+        border: 1px solid var(--border);
+        margin-top: 30px;
+    }
+    .billing-toggle span {
+        padding: 10px 24px;
+        border-radius: 100px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 500;
+        color: var(--text-muted);
+        transition: all 0.3s;
+    }
+    .billing-toggle span.active {
+        background: linear-gradient(135deg, var(--primary), #6d28d9);
+        color: white;
+    }
+    .billing-toggle .save-badge {
+        font-size: 11px;
+        background: var(--accent);
+        color: white;
+        padding: 3px 8px;
+        border-radius: 10px;
+        margin-left: 5px;
+    }
+
+    /* Pricing Section */
+    .pricing-section {
+        padding: 60px 40px 80px;
+    }
+    
+    /* Pricing Grid - from landing */
+    .pricing-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 30px;
+        max-width: 1000px;
+        margin: 0 auto;
+    }
+
+    /* Pricing Card - from landing */
+    .pricing-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: 24px;
+        padding: 40px;
+        text-align: center;
+        transition: all 0.3s;
+        position: relative;
+    }
+    [data-theme="light"] .pricing-card {
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    }
+
+    .pricing-card.featured {
+        border-color: var(--primary);
+        transform: scale(1.05);
+        box-shadow: 0 30px 80px rgba(124, 58, 237, 0.2);
+    }
+
+    .pricing-card.featured::before {
+        content: 'MOST POPULAR';
+        position: absolute;
+        top: -12px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: linear-gradient(135deg, var(--primary), #6d28d9);
+        padding: 6px 20px;
+        border-radius: 100px;
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 1px;
+        color: white;
+    }
+
+    .pricing-card:hover {
+        border-color: var(--primary);
+    }
+
+    .pricing-name {
+        font-size: 20px;
+        font-weight: 600;
+        margin-bottom: 10px;
+    }
+
+    .pricing-price {
+        font-size: 48px;
+        font-weight: 700;
+        margin-bottom: 5px;
+    }
+
+    .pricing-price span {
+        font-size: 16px;
+        color: var(--text-dim);
+        font-weight: 400;
+    }
+    
+    .yearly-price { display: none; }
+    .yearly-price.show { display: block; }
+    .monthly-price.hide { display: none; }
+
+    .pricing-desc {
+        font-size: 14px;
+        color: var(--text-dim);
+        margin-bottom: 30px;
+    }
+
+    .pricing-features {
+        list-style: none;
+        text-align: left;
+        margin-bottom: 30px;
+    }
+
+    .pricing-features li {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 0;
+        border-bottom: 1px solid var(--border);
+        font-size: 14px;
+        color: var(--text-muted);
+    }
+    
+    .pricing-features li:last-child {
+        border-bottom: none;
+    }
+
+    .pricing-features li i {
+        color: var(--accent);
+        flex-shrink: 0;
+    }
+
+    .pricing-features li i.fa-times {
+        color: var(--text-dim);
+    }
+    
+    /* Buttons - from landing */
+    .pricing-btn {
+        padding: 12px 28px;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.3s;
+        cursor: pointer;
+        border: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        width: 100%;
+    }
+    .pricing-btn-ghost {
+        background: transparent;
+        color: var(--text);
+        border: 1px solid var(--border);
+    }
+    .pricing-btn-ghost:hover {
+        background: rgba(124, 58, 237, 0.1);
+        border-color: var(--primary);
+    }
+    .pricing-btn-primary {
+        background: linear-gradient(135deg, var(--primary), #6d28d9);
+        color: white;
+        box-shadow: 0 4px 20px rgba(124, 58, 237, 0.4);
+    }
+    .pricing-btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 30px rgba(124, 58, 237, 0.5);
+    }
+
+    /* Comparison Section */
+    .comparison-section {
+        padding: 80px 40px;
+        background: var(--bg-darker);
+    }
+    .comparison-section .section-header {
+        margin-bottom: 40px;
+    }
+    .comparison-section .section-header h2 {
+        font-size: 32px;
+        background: linear-gradient(135deg, #fff, var(--primary-light));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+    [data-theme="light"] .comparison-section .section-header h2 {
+        background: linear-gradient(135deg, #0f172a, var(--primary));
+        -webkit-background-clip: text;
+        background-clip: text;
+    }
+    .comparison-table {
+        max-width: 900px;
+        margin: 0 auto;
+        background: var(--bg-card);
+        border-radius: 24px;
+        border: 1px solid var(--border);
+        overflow: hidden;
+    }
+    [data-theme="light"] .comparison-table {
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    }
+    .comparison-table table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    .comparison-table th,
+    .comparison-table td {
+        padding: 18px 24px;
+        text-align: center;
+        border-bottom: 1px solid var(--border);
+    }
+    .comparison-table th {
+        background: rgba(124, 58, 237, 0.1);
+        font-weight: 600;
+        font-size: 14px;
+    }
+    .comparison-table th:first-child,
+    .comparison-table td:first-child {
+        text-align: left;
+    }
+    .comparison-table tr:last-child td {
+        border-bottom: none;
+    }
+    .comparison-table td {
+        font-size: 14px;
+        color: var(--text-muted);
+    }
+    .comparison-table .check {
+        color: var(--accent);
+        font-size: 18px;
+    }
+    .comparison-table .cross {
+        color: var(--text-dim);
+        font-size: 18px;
+    }
+
+    /* FAQ Section */
+    .faq-section {
+        padding: 80px 40px;
+    }
+    .faq-section .section-header {
+        margin-bottom: 50px;
+    }
+    .faq-section .section-header h2 {
+        font-size: 32px;
+        background: linear-gradient(135deg, #fff, var(--primary-light));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+    [data-theme="light"] .faq-section .section-header h2 {
+        background: linear-gradient(135deg, #0f172a, var(--primary));
+        -webkit-background-clip: text;
+        background-clip: text;
+    }
+    .faq-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+        gap: 25px;
+        max-width: 900px;
+        margin: 0 auto;
+    }
+    .faq-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 28px;
+        transition: all 0.3s;
+    }
+    [data-theme="light"] .faq-card {
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    }
+    .faq-card:hover {
+        border-color: var(--primary);
+    }
+    .faq-card h3 {
+        font-size: 16px;
+        font-weight: 600;
+        margin-bottom: 12px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .faq-card h3 i {
+        color: var(--primary-light);
+        font-size: 14px;
+    }
+    .faq-card p {
+        font-size: 14px;
+        color: var(--text-muted);
+        line-height: 1.7;
+    }
+
+    /* CTA Section - from landing */
+    .cta-section {
+        text-align: center;
+        padding: 100px 40px;
+        background: linear-gradient(180deg, var(--bg-dark) 0%, var(--bg-darker) 100%);
+        position: relative;
+        overflow: hidden;
+    }
+    .cta-section::before {
+        content: '';
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        top: 0;
+        left: 0;
+        background: radial-gradient(ellipse at center, rgba(124, 58, 237, 0.1) 0%, transparent 70%);
+        pointer-events: none;
+    }
+    .cta-content {
+        position: relative;
+        z-index: 1;
+    }
+    .cta-section h2 {
+        font-size: 40px;
+        font-weight: 700;
+        margin-bottom: 15px;
+    }
+    .cta-section p {
+        font-size: 18px;
+        color: var(--text-muted);
+        max-width: 500px;
+        margin: 0 auto 35px;
+    }
+    .cta-buttons {
+        display: flex;
+        gap: 15px;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+    .cta-buttons .btn {
+        width: auto;
+        padding: 16px 36px;
+        font-size: 15px;
+    }
+    .btn-accent {
+        background: var(--accent);
+        color: white;
+        box-shadow: 0 4px 20px rgba(16, 185, 129, 0.4);
+    }
+    .btn-accent:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 30px rgba(16, 185, 129, 0.5);
+    }
+
+    @media (max-width: 900px) {
+        .pricing-card.featured {
+            transform: none;
+        }
+        .pricing-card.featured:hover {
+            transform: translateY(-5px);
+        }
+    }
+
+    @media (max-width: 768px) {
+        .section-header h1 { font-size: 32px; }
+        .pricing-section { padding: 40px 20px; }
+        .comparison-section { padding: 60px 20px; }
+        .faq-section { padding: 60px 20px; }
+        .cta-section { padding: 80px 20px; }
+        .faq-grid { grid-template-columns: 1fr; }
+        .cta-section h2 { font-size: 28px; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="pricing-page">
+    <!-- Hero Section -->
+    <section class="pricing-section">
+        <div class="section-header">
+            <div class="section-badge"><i class="fas fa-tag"></i> Simple Pricing</div>
+            <h1>Choose Your Plan</h1>
+            <p>Start free, upgrade when you need more. No hidden fees.</p>
+            
+            <div class="billing-toggle">
+                <span class="active" onclick="setBilling('monthly')">Monthly</span>
+                <span onclick="setBilling('yearly')">Yearly <span class="save-badge">-20%</span></span>
+            </div>
+        </div>
+        
+        <div class="pricing-grid">
+            <!-- Free Plan -->
+            <div class="pricing-card">
+                <div class="pricing-name">Free</div>
+                <div class="pricing-price monthly-price">$0<span>/month</span></div>
+                <div class="pricing-price yearly-price">$0<span>/month</span></div>
+                <div class="pricing-desc">For trying out</div>
+                <ul class="pricing-features">
+                    <li><i class="fas fa-check"></i> 3 songs per month</li>
+                    <li><i class="fas fa-check"></i> 4-stem separation</li>
+                    <li><i class="fas fa-check"></i> Basic lyrics extraction</li>
+                    <li><i class="fas fa-times"></i> No commercial use</li>
+                    <li><i class="fas fa-times"></i> Limited export formats</li>
+                </ul>
+                <a href="/register" class="pricing-btn pricing-btn-ghost">Get Started Free</a>
+            </div>
+            
+            <!-- Creator Plan -->
+            <div class="pricing-card featured">
+                <div class="pricing-name">Creator</div>
+                <div class="pricing-price monthly-price">$19<span>/month</span></div>
+                <div class="pricing-price yearly-price">$15<span>/month</span></div>
+                <div class="pricing-desc">For musicians & creators</div>
+                <ul class="pricing-features">
+                    <li><i class="fas fa-check"></i> 50 songs per month</li>
+                    <li><i class="fas fa-check"></i> 6-stem separation</li>
+                    <li><i class="fas fa-check"></i> Advanced lyrics + timing</li>
+                    <li><i class="fas fa-check"></i> All export formats</li>
+                    <li><i class="fas fa-check"></i> Priority processing</li>
+                </ul>
+                <a href="/register?plan=creator" class="pricing-btn pricing-btn-primary">Start Free Trial</a>
+            </div>
+            
+            <!-- Studio Plan -->
+            <div class="pricing-card">
+                <div class="pricing-name">Studio</div>
+                <div class="pricing-price monthly-price">$49<span>/month</span></div>
+                <div class="pricing-price yearly-price">$39<span>/month</span></div>
+                <div class="pricing-desc">For professionals</div>
+                <ul class="pricing-features">
+                    <li><i class="fas fa-check"></i> Unlimited songs</li>
+                    <li><i class="fas fa-check"></i> 6-stem + custom models</li>
+                    <li><i class="fas fa-check"></i> API access</li>
+                    <li><i class="fas fa-check"></i> Commercial license</li>
+                    <li><i class="fas fa-check"></i> Dedicated support</li>
+                </ul>
+                <a href="/contact" class="pricing-btn pricing-btn-ghost">Contact Sales</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Comparison Section -->
+    <section class="comparison-section">
+        <div class="section-header">
+            <div class="section-badge"><i class="fas fa-table"></i> Compare Plans</div>
+            <h2>Feature Comparison</h2>
+        </div>
+        <div class="comparison-table">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Feature</th>
+                        <th>Free</th>
+                        <th>Creator</th>
+                        <th>Studio</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Songs per month</td>
+                        <td>3</td>
+                        <td>50</td>
+                        <td>Unlimited</td>
+                    </tr>
+                    <tr>
+                        <td>Stem separation</td>
+                        <td>4-stem</td>
+                        <td>6-stem</td>
+                        <td>6-stem + custom</td>
+                    </tr>
+                    <tr>
+                        <td>Audio quality</td>
+                        <td>MP3 128kbps</td>
+                        <td>WAV/FLAC</td>
+                        <td>32-bit lossless</td>
+                    </tr>
+                    <tr>
+                        <td>Lyrics extraction</td>
+                        <td>Basic</td>
+                        <td><i class="fas fa-check check"></i></td>
+                        <td><i class="fas fa-check check"></i></td>
+                    </tr>
+                    <tr>
+                        <td>BPM & key detection</td>
+                        <td><i class="fas fa-times cross"></i></td>
+                        <td><i class="fas fa-check check"></i></td>
+                        <td><i class="fas fa-check check"></i></td>
+                    </tr>
+                    <tr>
+                        <td>Batch processing</td>
+                        <td><i class="fas fa-times cross"></i></td>
+                        <td><i class="fas fa-times cross"></i></td>
+                        <td><i class="fas fa-check check"></i></td>
+                    </tr>
+                    <tr>
+                        <td>API access</td>
+                        <td><i class="fas fa-times cross"></i></td>
+                        <td><i class="fas fa-times cross"></i></td>
+                        <td><i class="fas fa-check check"></i></td>
+                    </tr>
+                    <tr>
+                        <td>Commercial use</td>
+                        <td><i class="fas fa-times cross"></i></td>
+                        <td><i class="fas fa-check check"></i></td>
+                        <td><i class="fas fa-check check"></i></td>
+                    </tr>
+                    <tr>
+                        <td>Support</td>
+                        <td>Community</td>
+                        <td>Email</td>
+                        <td>Priority + Phone</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- FAQ Section -->
+    <section class="faq-section">
+        <div class="section-header">
+            <div class="section-badge"><i class="fas fa-question-circle"></i> FAQ</div>
+            <h2>Frequently Asked Questions</h2>
+        </div>
+        <div class="faq-grid">
+            <div class="faq-card">
+                <h3><i class="fas fa-credit-card"></i> Can I cancel anytime?</h3>
+                <p>Yes! All plans are billed monthly with no long-term commitment. You can upgrade, downgrade, or cancel your subscription at any time from your account settings.</p>
+            </div>
+            <div class="faq-card">
+                <h3><i class="fas fa-wallet"></i> What payment methods?</h3>
+                <p>We accept all major credit cards (Visa, MasterCard, Amex), PayPal, and bank transfers for Studio plans. All payments are processed securely through Stripe.</p>
+            </div>
+            <div class="faq-card">
+                <h3><i class="fas fa-headphones"></i> What's the audio quality?</h3>
+                <p>Our AI models produce studio-quality separations. Creator and Studio plans include lossless WAV/FLAC exports for professional use.</p>
+            </div>
+            <div class="faq-card">
+                <h3><i class="fas fa-sync"></i> Do unused songs roll over?</h3>
+                <p>Monthly song allocations don't roll over. However, all your processed songs remain accessible in your library indefinitely.</p>
+            </div>
+            <div class="faq-card">
+                <h3><i class="fas fa-gift"></i> Is there a free trial?</h3>
+                <p>Yes! New users get a 7-day free trial of Creator features. No credit card required to start. Experience the full power of Harmonix.</p>
+            </div>
+            <div class="faq-card">
+                <h3><i class="fas fa-shield-alt"></i> What about copyright?</h3>
+                <p>You own all outputs from your own music. For copyrighted content, ensure you have rights to process it. We don't store or claim ownership.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta-section">
+        <div class="cta-content">
+            <h2>Ready to Unmix Your Music?</h2>
+            <p>Join thousands of musicians, producers, and creators using Harmonix.</p>
+            <div class="cta-buttons">
+                <a href="/register" class="btn btn-accent">
+                    <i class="fas fa-rocket"></i> Get Started Free
+                </a>
+                <a href="/dashboard" class="btn btn-ghost">
+                    <i class="fas fa-play"></i> Try Demo
+                </a>
+            </div>
+        </div>
+    </section>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function setBilling(type) {
+        const toggles = document.querySelectorAll('.billing-toggle > span:not(.save-badge)');
+        toggles.forEach(t => t.classList.remove('active'));
+        
+        if (type === 'monthly') {
+            toggles[0].classList.add('active');
+            document.querySelectorAll('.monthly-price').forEach(el => el.classList.remove('hide'));
+            document.querySelectorAll('.yearly-price').forEach(el => el.classList.remove('show'));
+        } else {
+            toggles[1].classList.add('active');
+            document.querySelectorAll('.monthly-price').forEach(el => el.classList.add('hide'));
+            document.querySelectorAll('.yearly-price').forEach(el => el.classList.add('show'));
+        }
+    }
+</script>
+{% endblock %}

@@ -1,443 +1,633 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Harmonix Audio Splitter</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+{% extends "base.html" %}
 
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
-        }
+{% block title %}Audio Splitter – Harmonix{% endblock %}
+{% block description %}AI-powered stem separation and lyrics extraction{% endblock %}
 
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
+{% block extra_styles %}
+<style>
+    /* Section Header Styles */
+    .section-header {
+        text-align: center;
+        margin-bottom: 50px;
+    }
+    .section-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: rgba(124, 58, 237, 0.1);
+        border: 1px solid var(--border);
+        padding: 8px 16px;
+        border-radius: 100px;
+        font-size: 13px;
+        color: var(--primary-light);
+        margin-bottom: 20px;
+    }
+    .section-header h1 {
+        font-size: 48px;
+        font-weight: 700;
+        margin-bottom: 15px;
+        background: linear-gradient(135deg, #fff 0%, #a78bfa 50%, #06b6d4 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+    [data-theme="light"] .section-header h1 {
+        background: linear-gradient(135deg, #0f172a 0%, var(--primary) 50%, #0891b2 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+    }
+    .section-header p {
+        font-size: 18px;
+        color: var(--text-muted);
+        max-width: 600px;
+        margin: 0 auto;
+    }
 
-        .header {
-            text-align: center;
-            color: white;
-            margin-bottom: 40px;
-        }
+    /* Main Layout */
+    .splitter-hero {
+        padding: 60px 40px 40px;
+        text-align: center;
+    }
+    .splitter-section {
+        padding: 20px 40px 80px;
+        max-width: 1200px;
+        margin: 0 auto;
+    }
 
-        .header h1 {
-            font-size: 3em;
-            margin-bottom: 10px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-        }
+    /* Cards */
+    .splitter-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: 24px;
+        padding: 40px;
+        margin-bottom: 30px;
+        transition: all 0.3s;
+    }
+    [data-theme="light"] .splitter-card {
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    }
+    .splitter-card:hover {
+        border-color: var(--primary);
+    }
+    .splitter-card h2 {
+        font-size: 24px;
+        font-weight: 600;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    .splitter-card h2 i {
+        font-size: 22px;
+        background: linear-gradient(135deg, var(--primary-light), var(--secondary));
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
 
-        .header p {
-            font-size: 1.2em;
-            opacity: 0.9;
-        }
+    /* Upload Zone */
+    .upload-zone {
+        border: 2px dashed var(--border);
+        border-radius: 16px;
+        padding: 50px 30px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s;
+        background: rgba(124, 58, 237, 0.03);
+    }
+    .upload-zone:hover {
+        border-color: var(--primary);
+        background: rgba(124, 58, 237, 0.08);
+    }
+    .upload-zone.dragging {
+        border-color: var(--secondary);
+        background: rgba(6, 182, 212, 0.1);
+        transform: scale(1.02);
+    }
+    .upload-icon {
+        width: 80px;
+        height: 80px;
+        background: linear-gradient(135deg, rgba(124, 58, 237, 0.2), rgba(6, 182, 212, 0.2));
+        border-radius: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 20px;
+    }
+    .upload-icon i {
+        font-size: 36px;
+        background: linear-gradient(135deg, var(--primary-light), var(--secondary));
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+    .upload-zone h3 {
+        font-size: 18px;
+        margin-bottom: 10px;
+        color: var(--text);
+    }
+    .upload-zone p {
+        color: var(--text-muted);
+        font-size: 14px;
+    }
+    .file-input {
+        display: none;
+    }
+    .selected-file {
+        display: none;
+        margin-top: 20px;
+        padding: 15px 20px;
+        background: rgba(16, 185, 129, 0.1);
+        border: 1px solid var(--accent);
+        border-radius: 12px;
+        color: var(--accent);
+    }
+    .selected-file.show {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+    }
 
-        .card {
-            background: white;
-            border-radius: 20px;
-            padding: 30px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-            margin-bottom: 30px;
-        }
+    /* Options Grid */
+    .options-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 25px;
+        margin: 30px 0;
+    }
+    .option-group label {
+        display: block;
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text);
+        margin-bottom: 10px;
+    }
+    .option-group select,
+    .option-group input[type="text"] {
+        width: 100%;
+        padding: 14px 16px;
+        background: var(--bg-dark);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        color: var(--text);
+        font-size: 14px;
+        transition: all 0.3s;
+        font-family: inherit;
+    }
+    [data-theme="light"] .option-group select,
+    [data-theme="light"] .option-group input[type="text"] {
+        background: #f8fafc;
+        border-color: rgba(0, 0, 0, 0.15);
+    }
+    .option-group select:focus,
+    .option-group input[type="text"]:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
+    }
+    .option-group select option {
+        background: var(--bg-card);
+        color: var(--text);
+    }
+    .option-hint {
+        font-size: 13px;
+        color: var(--text-dim);
+        margin-top: 8px;
+    }
 
-        .upload-section {
-            border: 3px dashed #667eea;
-            border-radius: 15px;
-            padding: 40px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s;
-            background: #f8f9ff;
-        }
+    /* Checkbox Group */
+    .checkbox-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+        gap: 12px;
+        margin-top: 12px;
+    }
+    .checkbox-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 12px 16px;
+        background: var(--bg-dark);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+    [data-theme="light"] .checkbox-item {
+        background: #f8fafc;
+    }
+    .checkbox-item:hover {
+        border-color: var(--primary);
+        background: rgba(124, 58, 237, 0.05);
+    }
+    .checkbox-item input {
+        width: 18px;
+        height: 18px;
+        accent-color: var(--primary);
+    }
+    .checkbox-item span {
+        font-size: 14px;
+        color: var(--text);
+    }
 
-        .upload-section:hover {
-            border-color: #764ba2;
-            background: #f0f2ff;
-        }
+    /* Process Button */
+    .process-btn-container {
+        text-align: center;
+        margin-top: 30px;
+    }
+    .btn-process {
+        padding: 16px 40px;
+        font-size: 16px;
+        font-weight: 600;
+        background: linear-gradient(135deg, var(--primary), #6d28d9);
+        color: white;
+        border: none;
+        border-radius: 12px;
+        cursor: pointer;
+        transition: all 0.3s;
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .btn-process:hover:not(:disabled) {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 30px rgba(124, 58, 237, 0.4);
+    }
+    .btn-process:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
 
-        .upload-section.dragging {
-            border-color: #764ba2;
-            background: #e8eaff;
-            transform: scale(1.02);
-        }
+    /* Progress Section */
+    .progress-section {
+        display: none;
+    }
+    .progress-section.active {
+        display: block;
+    }
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 18px;
+        border-radius: 100px;
+        font-size: 14px;
+        font-weight: 600;
+        margin-bottom: 25px;
+    }
+    .status-badge.queued {
+        background: rgba(245, 158, 11, 0.15);
+        color: var(--warning);
+    }
+    .status-badge.processing {
+        background: rgba(59, 130, 246, 0.15);
+        color: #3b82f6;
+    }
+    .status-badge.completed {
+        background: rgba(16, 185, 129, 0.15);
+        color: var(--accent);
+    }
+    .status-badge.failed {
+        background: rgba(239, 68, 68, 0.15);
+        color: var(--danger);
+    }
+    .progress-bar {
+        width: 100%;
+        height: 12px;
+        background: var(--bg-dark);
+        border-radius: 6px;
+        overflow: hidden;
+        margin: 20px 0;
+    }
+    [data-theme="light"] .progress-bar {
+        background: #e2e8f0;
+    }
+    .progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, var(--primary), var(--secondary));
+        width: 0%;
+        transition: width 0.3s;
+        border-radius: 6px;
+    }
+    .progress-text {
+        text-align: center;
+        color: var(--text-muted);
+        font-size: 14px;
+    }
 
-        .upload-icon {
-            font-size: 4em;
-            margin-bottom: 20px;
-        }
+    /* Results Section */
+    .results-section {
+        display: none;
+    }
+    .results-section.active {
+        display: block;
+    }
+    .results-info {
+        background: rgba(124, 58, 237, 0.05);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 25px;
+        margin-bottom: 30px;
+    }
+    .results-info h3 {
+        font-size: 16px;
+        color: var(--primary-light);
+        margin-bottom: 15px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .results-info p {
+        color: var(--text-muted);
+        font-size: 14px;
+        margin-bottom: 8px;
+    }
+    .results-info strong {
+        color: var(--text);
+    }
+    .detected-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 15px;
+    }
+    .detected-tag {
+        padding: 6px 14px;
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        color: white;
+        border-radius: 100px;
+        font-size: 13px;
+        font-weight: 500;
+    }
 
-        .file-input {
-            display: none;
-        }
+    /* Stem Grid */
+    .stem-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 20px;
+    }
+    .stem-card {
+        background: var(--bg-dark);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 25px;
+        transition: all 0.3s;
+    }
+    [data-theme="light"] .stem-card {
+        background: #f8fafc;
+    }
+    .stem-card:hover {
+        border-color: var(--primary);
+        transform: translateY(-3px);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    }
+    .stem-name {
+        font-size: 16px;
+        font-weight: 600;
+        margin-bottom: 15px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .stem-name i {
+        color: var(--primary-light);
+    }
+    .stem-card audio {
+        width: 100%;
+        margin-bottom: 15px;
+        border-radius: 8px;
+    }
+    .stem-download {
+        width: 100%;
+        padding: 12px;
+        background: linear-gradient(135deg, var(--primary), #6d28d9);
+        color: white;
+        border: none;
+        border-radius: 10px;
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 14px;
+        transition: all 0.3s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+    }
+    .stem-download:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 20px rgba(124, 58, 237, 0.3);
+    }
 
-        .btn {
-            padding: 12px 30px;
-            border: none;
-            border-radius: 8px;
-            font-size: 16px;
-            cursor: pointer;
-            transition: all 0.3s;
-            font-weight: 600;
-        }
+    /* History Section */
+    .history-section {
+        margin-top: 30px;
+    }
+    .history-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+    .history-header h3 {
+        font-size: 18px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .btn-refresh {
+        padding: 10px 18px;
+        background: var(--bg-dark);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        color: var(--text);
+        cursor: pointer;
+        font-size: 14px;
+        transition: all 0.3s;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    [data-theme="light"] .btn-refresh {
+        background: #f8fafc;
+    }
+    .btn-refresh:hover {
+        border-color: var(--primary);
+        color: var(--primary);
+    }
+    .history-item {
+        background: var(--bg-dark);
+        border: 1px solid var(--border);
+        border-left: 4px solid var(--primary);
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 15px;
+        transition: all 0.3s;
+    }
+    [data-theme="light"] .history-item {
+        background: #f8fafc;
+    }
+    .history-item:hover {
+        border-color: var(--primary);
+        transform: translateX(5px);
+    }
+    .history-item.completed {
+        border-left-color: var(--accent);
+    }
+    .history-item.failed {
+        border-left-color: var(--danger);
+    }
+    .history-item.processing {
+        border-left-color: #3b82f6;
+    }
+    .history-item-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+    }
+    .history-filename {
+        font-weight: 600;
+        font-size: 15px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .history-status {
+        padding: 4px 12px;
+        border-radius: 100px;
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+    .history-status.completed {
+        background: rgba(16, 185, 129, 0.15);
+        color: var(--accent);
+    }
+    .history-status.failed {
+        background: rgba(239, 68, 68, 0.15);
+        color: var(--danger);
+    }
+    .history-status.processing {
+        background: rgba(59, 130, 246, 0.15);
+        color: #3b82f6;
+    }
+    .history-details {
+        font-size: 13px;
+        color: var(--text-muted);
+        margin-bottom: 10px;
+    }
+    .history-stems {
+        display: none;
+        margin-top: 15px;
+        padding-top: 15px;
+        border-top: 1px solid var(--border);
+    }
+    .history-stems.show {
+        display: block;
+    }
+    .history-stems-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 15px;
+        margin-top: 15px;
+    }
+    .history-stem-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 15px;
+    }
+    .history-stem-card audio {
+        width: 100%;
+        margin: 10px 0;
+        border-radius: 6px;
+    }
+    .empty-history {
+        text-align: center;
+        padding: 50px 20px;
+        color: var(--text-muted);
+    }
+    .empty-history i {
+        font-size: 48px;
+        margin-bottom: 15px;
+        opacity: 0.3;
+    }
 
-        .btn-primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-        }
+    /* Spinner */
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    .spinner {
+        display: inline-block;
+        width: 18px;
+        height: 18px;
+        border: 2px solid rgba(255,255,255,0.3);
+        border-radius: 50%;
+        border-top-color: white;
+        animation: spin 1s linear infinite;
+    }
 
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+    /* Responsive */
+    @media (max-width: 768px) {
+        .splitter-hero {
+            padding: 40px 20px 20px;
         }
-
-        .btn-primary:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
+        .splitter-section {
+            padding: 20px 20px 60px;
         }
-
+        .splitter-card {
+            padding: 25px;
+        }
+        .section-header h1 {
+            font-size: 32px;
+        }
         .options-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
-            margin: 30px 0;
+            grid-template-columns: 1fr;
         }
-
-        .option-group {
-            margin-bottom: 20px;
-        }
-
-        .option-group label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 600;
-            color: #333;
-        }
-
-        .option-group select,
-        .option-group input {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            font-size: 14px;
-            transition: border-color 0.3s;
-        }
-
-        .option-group select:focus,
-        .option-group input:focus {
-            outline: none;
-            border-color: #667eea;
-        }
-
-        .checkbox-group {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-            gap: 10px;
-            margin-top: 10px;
-        }
-
-        .checkbox-label {
-            display: flex;
-            align-items: center;
-            padding: 8px 12px;
-            background: #f8f9ff;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        .checkbox-label:hover {
-            background: #e8eaff;
-        }
-
-        .checkbox-label input {
-            margin-right: 8px;
-        }
-
-        .progress-section {
-            display: none;
-        }
-
-        .progress-section.active {
-            display: block;
-        }
-
-        .progress-bar {
-            width: 100%;
-            height: 30px;
-            background: #e0e0e0;
-            border-radius: 15px;
-            overflow: hidden;
-            margin: 20px 0;
-        }
-
-        .progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
-            width: 0%;
-            transition: width 0.3s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: 600;
-        }
-
-        .results-section {
-            display: none;
-        }
-
-        .results-section.active {
-            display: block;
-        }
-
         .stem-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 20px;
-            margin-top: 20px;
+            grid-template-columns: 1fr;
         }
+    }
+</style>
+{% endblock %}
 
-        .stem-card {
-            background: #f8f9ff;
-            border-radius: 12px;
-            padding: 20px;
-            border: 2px solid #e0e0e0;
-            transition: all 0.3s;
-        }
-
-        .stem-card:hover {
-            border-color: #667eea;
-            transform: translateY(-5px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-        }
-
-        .stem-name {
-            font-size: 1.3em;
-            font-weight: 600;
-            margin-bottom: 15px;
-            color: #333;
-            text-transform: capitalize;
-        }
-
-        .audio-player {
-            width: 100%;
-            margin: 15px 0;
-        }
-
-        .download-btn {
-            width: 100%;
-            padding: 10px;
-            background: #667eea;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: all 0.3s;
-        }
-
-        .download-btn:hover {
-            background: #764ba2;
-        }
-
-        .status-badge {
-            display: inline-block;
-            padding: 5px 15px;
-            border-radius: 20px;
-            font-size: 14px;
-            font-weight: 600;
-            margin: 10px 0;
-        }
-
-        .status-queued {
-            background: #ffd700;
-            color: #333;
-        }
-
-        .status-processing {
-            background: #3498db;
-            color: white;
-        }
-
-        .status-completed {
-            background: #2ecc71;
-            color: white;
-        }
-
-        .status-failed {
-            background: #e74c3c;
-            color: white;
-        }
-
-        .info-section {
-            background: #f8f9ff;
-            padding: 15px;
-            border-radius: 8px;
-            margin: 20px 0;
-        }
-
-        .info-section h3 {
-            margin-bottom: 10px;
-            color: #667eea;
-        }
-
-        .detected-instruments {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-
-        .instrument-tag {
-            background: #667eea;
-            color: white;
-            padding: 5px 15px;
-            border-radius: 20px;
-            font-size: 14px;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        .spinner {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 3px solid rgba(255,255,255,0.3);
-            border-radius: 50%;
-            border-top-color: white;
-            animation: spin 1s linear infinite;
-        }
-
-        .history-item {
-            background: #f8f9ff;
-            border-left: 4px solid #667eea;
-            padding: 15px;
-            margin-bottom: 15px;
-            border-radius: 8px;
-            transition: all 0.3s;
-        }
-
-        .history-item:hover {
-            transform: translateX(5px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        }
-
-        .history-item.failed {
-            border-left-color: #ff4757;
-        }
-
-        .history-item.completed {
-            border-left-color: #2ecc71;
-        }
-
-        .history-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 10px;
-        }
-
-        .history-filename {
-            font-weight: bold;
-            font-size: 16px;
-            color: #333;
-        }
-
-        .history-status {
-            padding: 4px 12px;
-            border-radius: 12px;
-            font-size: 12px;
-            font-weight: bold;
-        }
-
-        .history-status.completed {
-            background: #d4edda;
-            color: #155724;
-        }
-
-        .history-status.failed {
-            background: #f8d7da;
-            color: #721c24;
-        }
-
-        .history-status.processing {
-            background: #fff3cd;
-            color: #856404;
-        }
-
-        .history-details {
-            font-size: 14px;
-            color: #666;
-            margin: 8px 0;
-        }
-
-        .history-stems {
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-            margin-top: 10px;
-        }
-
-        .history-stem-btn {
-            background: #667eea;
-            color: white;
-            border: none;
-            padding: 6px 12px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 13px;
-            transition: all 0.2s;
-        }
-
-        .history-stem-btn:hover {
-            background: #764ba2;
-            transform: translateY(-2px);
-        }
-
-        .empty-history {
-            text-align: center;
-            padding: 40px;
-            color: #999;
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="header">
-            <h1>🎵 Harmonix</h1>
-            <p>AI-Powered Audio Stem Separation</p>
+{% block content %}
+<main class="main-content">
+    <!-- Hero Section -->
+    <section class="splitter-hero">
+        <div class="section-header">
+            <span class="section-badge"><i class="fas fa-wave-square"></i> AI-Powered</span>
+            <h1>Audio Stem Separator</h1>
+            <p>Upload any audio file and extract vocals, drums, bass, and instruments using state-of-the-art AI technology</p>
         </div>
+    </section>
 
+    <!-- Main Content -->
+    <section class="splitter-section">
         <!-- Upload Card -->
-        <div class="card" id="uploadCard">
-            <h2 style="margin-bottom: 20px;">Upload Audio File</h2>
+        <div class="splitter-card" id="uploadCard">
+            <h2><i class="fas fa-cloud-upload-alt"></i> Upload Audio File</h2>
             
-            <div class="upload-section" id="uploadZone">
-                <div class="upload-icon">📁</div>
+            <div class="upload-zone" id="uploadZone">
+                <div class="upload-icon">
+                    <i class="fas fa-music"></i>
+                </div>
                 <h3>Drop your audio file here or click to browse</h3>
-                <p style="margin-top: 10px; color: #666;">Supported formats: MP3, WAV, FLAC, M4A, OGG, AAC</p>
-                <p style="margin-top: 5px; color: #999;">Max size: 500MB</p>
+                <p>Supported formats: MP3, WAV, FLAC, M4A, OGG, AAC</p>
+                <p style="margin-top: 5px; opacity: 0.7;">Max size: 500MB</p>
                 <input type="file" id="fileInput" class="file-input" accept=".mp3,.wav,.flac,.m4a,.ogg,.aac">
             </div>
 
-            <div id="selectedFile" style="display: none; margin-top: 20px; text-align: center;">
-                <p><strong>Selected:</strong> <span id="fileName"></span></p>
+            <div class="selected-file" id="selectedFile">
+                <i class="fas fa-check-circle"></i>
+                <span>Selected: <strong id="fileName"></strong></span>
             </div>
 
             <div class="options-grid">
                 <div class="option-group">
-                    <label for="quality">Quality Mode</label>
+                    <label for="quality"><i class="fas fa-sliders-h"></i> Quality Mode</label>
                     <select id="quality">
                         <option value="fast">Fast (Quick Processing)</option>
                         <option value="balanced" selected>Balanced (Recommended)</option>
@@ -446,7 +636,7 @@
                 </div>
 
                 <div class="option-group">
-                    <label for="mode">Separation Mode</label>
+                    <label for="mode"><i class="fas fa-layer-group"></i> Separation Mode</label>
                     <select id="mode">
                         <option value="grouped" selected>Grouped (4 Stems: Vocals, Drums, Bass, Other)</option>
                         <option value="per_instrument">Per-Instrument (Individual Instruments)</option>
@@ -455,420 +645,410 @@
             </div>
 
             <div class="option-group">
-                <label for="outputName">Output Folder & Track Name (Optional)</label>
-                <input type="text" id="outputName" placeholder="Leave empty to use original filename" 
-                       style="width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px;">
-                <p style="color: #666; font-size: 14px; margin-top: 5px;">
-                    📁 Example: "MySong" → MySong_vocals.wav, MySong_bass.wav, etc.
-                </p>
+                <label for="outputName"><i class="fas fa-folder"></i> Output Folder & Track Name (Optional)</label>
+                <input type="text" id="outputName" placeholder="Leave empty to use original filename">
+                <p class="option-hint"><i class="fas fa-info-circle"></i> Example: "MySong" → MySong_vocals.wav, MySong_bass.wav, etc.</p>
             </div>
 
             <div class="option-group" id="instrumentsSection" style="display: none;">
-                <label>Target Instruments (Optional)</label>
-                <div class="checkbox-group">
-                    <label class="checkbox-label">
-                        <input type="checkbox" value="vocals"> Vocals
+                <label><i class="fas fa-guitar"></i> Target Instruments (Optional)</label>
+                <div class="checkbox-grid">
+                    <label class="checkbox-item">
+                        <input type="checkbox" value="vocals">
+                        <span>Vocals</span>
                     </label>
-                    <label class="checkbox-label">
-                        <input type="checkbox" value="drums"> Drums
+                    <label class="checkbox-item">
+                        <input type="checkbox" value="drums">
+                        <span>Drums</span>
                     </label>
-                    <label class="checkbox-label">
-                        <input type="checkbox" value="bass"> Bass
+                    <label class="checkbox-item">
+                        <input type="checkbox" value="bass">
+                        <span>Bass</span>
                     </label>
-                    <label class="checkbox-label">
-                        <input type="checkbox" value="guitar"> Guitar
+                    <label class="checkbox-item">
+                        <input type="checkbox" value="guitar">
+                        <span>Guitar</span>
                     </label>
-                    <label class="checkbox-label">
-                        <input type="checkbox" value="piano"> Piano
+                    <label class="checkbox-item">
+                        <input type="checkbox" value="piano">
+                        <span>Piano</span>
                     </label>
-                    <label class="checkbox-label">
-                        <input type="checkbox" value="strings"> Strings
+                    <label class="checkbox-item">
+                        <input type="checkbox" value="strings">
+                        <span>Strings</span>
                     </label>
-                    <label class="checkbox-label">
-                        <input type="checkbox" value="synth"> Synth
+                    <label class="checkbox-item">
+                        <input type="checkbox" value="synth">
+                        <span>Synth</span>
                     </label>
                 </div>
             </div>
 
-            <div style="text-align: center; margin-top: 30px;">
-                <button class="btn btn-primary" id="processBtn" disabled>
-                    🚀 Start Processing
+            <div class="process-btn-container">
+                <button class="btn-process" id="processBtn" disabled>
+                    <i class="fas fa-rocket"></i> Start Processing
                 </button>
             </div>
-        </div>
-
-        <!-- History Card - Now at the top -->
-        <div class="card" id="historyCard">
-            <h2>📜 Processing History</h2>
-            <p style="color: #666; margin-bottom: 20px;">View and access your processed audio files</p>
-            
-            <div style="text-align: right; margin-bottom: 15px;">
-                <button class="btn" onclick="loadHistory()" style="padding: 8px 16px;">
-                    🔄 Refresh
-                </button>
-            </div>
-            
-            <div id="historyList"></div>
         </div>
 
         <!-- Progress Card -->
-        <div class="card progress-section" id="progressCard">
-            <h2>Processing Audio...</h2>
-            <div class="status-badge status-processing" id="statusBadge">
-                <span class="spinner"></span> Processing
+        <div class="splitter-card progress-section" id="progressCard">
+            <h2><i class="fas fa-cog fa-spin"></i> Processing Audio...</h2>
+            <div style="text-align: center;">
+                <span class="status-badge processing" id="statusBadge">
+                    <span class="spinner"></span> Processing
+                </span>
             </div>
             <div class="progress-bar">
-                <div class="progress-fill" id="progressFill">0%</div>
+                <div class="progress-fill" id="progressFill"></div>
             </div>
-            <p id="statusMessage" style="text-align: center; color: #666;"></p>
+            <p class="progress-text" id="progressText">0%</p>
+            <p class="progress-text" id="statusMessage"></p>
         </div>
 
         <!-- Results Card -->
-        <div class="card results-section" id="resultsCard">
-            <h2>🎉 Separation Complete!</h2>
+        <div class="splitter-card results-section" id="resultsCard">
+            <h2><i class="fas fa-check-circle"></i> Separation Complete!</h2>
             
-            <div class="info-section">
-                <h3>Processing Information</h3>
+            <div class="results-info">
+                <h3><i class="fas fa-info-circle"></i> Processing Information</h3>
                 <p><strong>Processing Time:</strong> <span id="processingTime"></span></p>
                 <p><strong>Original File:</strong> <span id="originalFile"></span></p>
-                <p style="margin-top: 10px;"><strong>Detected Instruments:</strong></p>
-                <div class="detected-instruments" id="detectedInstruments"></div>
+                <p style="margin-top: 15px;"><strong>Detected Instruments:</strong></p>
+                <div class="detected-tags" id="detectedInstruments"></div>
             </div>
 
-            <h3 style="margin-top: 30px; margin-bottom: 15px;">Your Stems</h3>
+            <h3 style="margin-bottom: 20px;"><i class="fas fa-music" style="color: var(--primary-light); margin-right: 8px;"></i> Your Stems</h3>
             <div class="stem-grid" id="stemGrid"></div>
 
-            <div style="text-align: center; margin-top: 30px;">
-                <button class="btn btn-primary" onclick="resetDashboard()">
-                    ↻ Process Another File
+            <div class="process-btn-container" style="margin-top: 40px;">
+                <button class="btn-process" onclick="resetDashboard()">
+                    <i class="fas fa-redo"></i> Process Another File
                 </button>
             </div>
         </div>
-    </div>
 
-    <script>
-        let currentJobId = null;
-        let selectedFile = null;
-        let statusCheckInterval = null;
+        <!-- History Card -->
+        <div class="splitter-card">
+            <div class="history-header">
+                <h3><i class="fas fa-history" style="color: var(--primary-light);"></i> Processing History</h3>
+                <button class="btn-refresh" onclick="loadHistory()">
+                    <i class="fas fa-sync-alt"></i> Refresh
+                </button>
+            </div>
+            <p style="color: var(--text-muted); margin-bottom: 20px;">View and access your processed audio files</p>
+            <div id="historyList"></div>
+        </div>
+    </section>
+</main>
 
-        // DOM Elements
-        const uploadZone = document.getElementById('uploadZone');
-        const fileInput = document.getElementById('fileInput');
-        const selectedFileDiv = document.getElementById('selectedFile');
-        const fileName = document.getElementById('fileName');
-        const processBtn = document.getElementById('processBtn');
-        const qualitySelect = document.getElementById('quality');
-        const modeSelect = document.getElementById('mode');
-        const instrumentsSection = document.getElementById('instrumentsSection');
-        const uploadCard = document.getElementById('uploadCard');
-        const progressCard = document.getElementById('progressCard');
-        const resultsCard = document.getElementById('resultsCard');
+<script>
+    let currentJobId = null;
+    let selectedFile = null;
+    let statusCheckInterval = null;
 
-        // File upload handling
-        uploadZone.addEventListener('click', () => fileInput.click());
+    // DOM Elements
+    const uploadZone = document.getElementById('uploadZone');
+    const fileInput = document.getElementById('fileInput');
+    const selectedFileDiv = document.getElementById('selectedFile');
+    const fileName = document.getElementById('fileName');
+    const processBtn = document.getElementById('processBtn');
+    const qualitySelect = document.getElementById('quality');
+    const modeSelect = document.getElementById('mode');
+    const instrumentsSection = document.getElementById('instrumentsSection');
+    const uploadCard = document.getElementById('uploadCard');
+    const progressCard = document.getElementById('progressCard');
+    const resultsCard = document.getElementById('resultsCard');
 
-        uploadZone.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            uploadZone.classList.add('dragging');
-        });
+    // File upload handling
+    uploadZone.addEventListener('click', () => fileInput.click());
 
-        uploadZone.addEventListener('dragleave', () => {
-            uploadZone.classList.remove('dragging');
-        });
+    uploadZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        uploadZone.classList.add('dragging');
+    });
 
-        uploadZone.addEventListener('drop', (e) => {
-            e.preventDefault();
-            uploadZone.classList.remove('dragging');
-            const files = e.dataTransfer.files;
-            if (files.length > 0) {
-                handleFileSelect(files[0]);
-            }
-        });
+    uploadZone.addEventListener('dragleave', () => {
+        uploadZone.classList.remove('dragging');
+    });
 
-        fileInput.addEventListener('change', (e) => {
-            if (e.target.files.length > 0) {
-                handleFileSelect(e.target.files[0]);
-            }
-        });
+    uploadZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        uploadZone.classList.remove('dragging');
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            handleFileSelect(files[0]);
+        }
+    });
 
-        function handleFileSelect(file) {
-            selectedFile = file;
-            fileName.textContent = file.name;
-            selectedFileDiv.style.display = 'block';
-            processBtn.disabled = false;
+    fileInput.addEventListener('change', (e) => {
+        if (e.target.files.length > 0) {
+            handleFileSelect(e.target.files[0]);
+        }
+    });
+
+    function handleFileSelect(file) {
+        selectedFile = file;
+        fileName.textContent = file.name;
+        selectedFileDiv.classList.add('show');
+        processBtn.disabled = false;
+    }
+
+    // Mode change handler
+    modeSelect.addEventListener('change', (e) => {
+        instrumentsSection.style.display = e.target.value === 'per_instrument' ? 'block' : 'none';
+    });
+
+    // Process button handler
+    processBtn.addEventListener('click', async () => {
+        if (!selectedFile) return;
+
+        const formData = new FormData();
+        formData.append('file', selectedFile);
+        formData.append('quality', qualitySelect.value);
+        formData.append('mode', modeSelect.value);
+        
+        const outputName = document.getElementById('outputName').value.trim();
+        if (outputName) {
+            formData.append('output_name', outputName);
         }
 
-        // Mode change handler
-        modeSelect.addEventListener('change', (e) => {
-            if (e.target.value === 'per_instrument') {
-                instrumentsSection.style.display = 'block';
-            } else {
-                instrumentsSection.style.display = 'none';
-            }
-        });
-
-        // Process button handler
-        processBtn.addEventListener('click', async () => {
-            if (!selectedFile) return;
-
-            const formData = new FormData();
-            formData.append('file', selectedFile);
-            formData.append('quality', qualitySelect.value);
-            formData.append('mode', modeSelect.value);
-            
-            // Add custom output name if provided
-            const outputName = document.getElementById('outputName').value.trim();
-            if (outputName) {
-                formData.append('output_name', outputName);
-            }
-
-            // Get selected instruments
-            const selectedInstruments = Array.from(
-                document.querySelectorAll('.checkbox-label input:checked')
-            ).map(cb => cb.value);
-            
-            if (selectedInstruments.length > 0) {
-                formData.append('instruments', selectedInstruments.join(','));
-            }
-
-            try {
-                processBtn.disabled = true;
-                processBtn.innerHTML = '<span class="spinner"></span> Uploading...';
-
-                const response = await fetch('/upload', {
-                    method: 'POST',
-                    body: formData
-                });
-
-                const data = await response.json();
-
-                if (response.ok) {
-                    currentJobId = data.job_id;
-                    showProgress();
-                    startStatusChecking();
-                } else {
-                    alert('Error: ' + data.error);
-                    processBtn.disabled = false;
-                    processBtn.innerHTML = '🚀 Start Processing';
-                }
-            } catch (error) {
-                alert('Upload failed: ' + error.message);
-                processBtn.disabled = false;
-                processBtn.innerHTML = '🚀 Start Processing';
-            }
-        });
-
-        function showProgress() {
-            uploadCard.style.display = 'none';
-            progressCard.classList.add('active');
+        const selectedInstruments = Array.from(
+            document.querySelectorAll('.checkbox-item input:checked')
+        ).map(cb => cb.value);
+        
+        if (selectedInstruments.length > 0) {
+            formData.append('instruments', selectedInstruments.join(','));
         }
 
-        function showResults() {
-            progressCard.classList.remove('active');
-            resultsCard.classList.add('active');
-        }
-
-        function startStatusChecking() {
-            statusCheckInterval = setInterval(checkStatus, 2000);
-        }
-
-        async function checkStatus() {
-            try {
-                const response = await fetch(`/status/${currentJobId}`);
-                const job = await response.json();
-
-                updateProgress(job);
-
-                if (job.status === 'completed') {
-                    clearInterval(statusCheckInterval);
-                    displayResults(job);
-                } else if (job.status === 'failed') {
-                    clearInterval(statusCheckInterval);
-                    alert('Processing failed: ' + job.error);
-                    resetDashboard();
-                }
-            } catch (error) {
-                console.error('Status check failed:', error);
-            }
-        }
-
-        function updateProgress(job) {
-            const progressFill = document.getElementById('progressFill');
-            const statusMessage = document.getElementById('statusMessage');
-
-            progressFill.style.width = job.progress + '%';
-            progressFill.textContent = job.progress + '%';
-            
-            statusMessage.textContent = `Status: ${job.status} | File: ${job.filename}`;
-        }
-
-        function displayResults(job) {
-            // Update processing info
-            document.getElementById('processingTime').textContent = 
-                job.processing_time.toFixed(2) + ' seconds';
-            document.getElementById('originalFile').textContent = job.filename;
-
-            // Display detected instruments
-            const detectedDiv = document.getElementById('detectedInstruments');
-            detectedDiv.innerHTML = '';
-            if (job.detected_instruments && job.detected_instruments.length > 0) {
-                job.detected_instruments.forEach(inst => {
-                    const tag = document.createElement('span');
-                    tag.className = 'instrument-tag';
-                    tag.textContent = inst;
-                    detectedDiv.appendChild(tag);
-                });
-            } else {
-                detectedDiv.innerHTML = '<span class="instrument-tag">N/A</span>';
-            }
-
-            // Get original filename without extension
-            const originalName = job.filename.replace(/\.[^/.]+$/, '');
-
-            // Display stems
-            const stemGrid = document.getElementById('stemGrid');
-            stemGrid.innerHTML = '';
-
-            for (const [stemName, stemUrl] of Object.entries(job.stems)) {
-                const stemCard = document.createElement('div');
-                stemCard.className = 'stem-card';
-                
-                // Create display name: originalfilename_stemname
-                const displayName = `${originalName}_${stemName}`;
-                
-                stemCard.innerHTML = `
-                    <div class="stem-name">🎵 ${displayName}</div>
-                    <audio controls class="audio-player" preload="metadata">
-                        <source src="${stemUrl}" type="audio/wav">
-                        Your browser does not support the audio element.
-                    </audio>
-                    <button class="download-btn" onclick="downloadStem('${stemUrl}', '${displayName}')">
-                        ⬇️ Download
-                    </button>
-                `;
-                
-                stemGrid.appendChild(stemCard);
-            }
-
-            showResults();
-        }
-
-        function downloadStem(url, name) {
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = name + '.wav';
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-        }
-
-        function resetDashboard() {
-            uploadCard.style.display = 'block';
-            progressCard.classList.remove('active');
-            resultsCard.classList.remove('active');
-            
-            selectedFile = null;
-            currentJobId = null;
-            selectedFileDiv.style.display = 'none';
+        try {
             processBtn.disabled = true;
-            processBtn.innerHTML = '🚀 Start Processing';
-            fileInput.value = '';
-            
-            document.querySelectorAll('.checkbox-label input').forEach(cb => cb.checked = false);
-            
-            // Reload history
-            loadHistory();
+            processBtn.innerHTML = '<span class="spinner"></span> Uploading...';
+
+            const response = await fetch('/upload', {
+                method: 'POST',
+                body: formData
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                currentJobId = data.job_id;
+                showProgress();
+                startStatusChecking();
+            } else {
+                alert('Error: ' + data.error);
+                processBtn.disabled = false;
+                processBtn.innerHTML = '<i class="fas fa-rocket"></i> Start Processing';
+            }
+        } catch (error) {
+            alert('Upload failed: ' + error.message);
+            processBtn.disabled = false;
+            processBtn.innerHTML = '<i class="fas fa-rocket"></i> Start Processing';
+        }
+    });
+
+    function showProgress() {
+        uploadCard.style.display = 'none';
+        progressCard.classList.add('active');
+    }
+
+    function showResults() {
+        progressCard.classList.remove('active');
+        resultsCard.classList.add('active');
+    }
+
+    function startStatusChecking() {
+        statusCheckInterval = setInterval(checkStatus, 2000);
+    }
+
+    async function checkStatus() {
+        try {
+            const response = await fetch(`/status/${currentJobId}`);
+            const job = await response.json();
+
+            updateProgress(job);
+
+            if (job.status === 'completed') {
+                clearInterval(statusCheckInterval);
+                displayResults(job);
+            } else if (job.status === 'failed') {
+                clearInterval(statusCheckInterval);
+                alert('Processing failed: ' + job.error);
+                resetDashboard();
+            }
+        } catch (error) {
+            console.error('Status check failed:', error);
+        }
+    }
+
+    function updateProgress(job) {
+        const progressFill = document.getElementById('progressFill');
+        const progressText = document.getElementById('progressText');
+        const statusMessage = document.getElementById('statusMessage');
+
+        progressFill.style.width = job.progress + '%';
+        progressText.textContent = job.progress + '%';
+        statusMessage.textContent = `Status: ${job.status} | File: ${job.filename}`;
+    }
+
+    function displayResults(job) {
+        document.getElementById('processingTime').textContent = 
+            job.processing_time.toFixed(2) + ' seconds';
+        document.getElementById('originalFile').textContent = job.filename;
+
+        const detectedDiv = document.getElementById('detectedInstruments');
+        detectedDiv.innerHTML = '';
+        if (job.detected_instruments && job.detected_instruments.length > 0) {
+            job.detected_instruments.forEach(inst => {
+                const tag = document.createElement('span');
+                tag.className = 'detected-tag';
+                tag.textContent = inst;
+                detectedDiv.appendChild(tag);
+            });
+        } else {
+            detectedDiv.innerHTML = '<span class="detected-tag">N/A</span>';
         }
 
-        // History functions
-        async function loadHistory() {
-            try {
-                const response = await fetch('/jobs');
-                const data = await response.json();
-                displayHistory(data.jobs);
-            } catch (error) {
-                console.error('Failed to load history:', error);
-            }
+        const originalName = job.filename.replace(/\.[^/.]+$/, '');
+        const stemGrid = document.getElementById('stemGrid');
+        stemGrid.innerHTML = '';
+
+        for (const [stemName, stemUrl] of Object.entries(job.stems)) {
+            const stemCard = document.createElement('div');
+            stemCard.className = 'stem-card';
+            const displayName = `${originalName}_${stemName}`;
+            
+            stemCard.innerHTML = `
+                <div class="stem-name"><i class="fas fa-music"></i> ${displayName}</div>
+                <audio controls preload="metadata">
+                    <source src="${stemUrl}" type="audio/wav">
+                </audio>
+                <button class="stem-download" onclick="downloadStem('${stemUrl}', '${displayName}')">
+                    <i class="fas fa-download"></i> Download
+                </button>
+            `;
+            
+            stemGrid.appendChild(stemCard);
         }
 
-        function displayHistory(jobs) {
-            const historyList = document.getElementById('historyList');
+        showResults();
+    }
+
+    function downloadStem(url, name) {
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = name + '.wav';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+    }
+
+    function resetDashboard() {
+        uploadCard.style.display = 'block';
+        progressCard.classList.remove('active');
+        resultsCard.classList.remove('active');
+        
+        selectedFile = null;
+        currentJobId = null;
+        selectedFileDiv.classList.remove('show');
+        processBtn.disabled = true;
+        processBtn.innerHTML = '<i class="fas fa-rocket"></i> Start Processing';
+        fileInput.value = '';
+        
+        document.querySelectorAll('.checkbox-item input').forEach(cb => cb.checked = false);
+        loadHistory();
+    }
+
+    // History functions
+    async function loadHistory() {
+        try {
+            const response = await fetch('/jobs');
+            const data = await response.json();
+            displayHistory(data.jobs);
+        } catch (error) {
+            console.error('Failed to load history:', error);
+        }
+    }
+
+    function displayHistory(jobs) {
+        const historyList = document.getElementById('historyList');
+        
+        if (!jobs || jobs.length === 0) {
+            historyList.innerHTML = `
+                <div class="empty-history">
+                    <i class="fas fa-inbox"></i>
+                    <p>No processing history yet</p>
+                </div>
+            `;
+            return;
+        }
+
+        historyList.innerHTML = jobs.map(job => {
+            const date = new Date(job.created_at);
+            const timeStr = date.toLocaleString();
+            const displayName = job.display_name || job.filename.replace(/\.[^/.]+$/, '');
             
-            if (!jobs || jobs.length === 0) {
-                historyList.innerHTML = '<div class="empty-history">📭 No processing history yet</div>';
-                return;
-            }
-
-            historyList.innerHTML = jobs.map(job => {
-                const date = new Date(job.created_at);
-                const timeStr = date.toLocaleString();
-                
-                // Use display_name if available, otherwise use filename
-                const displayName = job.display_name || job.filename.replace(/\.[^/.]+$/, '');
-                
-                let stemsHtml = '';
-                if (job.status === 'completed' && job.stems) {
-                    stemsHtml = `
-                        <div class="history-stems" id="stems-${job.job_id}" style="display: none; margin-top: 15px;">
-                            <div style="font-weight: bold; margin-bottom: 10px; color: #667eea;">🎵 Available Stems:</div>
-                            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 10px;">
-                                ${Object.entries(job.stems).map(([stemName, stemUrl]) => `
-                                    <div style="background: white; padding: 10px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-                                        <div style="font-weight: bold; margin-bottom: 8px; color: #333;">
-                                            🎵 ${displayName}_${stemName}
-                                        </div>
-                                        <audio controls style="width: 100%; margin-bottom: 8px;" preload="metadata">
-                                            <source src="${stemUrl}" type="audio/wav">
-                                        </audio>
-                                        <button class="history-stem-btn" onclick="downloadStem('${stemUrl}', '${displayName}_${stemName}')" style="width: 100%;">
-                                            ⬇️ Download
-                                        </button>
-                                    </div>
-                                `).join('')}
-                            </div>
+            let stemsHtml = '';
+            if (job.status === 'completed' && job.stems) {
+                stemsHtml = `
+                    <div class="history-stems" id="stems-${job.job_id}">
+                        <p style="font-weight: 600; margin-bottom: 10px;"><i class="fas fa-music" style="color: var(--primary-light);"></i> Available Stems:</p>
+                        <div class="history-stems-grid">
+                            ${Object.entries(job.stems).map(([stemName, stemUrl]) => `
+                                <div class="history-stem-card">
+                                    <div class="stem-name"><i class="fas fa-music"></i> ${displayName}_${stemName}</div>
+                                    <audio controls preload="metadata">
+                                        <source src="${stemUrl}" type="audio/wav">
+                                    </audio>
+                                    <button class="stem-download" onclick="downloadStem('${stemUrl}', '${displayName}_${stemName}')">
+                                        <i class="fas fa-download"></i> Download
+                                    </button>
+                                </div>
+                            `).join('')}
                         </div>
-                    `;
-                }
-
-                let errorHtml = '';
-                if (job.status === 'failed' && job.error) {
-                    errorHtml = `<div style="color: #dc3545; margin-top: 8px;">❌ ${job.error}</div>`;
-                }
-
-                const clickHandler = job.status === 'completed' ? `onclick="toggleStems('${job.job_id}')"` : '';
-                const cursorStyle = job.status === 'completed' ? 'cursor: pointer;' : '';
-
-                return `
-                    <div class="history-item ${job.status}" ${clickHandler} style="${cursorStyle}">
-                        <div class="history-header">
-                            <span class="history-filename">📄 ${job.filename}</span>
-                            <span class="history-status ${job.status}">${job.status.toUpperCase()}</span>
-                        </div>
-                        <div class="history-details">
-                            ⏰ ${timeStr}
-                            ${job.processing_time ? ` | ⚡ ${job.processing_time.toFixed(2)}s` : ''}
-                            ${job.progress ? ` | 📊 ${job.progress}%` : ''}
-                            ${job.status === 'completed' ? ' | 👆 Click to view stems' : ''}
-                        </div>
-                        ${errorHtml}
-                        ${stemsHtml}
                     </div>
                 `;
-            }).join('');
-        }
-
-        function toggleStems(jobId) {
-            const stemsDiv = document.getElementById(`stems-${jobId}`);
-            if (stemsDiv) {
-                stemsDiv.style.display = stemsDiv.style.display === 'none' ? 'block' : 'none';
             }
-        }
 
-        // Load history on page load
-        window.addEventListener('load', () => {
-            loadHistory();
-        });
-    </script>
-</body>
-</html>
+            let errorHtml = '';
+            if (job.status === 'failed' && job.error) {
+                errorHtml = `<div style="color: var(--danger); margin-top: 10px;"><i class="fas fa-exclamation-circle"></i> ${job.error}</div>`;
+            }
+
+            const clickHandler = job.status === 'completed' ? `onclick="toggleStems('${job.job_id}')"` : '';
+            const cursorStyle = job.status === 'completed' ? 'cursor: pointer;' : '';
+
+            return `
+                <div class="history-item ${job.status}" ${clickHandler} style="${cursorStyle}">
+                    <div class="history-item-header">
+                        <span class="history-filename"><i class="fas fa-file-audio"></i> ${job.filename}</span>
+                        <span class="history-status ${job.status}">${job.status}</span>
+                    </div>
+                    <div class="history-details">
+                        <i class="fas fa-clock"></i> ${timeStr}
+                        ${job.processing_time ? ` &bull; <i class="fas fa-bolt"></i> ${job.processing_time.toFixed(2)}s` : ''}
+                        ${job.progress ? ` &bull; <i class="fas fa-chart-line"></i> ${job.progress}%` : ''}
+                        ${job.status === 'completed' ? ' &bull; <i class="fas fa-hand-pointer"></i> Click to view stems' : ''}
+                    </div>
+                    ${errorHtml}
+                    ${stemsHtml}
+                </div>
+            `;
+        }).join('');
+    }
+
+    function toggleStems(jobId) {
+        const stemsDiv = document.getElementById(`stems-${jobId}`);
+        if (stemsDiv) {
+            stemsDiv.classList.toggle('show');
+        }
+    }
+
+    // Load history on page load
+    window.addEventListener('load', () => {
+        loadHistory();
+    });
+</script>
+{% endblock %}
 

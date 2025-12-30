@@ -1,0 +1,498 @@
+{% extends "base.html" %}
+
+{% block title %}About Us – Harmonix{% endblock %}
+{% block description %}Learn about Harmonix and our mission to democratize audio production{% endblock %}
+
+{% block extra_styles %}
+<style>
+    /* Section Styles */
+    .section-header {
+        text-align: center;
+        margin-bottom: 60px;
+    }
+    .section-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: rgba(124, 58, 237, 0.1);
+        border: 1px solid var(--border);
+        padding: 8px 16px;
+        border-radius: 100px;
+        font-size: 13px;
+        color: var(--primary-light);
+        margin-bottom: 20px;
+    }
+    .section-header h1, .section-header h2 {
+        font-size: 48px;
+        font-weight: 700;
+        margin-bottom: 15px;
+        background: linear-gradient(135deg, #fff 0%, #a78bfa 50%, #06b6d4 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+    [data-theme="light"] .section-header h1,
+    [data-theme="light"] .section-header h2 {
+        background: linear-gradient(135deg, #0f172a 0%, var(--primary) 50%, #0891b2 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+    }
+    .section-header p {
+        font-size: 18px;
+        color: var(--text-muted);
+        max-width: 700px;
+        margin: 0 auto;
+        line-height: 1.8;
+    }
+
+    /* Hero */
+    .about-hero {
+        padding: 60px 40px 40px;
+        text-align: center;
+    }
+
+    /* Mission Section */
+    .mission-section {
+        padding: 80px 40px;
+        background: var(--bg-darker);
+    }
+    .mission-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 60px;
+        align-items: center;
+        max-width: 1100px;
+        margin: 0 auto;
+    }
+    .mission-content h2 {
+        font-size: 32px;
+        margin-bottom: 20px;
+        background: linear-gradient(135deg, #fff, var(--primary-light));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+    [data-theme="light"] .mission-content h2 {
+        background: linear-gradient(135deg, #0f172a, var(--primary));
+        -webkit-background-clip: text;
+        background-clip: text;
+    }
+    .mission-content p {
+        color: var(--text-muted);
+        line-height: 1.8;
+        margin-bottom: 20px;
+    }
+    .mission-visual {
+        background: linear-gradient(135deg, var(--primary), #6d28d9);
+        border-radius: 24px;
+        padding: 60px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+    }
+    .mission-visual i {
+        font-size: 80px;
+        margin-bottom: 20px;
+        opacity: 0.9;
+    }
+    .mission-visual p {
+        font-size: 20px;
+        font-weight: 500;
+        color: white;
+    }
+
+    /* Stats */
+    .stats-section {
+        padding: 80px 40px;
+    }
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 30px;
+        max-width: 1000px;
+        margin: 0 auto;
+    }
+    .stat-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: 20px;
+        padding: 35px;
+        text-align: center;
+        transition: all 0.3s;
+    }
+    [data-theme="light"] .stat-card {
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    }
+    .stat-card:hover {
+        border-color: var(--primary);
+        transform: translateY(-5px);
+    }
+    .stat-number {
+        font-size: 42px;
+        font-weight: 700;
+        background: linear-gradient(135deg, var(--primary-light), var(--secondary));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin-bottom: 8px;
+    }
+    .stat-label {
+        color: var(--text-muted);
+        font-size: 14px;
+    }
+
+    /* Values */
+    .values-section {
+        padding: 80px 40px;
+        background: var(--bg-darker);
+    }
+    .values-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 25px;
+        max-width: 1100px;
+        margin: 0 auto;
+    }
+    .value-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: 20px;
+        padding: 35px;
+        transition: all 0.3s;
+    }
+    [data-theme="light"] .value-card {
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    }
+    .value-card:hover {
+        transform: translateY(-5px);
+        border-color: var(--primary);
+    }
+    .value-icon {
+        width: 60px;
+        height: 60px;
+        background: linear-gradient(135deg, rgba(124, 58, 237, 0.2), rgba(6, 182, 212, 0.2));
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 20px;
+    }
+    .value-icon i {
+        font-size: 24px;
+        background: linear-gradient(135deg, var(--primary-light), var(--secondary));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+    .value-card h3 {
+        font-size: 20px;
+        margin-bottom: 12px;
+    }
+    .value-card p {
+        color: var(--text-muted);
+        line-height: 1.7;
+        font-size: 14px;
+    }
+
+    /* Team */
+    .team-section {
+        padding: 80px 40px;
+    }
+    .team-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        gap: 25px;
+        max-width: 1100px;
+        margin: 0 auto;
+    }
+    .team-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: 20px;
+        padding: 35px;
+        text-align: center;
+        transition: all 0.3s;
+    }
+    [data-theme="light"] .team-card {
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    }
+    .team-card:hover {
+        transform: translateY(-5px);
+        border-color: var(--primary);
+    }
+    .team-avatar {
+        width: 90px;
+        height: 90px;
+        background: linear-gradient(135deg, var(--primary), #6d28d9);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 20px;
+        font-size: 36px;
+        color: white;
+    }
+    .team-card h3 {
+        font-size: 18px;
+        margin-bottom: 5px;
+    }
+    .team-role {
+        color: var(--primary-light);
+        font-size: 13px;
+        margin-bottom: 15px;
+    }
+    .team-card > p {
+        color: var(--text-muted);
+        font-size: 14px;
+        line-height: 1.6;
+    }
+    .team-social {
+        display: flex;
+        gap: 10px;
+        justify-content: center;
+        margin-top: 15px;
+    }
+    .team-social a {
+        width: 35px;
+        height: 35px;
+        background: rgba(124, 58, 237, 0.1);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--text-muted);
+        transition: all 0.3s;
+    }
+    .team-social a:hover {
+        background: var(--primary);
+        border-color: var(--primary);
+        color: white;
+    }
+
+    /* CTA */
+    .cta-section {
+        text-align: center;
+        padding: 100px 40px;
+        background: linear-gradient(180deg, var(--bg-dark) 0%, var(--bg-darker) 100%);
+        position: relative;
+        overflow: hidden;
+    }
+    .cta-section::before {
+        content: '';
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        top: 0;
+        left: 0;
+        background: radial-gradient(ellipse at center, rgba(124, 58, 237, 0.1) 0%, transparent 70%);
+        pointer-events: none;
+    }
+    .cta-content {
+        position: relative;
+        z-index: 1;
+    }
+    .cta-section h2 {
+        font-size: 40px;
+        font-weight: 700;
+        margin-bottom: 15px;
+    }
+    .cta-section > .cta-content > p {
+        font-size: 18px;
+        color: var(--text-muted);
+        max-width: 500px;
+        margin: 0 auto 35px;
+    }
+    .cta-btn {
+        padding: 16px 36px;
+        border-radius: 8px;
+        font-size: 15px;
+        font-weight: 600;
+        text-decoration: none;
+        background: var(--accent);
+        color: white;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.3s;
+        box-shadow: 0 4px 20px rgba(16, 185, 129, 0.4);
+    }
+    .cta-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 30px rgba(16, 185, 129, 0.5);
+    }
+
+    @media (max-width: 900px) {
+        .mission-grid { grid-template-columns: 1fr; }
+        .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 768px) {
+        .section-header h1 { font-size: 32px; }
+        .about-hero { padding: 40px 20px; }
+        .mission-section { padding: 60px 20px; }
+        .stats-section { padding: 60px 20px; }
+        .values-section { padding: 60px 20px; }
+        .team-section { padding: 60px 20px; }
+        .cta-section { padding: 80px 20px; }
+        .stat-number { font-size: 32px; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero -->
+<section class="about-hero">
+    <div class="section-header">
+        <div class="section-badge"><i class="fas fa-info-circle"></i> About Us</div>
+        <h1>About Harmonix</h1>
+        <p>We're on a mission to democratize professional audio production, making it accessible to creators everywhere through cutting-edge AI technology.</p>
+    </div>
+</section>
+
+<!-- Mission -->
+<section class="mission-section">
+    <div class="mission-grid">
+        <div class="mission-content">
+            <h2>Our Mission</h2>
+            <p>At Harmonix, we believe that creative tools should be accessible to everyone. Whether you're a bedroom producer, a professional DJ, or a music educator, you deserve access to the same powerful audio separation technology used by major studios.</p>
+            <p>Founded in 2024, Harmonix combines state-of-the-art AI models with intuitive interfaces to deliver professional-grade stem separation, lyrics transcription, and audio analysis tools that work right in your browser.</p>
+            <p>We're committed to continuous innovation, constantly improving our algorithms to deliver the highest quality separations while maintaining the speed and accessibility our users depend on.</p>
+        </div>
+        <div class="mission-visual">
+            <i class="fas fa-music"></i>
+            <p>"Every song tells a story.<br>We help you hear every chapter."</p>
+        </div>
+    </div>
+</section>
+
+<!-- Stats -->
+<section class="stats-section">
+    <div class="section-header">
+        <div class="section-badge"><i class="fas fa-chart-bar"></i> By the Numbers</div>
+        <h2 style="font-size: 32px;">Growing Every Day</h2>
+    </div>
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-number">1M+</div>
+            <div class="stat-label">Songs Processed</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">50K+</div>
+            <div class="stat-label">Active Users</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">99%</div>
+            <div class="stat-label">Uptime</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">50+</div>
+            <div class="stat-label">Languages</div>
+        </div>
+    </div>
+</section>
+
+<!-- Values -->
+<section class="values-section">
+    <div class="section-header">
+        <div class="section-badge"><i class="fas fa-heart"></i> Our Values</div>
+        <h2 style="font-size: 32px;">What We Stand For</h2>
+        <p>The principles that guide everything we do</p>
+    </div>
+    <div class="values-grid">
+        <div class="value-card">
+            <div class="value-icon"><i class="fas fa-bolt"></i></div>
+            <h3>Innovation First</h3>
+            <p>We continuously push the boundaries of what's possible with AI audio processing, delivering cutting-edge technology to our users.</p>
+        </div>
+        <div class="value-card">
+            <div class="value-icon"><i class="fas fa-users"></i></div>
+            <h3>User-Centric Design</h3>
+            <p>Every feature we build starts with understanding our users' needs. We design tools that are powerful yet intuitive.</p>
+        </div>
+        <div class="value-card">
+            <div class="value-icon"><i class="fas fa-unlock"></i></div>
+            <h3>Accessibility</h3>
+            <p>Professional audio tools shouldn't be locked behind expensive software. We make pro-grade technology available to everyone.</p>
+        </div>
+        <div class="value-card">
+            <div class="value-icon"><i class="fas fa-shield-alt"></i></div>
+            <h3>Privacy & Trust</h3>
+            <p>Your audio files are processed securely and never stored without permission. We respect your creative work and data.</p>
+        </div>
+        <div class="value-card">
+            <div class="value-icon"><i class="fas fa-comments"></i></div>
+            <h3>Community</h3>
+            <p>We build alongside our community, listening to feedback and growing together with the creators who use our tools.</p>
+        </div>
+        <div class="value-card">
+            <div class="value-icon"><i class="fas fa-gem"></i></div>
+            <h3>Quality</h3>
+            <p>We never compromise on audio quality. Every stem, every transcription meets professional standards.</p>
+        </div>
+    </div>
+</section>
+
+<!-- Team -->
+<section class="team-section">
+    <div class="section-header">
+        <div class="section-badge"><i class="fas fa-user-friends"></i> Our Team</div>
+        <h2 style="font-size: 32px;">Meet the Team</h2>
+        <p>The people behind Harmonix</p>
+    </div>
+    <div class="team-grid">
+        <div class="team-card">
+            <div class="team-avatar"><i class="fas fa-user"></i></div>
+            <h3>Alex Chen</h3>
+            <div class="team-role">Founder & CEO</div>
+            <p>Former audio engineer turned AI enthusiast. Passionate about democratizing music production.</p>
+            <div class="team-social">
+                <a href="#"><i class="fab fa-twitter"></i></a>
+                <a href="#"><i class="fab fa-linkedin"></i></a>
+            </div>
+        </div>
+        <div class="team-card">
+            <div class="team-avatar"><i class="fas fa-user"></i></div>
+            <h3>Sarah Martinez</h3>
+            <div class="team-role">CTO</div>
+            <p>ML researcher specializing in audio processing. PhD from Stanford in signal processing.</p>
+            <div class="team-social">
+                <a href="#"><i class="fab fa-twitter"></i></a>
+                <a href="#"><i class="fab fa-github"></i></a>
+            </div>
+        </div>
+        <div class="team-card">
+            <div class="team-avatar"><i class="fas fa-user"></i></div>
+            <h3>Marcus Johnson</h3>
+            <div class="team-role">Head of Product</div>
+            <p>10+ years in music tech. Former product lead at major streaming platforms.</p>
+            <div class="team-social">
+                <a href="#"><i class="fab fa-twitter"></i></a>
+                <a href="#"><i class="fab fa-linkedin"></i></a>
+            </div>
+        </div>
+        <div class="team-card">
+            <div class="team-avatar"><i class="fas fa-user"></i></div>
+            <h3>Emma Wilson</h3>
+            <div class="team-role">Lead Designer</div>
+            <p>UX designer with a background in music. Creates interfaces that musicians love.</p>
+            <div class="team-social">
+                <a href="#"><i class="fab fa-dribbble"></i></a>
+                <a href="#"><i class="fab fa-linkedin"></i></a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section">
+    <div class="cta-content">
+        <h2>Join the Harmonix Community</h2>
+        <p>Start separating stems, extracting vocals, and creating amazing remixes today.</p>
+        <a href="/register" class="cta-btn">
+            <i class="fas fa-rocket"></i> Get Started Free
+        </a>
+    </div>
+</section>
+{% endblock %}

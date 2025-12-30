@@ -1,0 +1,614 @@
+{% extends "base.html" %}
+
+{% block title %}Community – Harmonix{% endblock %}
+{% block description %}Join the Harmonix community. Connect with creators, share your work, and get support.{% endblock %}
+
+{% block extra_styles %}
+<style>
+    /* Section Styles */
+    .section-header {
+        text-align: center;
+        margin-bottom: 60px;
+    }
+    .section-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: rgba(124, 58, 237, 0.1);
+        border: 1px solid var(--border);
+        padding: 8px 16px;
+        border-radius: 100px;
+        font-size: 13px;
+        color: var(--primary-light);
+        margin-bottom: 20px;
+    }
+    .section-header h1, .section-header h2 {
+        font-size: 48px;
+        font-weight: 700;
+        margin-bottom: 15px;
+        background: linear-gradient(135deg, #fff 0%, #a78bfa 50%, #06b6d4 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+    [data-theme="light"] .section-header h1,
+    [data-theme="light"] .section-header h2 {
+        background: linear-gradient(135deg, #0f172a 0%, var(--primary) 50%, #0891b2 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+    }
+    .section-header p {
+        font-size: 18px;
+        color: var(--text-muted);
+        max-width: 600px;
+        margin: 0 auto;
+        line-height: 1.8;
+    }
+
+    /* Hero */
+    .community-hero {
+        padding: 60px 40px 40px;
+        text-align: center;
+    }
+    .community-stats {
+        display: flex;
+        justify-content: center;
+        gap: 60px;
+        margin-top: 40px;
+    }
+    .community-stat {
+        text-align: center;
+    }
+    .community-stat-num {
+        font-size: 40px;
+        font-weight: 700;
+        background: linear-gradient(135deg, var(--primary-light), var(--secondary));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+    .community-stat-label {
+        color: var(--text-muted);
+        font-size: 14px;
+        margin-top: 5px;
+    }
+
+    /* Platforms Section */
+    .platforms-section {
+        padding: 60px 40px 80px;
+        background: var(--bg-darker);
+    }
+    .platforms-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 30px;
+        max-width: 1100px;
+        margin: 0 auto;
+    }
+    .platform-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: 24px;
+        padding: 40px;
+        text-align: center;
+        transition: all 0.3s;
+    }
+    [data-theme="light"] .platform-card {
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    }
+    .platform-card:hover {
+        transform: translateY(-5px);
+        border-color: var(--primary);
+    }
+    .platform-icon {
+        width: 80px;
+        height: 80px;
+        margin: 0 auto 25px;
+        border-radius: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 36px;
+        color: white;
+    }
+    .platform-icon.discord { background: linear-gradient(135deg, #5865F2, #7289DA); }
+    .platform-icon.twitter { background: linear-gradient(135deg, #1DA1F2, #0D8BD9); }
+    .platform-icon.github { background: linear-gradient(135deg, #333, #24292e); }
+    .platform-icon.youtube { background: linear-gradient(135deg, #FF0000, #CC0000); }
+    .platform-icon.reddit { background: linear-gradient(135deg, #FF4500, #FF5722); }
+    .platform-icon.forum { background: linear-gradient(135deg, var(--primary), var(--primary-dark)); }
+    .platform-card h3 {
+        font-size: 22px;
+        margin-bottom: 10px;
+    }
+    .platform-card p {
+        color: var(--text-muted);
+        font-size: 14px;
+        line-height: 1.7;
+        margin-bottom: 20px;
+    }
+    .platform-members {
+        color: var(--text-muted);
+        font-size: 13px;
+        margin-bottom: 20px;
+    }
+    .platform-members i {
+        margin-right: 5px;
+        color: var(--primary-light);
+    }
+    .platform-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 24px;
+        background: var(--primary);
+        border-radius: 10px;
+        color: white;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 14px;
+        transition: all 0.3s;
+    }
+    .platform-btn:hover {
+        background: var(--primary-dark);
+    }
+
+    /* Showcase Section */
+    .showcase-section {
+        padding: 80px 40px;
+    }
+    .showcase-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 25px;
+        max-width: 1100px;
+        margin: 0 auto;
+    }
+    .showcase-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: 20px;
+        overflow: hidden;
+        transition: all 0.3s;
+    }
+    [data-theme="light"] .showcase-card {
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    }
+    .showcase-card:hover {
+        border-color: var(--primary);
+        transform: translateY(-3px);
+    }
+    .showcase-audio {
+        aspect-ratio: 16/9;
+        background: var(--bg-darker);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        cursor: pointer;
+    }
+    .showcase-audio i {
+        font-size: 50px;
+        opacity: 0.3;
+        background: linear-gradient(135deg, var(--primary-light), var(--secondary));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+    .showcase-play {
+        position: absolute;
+        width: 60px;
+        height: 60px;
+        background: var(--primary);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: transform 0.3s;
+        font-size: 20px;
+        color: white;
+    }
+    .showcase-play:hover {
+        transform: scale(1.1);
+    }
+    .showcase-content {
+        padding: 22px;
+    }
+    .showcase-content h4 {
+        font-size: 16px;
+        margin-bottom: 10px;
+    }
+    .showcase-meta {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        color: var(--text-muted);
+        font-size: 13px;
+    }
+    .showcase-author {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .showcase-author-avatar {
+        width: 30px;
+        height: 30px;
+        background: linear-gradient(135deg, var(--primary), #6d28d9);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        color: white;
+    }
+    .showcase-likes {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+    .showcase-likes i {
+        color: var(--secondary);
+    }
+
+    /* Events Section */
+    .events-section {
+        padding: 80px 40px;
+        background: var(--bg-darker);
+    }
+    .events-list {
+        max-width: 900px;
+        margin: 0 auto;
+    }
+    .event-card {
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        gap: 30px;
+        align-items: center;
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: 20px;
+        padding: 30px;
+        margin-bottom: 20px;
+        transition: all 0.3s;
+    }
+    [data-theme="light"] .event-card {
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    }
+    .event-card:hover {
+        border-color: var(--primary);
+    }
+    .event-date {
+        width: 80px;
+        text-align: center;
+        background: linear-gradient(135deg, rgba(124, 58, 237, 0.2), rgba(6, 182, 212, 0.2));
+        border-radius: 14px;
+        padding: 18px 12px;
+    }
+    .event-day {
+        font-size: 28px;
+        font-weight: 700;
+        background: linear-gradient(135deg, var(--primary-light), var(--secondary));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+    .event-month {
+        font-size: 12px;
+        text-transform: uppercase;
+        color: var(--text-muted);
+        letter-spacing: 1px;
+    }
+    .event-info h4 {
+        font-size: 18px;
+        margin-bottom: 8px;
+    }
+    .event-info p {
+        color: var(--text-muted);
+        font-size: 14px;
+        margin-bottom: 10px;
+    }
+    .event-meta {
+        display: flex;
+        gap: 20px;
+        font-size: 13px;
+        color: var(--text-muted);
+    }
+    .event-meta span {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .event-meta i {
+        color: var(--primary-light);
+    }
+    .event-btn {
+        padding: 12px 24px;
+        background: transparent;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        color: var(--text);
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s;
+        white-space: nowrap;
+    }
+    .event-btn:hover {
+        background: var(--primary);
+        border-color: var(--primary);
+        color: white;
+    }
+
+    /* CTA */
+    .cta-section {
+        text-align: center;
+        padding: 100px 40px;
+        position: relative;
+        overflow: hidden;
+    }
+    .cta-section::before {
+        content: '';
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        top: 0;
+        left: 0;
+        background: radial-gradient(ellipse at center, rgba(124, 58, 237, 0.1) 0%, transparent 70%);
+        pointer-events: none;
+    }
+    .cta-content {
+        position: relative;
+        z-index: 1;
+    }
+    .cta-section h2 {
+        font-size: 36px;
+        font-weight: 700;
+        margin-bottom: 15px;
+    }
+    .cta-section > .cta-content > p {
+        font-size: 18px;
+        color: var(--text-muted);
+        max-width: 500px;
+        margin: 0 auto 30px;
+    }
+    .cta-btn {
+        padding: 16px 36px;
+        border-radius: 10px;
+        font-size: 15px;
+        font-weight: 600;
+        text-decoration: none;
+        background: var(--accent);
+        color: white;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.3s;
+        box-shadow: 0 4px 20px rgba(16, 185, 129, 0.4);
+    }
+    .cta-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 30px rgba(16, 185, 129, 0.5);
+    }
+
+    @media (max-width: 768px) {
+        .section-header h1 { font-size: 36px; }
+        .community-hero { padding: 40px 20px; }
+        .community-stats { gap: 30px; flex-wrap: wrap; }
+        .platforms-section { padding: 60px 20px; }
+        .showcase-section { padding: 60px 20px; }
+        .events-section { padding: 60px 20px; }
+        .event-card { grid-template-columns: 1fr; gap: 20px; }
+        .cta-section { padding: 80px 20px; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero -->
+<section class="community-hero">
+    <div class="section-header">
+        <div class="section-badge"><i class="fas fa-users"></i> Community</div>
+        <h1>Join Our Community</h1>
+        <p>Connect with thousands of creators, producers, and music enthusiasts using Harmonix</p>
+    </div>
+    <div class="community-stats">
+        <div class="community-stat">
+            <div class="community-stat-num">50K+</div>
+            <div class="community-stat-label">Community Members</div>
+        </div>
+        <div class="community-stat">
+            <div class="community-stat-num">12K+</div>
+            <div class="community-stat-label">Discord Members</div>
+        </div>
+        <div class="community-stat">
+            <div class="community-stat-num">5K+</div>
+            <div class="community-stat-label">Projects Shared</div>
+        </div>
+    </div>
+</section>
+
+<!-- Platforms -->
+<section class="platforms-section">
+    <div class="section-header">
+        <div class="section-badge"><i class="fas fa-globe"></i> Connect</div>
+        <h2 style="font-size: 32px;">Find Us Everywhere</h2>
+        <p>Join the conversation on your favorite platform</p>
+    </div>
+    <div class="platforms-grid">
+        <div class="platform-card">
+            <div class="platform-icon discord"><i class="fab fa-discord"></i></div>
+            <h3>Discord Server</h3>
+            <p>Get real-time support, share your work, and connect with fellow creators.</p>
+            <div class="platform-members"><i class="fas fa-users"></i> 12,450 members</div>
+            <a href="#" class="platform-btn"><i class="fab fa-discord"></i> Join Discord</a>
+        </div>
+        
+        <div class="platform-card">
+            <div class="platform-icon twitter"><i class="fab fa-twitter"></i></div>
+            <h3>Twitter / X</h3>
+            <p>Follow us for product updates, tips, and community highlights.</p>
+            <div class="platform-members"><i class="fas fa-users"></i> 8,200 followers</div>
+            <a href="#" class="platform-btn"><i class="fab fa-twitter"></i> Follow Us</a>
+        </div>
+        
+        <div class="platform-card">
+            <div class="platform-icon youtube"><i class="fab fa-youtube"></i></div>
+            <h3>YouTube Channel</h3>
+            <p>Watch tutorials, demos, and behind-the-scenes content.</p>
+            <div class="platform-members"><i class="fas fa-users"></i> 5,800 subscribers</div>
+            <a href="#" class="platform-btn"><i class="fab fa-youtube"></i> Subscribe</a>
+        </div>
+        
+        <div class="platform-card">
+            <div class="platform-icon github"><i class="fab fa-github"></i></div>
+            <h3>GitHub</h3>
+            <p>Contribute to our open-source projects and report issues.</p>
+            <div class="platform-members"><i class="fas fa-star"></i> 2,100 stars</div>
+            <a href="#" class="platform-btn"><i class="fab fa-github"></i> View Repo</a>
+        </div>
+        
+        <div class="platform-card">
+            <div class="platform-icon reddit"><i class="fab fa-reddit"></i></div>
+            <h3>Reddit Community</h3>
+            <p>Join discussions and share your stem separation projects.</p>
+            <div class="platform-members"><i class="fas fa-users"></i> 3,500 members</div>
+            <a href="#" class="platform-btn"><i class="fab fa-reddit"></i> Join Subreddit</a>
+        </div>
+        
+        <div class="platform-card">
+            <div class="platform-icon forum"><i class="fas fa-comments"></i></div>
+            <h3>Community Forum</h3>
+            <p>In-depth discussions, feature requests, and knowledge sharing.</p>
+            <div class="platform-members"><i class="fas fa-comments"></i> 4,200 threads</div>
+            <a href="#" class="platform-btn"><i class="fas fa-external-link-alt"></i> Visit Forum</a>
+        </div>
+    </div>
+</section>
+
+<!-- Showcase -->
+<section class="showcase-section">
+    <div class="section-header">
+        <div class="section-badge"><i class="fas fa-star"></i> Showcase</div>
+        <h2 style="font-size: 32px;">Community Creations</h2>
+        <p>Amazing projects made by our community members</p>
+    </div>
+    <div class="showcase-grid">
+        <div class="showcase-card">
+            <div class="showcase-audio">
+                <div class="showcase-play"><i class="fas fa-play"></i></div>
+            </div>
+            <div class="showcase-content">
+                <h4>Acoustic Remix - "Midnight Dreams"</h4>
+                <div class="showcase-meta">
+                    <div class="showcase-author">
+                        <div class="showcase-author-avatar"><i class="fas fa-user"></i></div>
+                        <span>@producer_mike</span>
+                    </div>
+                    <div class="showcase-likes"><i class="fas fa-heart"></i> 342</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="showcase-card">
+            <div class="showcase-audio">
+                <div class="showcase-play"><i class="fas fa-play"></i></div>
+            </div>
+            <div class="showcase-content">
+                <h4>Vocals Only - "Summer Vibes"</h4>
+                <div class="showcase-meta">
+                    <div class="showcase-author">
+                        <div class="showcase-author-avatar"><i class="fas fa-user"></i></div>
+                        <span>@dj_sarah</span>
+                    </div>
+                    <div class="showcase-likes"><i class="fas fa-heart"></i> 287</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="showcase-card">
+            <div class="showcase-audio">
+                <div class="showcase-play"><i class="fas fa-play"></i></div>
+            </div>
+            <div class="showcase-content">
+                <h4>Instrumental Mashup - "City Lights"</h4>
+                <div class="showcase-meta">
+                    <div class="showcase-author">
+                        <div class="showcase-author-avatar"><i class="fas fa-user"></i></div>
+                        <span>@beatmaker_j</span>
+                    </div>
+                    <div class="showcase-likes"><i class="fas fa-heart"></i> 198</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Events -->
+<section class="events-section">
+    <div class="section-header">
+        <div class="section-badge"><i class="fas fa-calendar"></i> Events</div>
+        <h2 style="font-size: 32px;">Upcoming Events</h2>
+        <p>Join us for live sessions and community meetups</p>
+    </div>
+    <div class="events-list">
+        <div class="event-card">
+            <div class="event-date">
+                <div class="event-day">05</div>
+                <div class="event-month">Jan</div>
+            </div>
+            <div class="event-info">
+                <h4>Live Tutorial: Advanced Stem Separation</h4>
+                <p>Learn pro tips for getting the cleanest stem extractions</p>
+                <div class="event-meta">
+                    <span><i class="fas fa-clock"></i> 2:00 PM EST</span>
+                    <span><i class="fas fa-video"></i> YouTube Live</span>
+                </div>
+            </div>
+            <button class="event-btn">Set Reminder</button>
+        </div>
+        
+        <div class="event-card">
+            <div class="event-date">
+                <div class="event-day">12</div>
+                <div class="event-month">Jan</div>
+            </div>
+            <div class="event-info">
+                <h4>Community Q&A Session</h4>
+                <p>Ask the team anything about Harmonix and upcoming features</p>
+                <div class="event-meta">
+                    <span><i class="fas fa-clock"></i> 4:00 PM EST</span>
+                    <span><i class="fab fa-discord"></i> Discord</span>
+                </div>
+            </div>
+            <button class="event-btn">Set Reminder</button>
+        </div>
+        
+        <div class="event-card">
+            <div class="event-date">
+                <div class="event-day">20</div>
+                <div class="event-month">Jan</div>
+            </div>
+            <div class="event-info">
+                <h4>Remix Challenge: "Best of 2024"</h4>
+                <p>Create your best remix using Harmonix - prizes for top entries!</p>
+                <div class="event-meta">
+                    <span><i class="fas fa-trophy"></i> Contest</span>
+                    <span><i class="fas fa-gift"></i> $500 Prize Pool</span>
+                </div>
+            </div>
+            <button class="event-btn">Learn More</button>
+        </div>
+    </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section">
+    <div class="cta-content">
+        <h2>Ready to Join the Community?</h2>
+        <p>Start creating amazing music with thousands of fellow producers and creators.</p>
+        <a href="/register" class="cta-btn">
+            <i class="fas fa-rocket"></i> Get Started Free
+        </a>
+    </div>
+</section>
+{% endblock %}

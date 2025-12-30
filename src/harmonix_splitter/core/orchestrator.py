@@ -251,12 +251,16 @@ class HarmonixOrchestrator:
         Returns:
             Dictionary of separated stems
         """
-        # Create separation config
+        # Create separation config with quality settings
         config = SeparationConfig(
             quality=QualityMode(routing_plan["quality"]),
             mode=SeparationMode(routing_plan["mode"]),
             target_instruments=routing_plan.get("target_instruments"),
-            use_gpu=self.settings.use_gpu
+            use_gpu=self.settings.use_gpu,
+            # Quality preservation settings
+            preserve_sample_rate=True,  # Keep native sample rate
+            output_format="wav",        # Lossless WAV output
+            bit_depth=24,               # 24-bit studio quality
         )
         
         # Initialize separator

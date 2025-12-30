@@ -1,0 +1,579 @@
+{% extends "base.html" %}
+
+{% block title %}My Account – Harmonix{% endblock %}
+{% block description %}Manage your Harmonix account settings, subscription, and preferences.{% endblock %}
+
+{% block extra_styles %}
+<style>
+    .text-muted { color: var(--text-muted); }
+    .account-layout {
+        display: grid;
+        grid-template-columns: 250px 1fr;
+        gap: 40px;
+        padding: 40px 0 80px;
+        min-height: 70vh;
+    }
+    .account-sidebar {
+        position: sticky;
+        top: 100px;
+        height: fit-content;
+    }
+    .account-nav {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 15px;
+    }
+    .account-nav a {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 15px;
+        color: var(--text-muted);
+        text-decoration: none;
+        border-radius: 8px;
+        transition: all 0.2s;
+        font-size: 14px;
+    }
+    .account-nav a:hover,
+    .account-nav a.active {
+        background: rgba(124, 58, 237, 0.15);
+        color: var(--primary-light);
+    }
+    .account-nav a i {
+        width: 20px;
+        text-align: center;
+    }
+    .account-content {
+        max-width: 700px;
+    }
+    .account-section {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 30px;
+        margin-bottom: 25px;
+    }
+    .account-section h2 {
+        font-size: 18px;
+        margin-bottom: 25px;
+        padding-bottom: 15px;
+        border-bottom: 1px solid var(--border);
+    }
+    .profile-header {
+        display: flex;
+        align-items: center;
+        gap: 25px;
+        margin-bottom: 30px;
+    }
+    .profile-avatar {
+        width: 100px;
+        height: 100px;
+        background: linear-gradient(135deg, var(--primary-dark), var(--primary));
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 40px;
+        position: relative;
+    }
+    .avatar-upload {
+        position: absolute;
+        bottom: 0;
+        right: 0;
+        width: 32px;
+        height: 32px;
+        background: var(--bg-card);
+        border: 2px solid var(--border);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        font-size: 12px;
+        transition: all 0.3s;
+    }
+    .avatar-upload:hover {
+        background: var(--primary);
+        border-color: var(--primary);
+    }
+    .profile-info h3 {
+        font-size: 22px;
+        margin-bottom: 5px;
+    }
+    .profile-info p {
+        color: var(--text-muted);
+        font-size: 14px;
+    }
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+    }
+    .plan-card {
+        background: linear-gradient(135deg, rgba(124, 58, 237, 0.15), rgba(236, 72, 153, 0.15));
+        border: 1px solid rgba(124, 58, 237, 0.3);
+        border-radius: 12px;
+        padding: 25px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .plan-info h3 {
+        font-size: 18px;
+        margin-bottom: 5px;
+    }
+    .plan-info p {
+        color: var(--text-muted);
+        font-size: 14px;
+    }
+    .plan-badge {
+        background: var(--primary);
+        color: white;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 500;
+        margin-left: 10px;
+    }
+    .usage-bar {
+        height: 8px;
+        background: var(--bg-darker);
+        border-radius: 4px;
+        overflow: hidden;
+        margin-top: 15px;
+    }
+    .usage-fill {
+        height: 100%;
+        background: linear-gradient(90deg, var(--primary), var(--secondary));
+        border-radius: 4px;
+        transition: width 0.3s;
+    }
+    .usage-text {
+        display: flex;
+        justify-content: space-between;
+        font-size: 13px;
+        color: var(--text-muted);
+        margin-top: 8px;
+    }
+    .settings-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 15px 0;
+        border-bottom: 1px solid var(--border);
+    }
+    .settings-item:last-child {
+        border-bottom: none;
+    }
+    .settings-item-info h4 {
+        font-size: 14px;
+        margin-bottom: 3px;
+    }
+    .settings-item-info p {
+        color: var(--text-muted);
+        font-size: 13px;
+    }
+    .toggle-switch {
+        position: relative;
+        width: 48px;
+        height: 26px;
+        background: var(--bg-darker);
+        border-radius: 13px;
+        cursor: pointer;
+        transition: background 0.3s;
+    }
+    .toggle-switch.active {
+        background: var(--primary);
+    }
+    .toggle-switch::after {
+        content: '';
+        position: absolute;
+        width: 20px;
+        height: 20px;
+        background: white;
+        border-radius: 50%;
+        top: 3px;
+        left: 3px;
+        transition: transform 0.3s;
+    }
+    .toggle-switch.active::after {
+        transform: translateX(22px);
+    }
+    .danger-zone {
+        background: rgba(239, 68, 68, 0.1);
+        border-color: rgba(239, 68, 68, 0.3);
+    }
+    .danger-zone h2 {
+        color: #ef4444;
+    }
+    .btn-danger {
+        background: #ef4444;
+        border-color: #ef4444;
+    }
+    .btn-danger:hover {
+        background: #dc2626;
+    }
+    .history-list {
+        margin-top: 20px;
+    }
+    .history-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 15px;
+        background: var(--bg-darker);
+        border-radius: 8px;
+        margin-bottom: 10px;
+    }
+    .history-item-info {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+    .history-icon {
+        width: 40px;
+        height: 40px;
+        background: rgba(124, 58, 237, 0.15);
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--primary-light);
+    }
+    .history-item-info h4 {
+        font-size: 14px;
+        margin-bottom: 2px;
+    }
+    .history-item-info p {
+        color: var(--text-muted);
+        font-size: 12px;
+    }
+    
+    @media (max-width: 900px) {
+        .account-layout {
+            grid-template-columns: 1fr;
+        }
+        .account-sidebar {
+            position: static;
+        }
+        .form-row {
+            grid-template-columns: 1fr;
+        }
+        .plan-card {
+            flex-direction: column;
+            text-align: center;
+            gap: 15px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-hero">
+    <h1>Account Settings</h1>
+    <p>Manage your profile, subscription, and preferences</p>
+</div>
+
+<div class="container">
+    <div class="account-layout">
+        <div class="account-sidebar">
+            <nav class="account-nav">
+                <a href="#profile" class="active"><i class="fas fa-user"></i> Profile</a>
+                <a href="#subscription"><i class="fas fa-crown"></i> Subscription</a>
+                <a href="#usage"><i class="fas fa-chart-bar"></i> Usage</a>
+                <a href="#notifications"><i class="fas fa-bell"></i> Notifications</a>
+                <a href="#security"><i class="fas fa-shield-alt"></i> Security</a>
+                <a href="#api"><i class="fas fa-code"></i> API Keys</a>
+                <a href="#history"><i class="fas fa-history"></i> History</a>
+            </nav>
+        </div>
+        
+        <div class="account-content">
+            <div class="account-section" id="profile">
+                <h2><i class="fas fa-user"></i> Profile Information</h2>
+                <div class="profile-header">
+                    <div class="profile-avatar">
+                        <i class="fas fa-user"></i>
+                        <label class="avatar-upload">
+                            <i class="fas fa-camera"></i>
+                            <input type="file" hidden>
+                        </label>
+                    </div>
+                    <div class="profile-info">
+                        <h3>{{ current_user.name if current_user else 'Guest User' }}</h3>
+                        <p>{{ current_user.email if current_user else 'Not logged in' }}</p>
+                    </div>
+                </div>
+                <form>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>First Name</label>
+                            <input type="text" class="form-control" value="{{ current_user.name.split()[0] if current_user and current_user.name else '' }}">
+                        </div>
+                        <div class="form-group">
+                            <label>Last Name</label>
+                            <input type="text" class="form-control" value="{{ current_user.name.split()[-1] if current_user and current_user.name and ' ' in current_user.name else '' }}">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Email Address</label>
+                        <input type="email" class="form-control" value="{{ current_user.email if current_user else '' }}">
+                    </div>
+                    <div class="form-group">
+                        <label>Bio</label>
+                        <textarea class="form-control" placeholder="Tell us about yourself..."></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                </form>
+            </div>
+            
+            <div class="account-section" id="subscription">
+                <h2><i class="fas fa-crown"></i> Subscription</h2>
+                <div class="plan-card">
+                    <div class="plan-info">
+                        <h3>{{ user_stats.plan_name if user_stats else 'Free' }} Plan <span class="plan-badge">Current</span></h3>
+                        <p>{{ user_stats.songs_limit if user_stats.songs_limit != 'unlimited' else 'Unlimited' }} songs/month · {{ user_stats.stems_available if user_stats else 4 }}-stem separation</p>
+                    </div>
+                    {% if not user_stats or user_stats.plan == 'free' %}
+                    <a href="/#pricing" class="btn btn-primary">Upgrade Plan</a>
+                    {% elif user_stats.plan == 'creator' %}
+                    <a href="/#pricing" class="btn btn-outline">Upgrade to Studio</a>
+                    {% else %}
+                    <span class="plan-badge" style="background: var(--success);">Max Plan</span>
+                    {% endif %}
+                </div>
+                
+                <!-- Plan Features -->
+                <div style="margin-top: 25px; padding: 20px; background: var(--bg-darker); border-radius: 12px;">
+                    <h4 style="font-size: 14px; margin-bottom: 15px; color: var(--text-muted);">Your Plan Features</h4>
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <i class="fas fa-check" style="color: var(--success); font-size: 12px;"></i>
+                            <span style="font-size: 13px;">{{ user_stats.songs_limit if user_stats.songs_limit != 'unlimited' else 'Unlimited' }} songs/month</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <i class="fas fa-check" style="color: var(--success); font-size: 12px;"></i>
+                            <span style="font-size: 13px;">{{ user_stats.stems_available if user_stats else 4 }}-stem separation</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            {% if user_stats and user_stats.has_api_access %}
+                            <i class="fas fa-check" style="color: var(--success); font-size: 12px;"></i>
+                            {% else %}
+                            <i class="fas fa-times" style="color: var(--text-muted); font-size: 12px;"></i>
+                            {% endif %}
+                            <span style="font-size: 13px;" class="{% if not user_stats or not user_stats.has_api_access %}text-muted{% endif %}">API Access</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            {% if user_stats and user_stats.has_commercial_license %}
+                            <i class="fas fa-check" style="color: var(--success); font-size: 12px;"></i>
+                            {% else %}
+                            <i class="fas fa-times" style="color: var(--text-muted); font-size: 12px;"></i>
+                            {% endif %}
+                            <span style="font-size: 13px;" class="{% if not user_stats or not user_stats.has_commercial_license %}text-muted{% endif %}">Commercial License</span>
+                        </div>
+                    </div>
+                    <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--border);">
+                        <span style="font-size: 13px; color: var(--text-muted);">Export Formats: </span>
+                        {% for format in (user_stats.export_formats if user_stats else ['mp3']) %}
+                        <span class="plan-badge" style="background: rgba(124, 58, 237, 0.3); font-size: 11px; margin-left: 5px;">{{ format|upper }}</span>
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                <div style="margin-top: 20px;">
+                    {% if user_stats and user_stats.plan != 'free' %}
+                    <p style="color: var(--text-muted); font-size: 14px;">Member since: {{ user_stats.member_since[:10] if user_stats.member_since else 'N/A' }}</p>
+                    <p style="margin-top: 10px;">
+                        <a href="#" style="color: var(--primary-light); font-size: 14px;">View billing history</a> · 
+                        <a href="#" style="color: var(--text-muted); font-size: 14px;">Cancel subscription</a>
+                    </p>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="account-section" id="usage">
+                <h2><i class="fas fa-chart-bar"></i> Usage This Month</h2>
+                <div>
+                    <div style="display: flex; justify-content: space-between; align-items: baseline;">
+                        <span style="font-size: 14px;">Songs Processed</span>
+                        <span style="font-size: 24px; font-weight: 700; color: var(--primary-light);">
+                            {{ user_stats.songs_this_month if user_stats else 0 }}
+                            {% if user_stats.songs_limit != 'unlimited' %}
+                            <span style="font-size: 14px; color: var(--text-muted);">/ {{ user_stats.songs_limit }}</span>
+                            {% endif %}
+                        </span>
+                    </div>
+                    {% if user_stats.songs_limit != 'unlimited' %}
+                    <div class="usage-bar">
+                        {% set usage_percent = ((user_stats.songs_this_month / user_stats.songs_limit) * 100) if user_stats and user_stats.songs_limit else 0 %}
+                        <div class="usage-fill" style="width: {{ [usage_percent, 100]|min }}%;"></div>
+                    </div>
+                    <div class="usage-text">
+                        <span>{{ user_stats.songs_remaining if user_stats else 0 }} songs remaining</span>
+                        <span>Resets on the 1st</span>
+                    </div>
+                    {% else %}
+                    <div style="margin-top: 10px; color: var(--success); font-size: 14px;">
+                        <i class="fas fa-infinity"></i> Unlimited processing available
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Stem Types Available -->
+                <div style="margin-top: 25px; padding-top: 20px; border-top: 1px solid var(--border);">
+                    <h4 style="font-size: 14px; margin-bottom: 15px;">Available Stem Types</h4>
+                    <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+                        {% for stem in (user_stats.stem_types if user_stats else ['vocals', 'drums', 'bass', 'other']) %}
+                        <div style="background: rgba(124, 58, 237, 0.15); padding: 8px 16px; border-radius: 20px; font-size: 13px;">
+                            <i class="fas fa-{% if stem == 'vocals' %}microphone{% elif stem == 'drums' %}drum{% elif stem == 'bass' %}guitar{% elif stem == 'guitar' %}guitar{% elif stem == 'piano' %}music{% else %}layer-group{% endif %}"></i>
+                            {{ stem|capitalize }}
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                <!-- Lifetime Stats -->
+                <div style="margin-top: 25px; padding-top: 20px; border-top: 1px solid var(--border);">
+                    <h4 style="font-size: 14px; margin-bottom: 15px;">Lifetime Statistics</h4>
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px;">
+                        <div style="background: var(--bg-darker); padding: 15px; border-radius: 8px; text-align: center;">
+                            <div style="font-size: 28px; font-weight: 700; color: var(--primary-light);">{{ user_stats.total_songs_processed if user_stats else 0 }}</div>
+                            <div style="font-size: 12px; color: var(--text-muted);">Songs Processed</div>
+                        </div>
+                        <div style="background: var(--bg-darker); padding: 15px; border-radius: 8px; text-align: center;">
+                            <div style="font-size: 28px; font-weight: 700; color: var(--secondary);">{{ user_stats.total_stems_downloaded if user_stats else 0 }}</div>
+                            <div style="font-size: 12px; color: var(--text-muted);">Stems Downloaded</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="account-section" id="notifications">
+                <h2><i class="fas fa-bell"></i> Notification Preferences</h2>
+                <div class="settings-item">
+                    <div class="settings-item-info">
+                        <h4>Email Notifications</h4>
+                        <p>Receive emails about your processing jobs</p>
+                    </div>
+                    <div class="toggle-switch active" onclick="this.classList.toggle('active')"></div>
+                </div>
+                <div class="settings-item">
+                    <div class="settings-item-info">
+                        <h4>Product Updates</h4>
+                        <p>News about new features and improvements</p>
+                    </div>
+                    <div class="toggle-switch active" onclick="this.classList.toggle('active')"></div>
+                </div>
+                <div class="settings-item">
+                    <div class="settings-item-info">
+                        <h4>Marketing Emails</h4>
+                        <p>Promotional offers and tips</p>
+                    </div>
+                    <div class="toggle-switch" onclick="this.classList.toggle('active')"></div>
+                </div>
+            </div>
+            
+            <div class="account-section" id="security">
+                <h2><i class="fas fa-shield-alt"></i> Security</h2>
+                <div class="settings-item">
+                    <div class="settings-item-info">
+                        <h4>Change Password</h4>
+                        <p>Update your account password</p>
+                    </div>
+                    <a href="#" class="btn btn-outline btn-sm">Change</a>
+                </div>
+                <div class="settings-item">
+                    <div class="settings-item-info">
+                        <h4>Two-Factor Authentication</h4>
+                        <p>Add an extra layer of security</p>
+                    </div>
+                    <a href="#" class="btn btn-outline btn-sm">Enable</a>
+                </div>
+                <div class="settings-item">
+                    <div class="settings-item-info">
+                        <h4>Active Sessions</h4>
+                        <p>Manage devices logged into your account</p>
+                    </div>
+                    <a href="#" class="btn btn-outline btn-sm">View</a>
+                </div>
+            </div>
+            
+            <div class="account-section" id="api">
+                <h2><i class="fas fa-code"></i> API Keys</h2>
+                {% if user_stats and user_stats.has_api_access %}
+                <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 20px;">Use API keys to integrate Harmonix into your applications.</p>
+                <div class="form-group">
+                    <label>Your API Key</label>
+                    <div style="display: flex; gap: 10px;">
+                        <input type="password" class="form-control" value="hx_sk_live_{{ current_user.username[:8] if current_user else 'xxxxx' }}xxxxxxxxxxxxx" readonly id="apiKey">
+                        <button class="btn btn-outline" onclick="copyApiKey()">Copy</button>
+                        <button class="btn btn-outline" onclick="toggleApiKey()"><i class="fas fa-eye"></i></button>
+                    </div>
+                </div>
+                <p style="color: var(--text-muted); font-size: 13px;"><i class="fas fa-info-circle"></i> Keep your API key secret. Don't share it publicly.</p>
+                <div style="margin-top: 20px;">
+                    <a href="/docs#api" class="btn btn-outline btn-sm">View API Documentation</a>
+                </div>
+                {% else %}
+                <div style="text-align: center; padding: 40px 20px;">
+                    <div style="width: 60px; height: 60px; background: rgba(124, 58, 237, 0.15); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;">
+                        <i class="fas fa-lock" style="font-size: 24px; color: var(--text-muted);"></i>
+                    </div>
+                    <h4 style="margin-bottom: 10px;">API Access Not Available</h4>
+                    <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 20px;">API access is available on the Studio plan. Upgrade to integrate Harmonix with your applications.</p>
+                    <a href="/#pricing" class="btn btn-primary">Upgrade to Studio</a>
+                </div>
+                {% endif %}
+            </div>
+            
+            <div class="account-section" id="history">
+                <h2><i class="fas fa-history"></i> Recent Activity</h2>
+                <div class="history-list">
+                    <div class="history-item">
+                        <div class="history-item-info">
+                            <div class="history-icon"><i class="fas fa-music"></i></div>
+                            <div>
+                                <h4>Song Processed</h4>
+                                <p>Summer_Vibes.mp3 - 4 stems</p>
+                            </div>
+                        </div>
+                        <span style="color: var(--text-muted); font-size: 13px;">2 hours ago</span>
+                    </div>
+                    <div class="history-item">
+                        <div class="history-item-info">
+                            <div class="history-icon"><i class="fas fa-download"></i></div>
+                            <div>
+                                <h4>Stems Downloaded</h4>
+                                <p>vocals.wav exported</p>
+                            </div>
+                        </div>
+                        <span style="color: var(--text-muted); font-size: 13px;">3 hours ago</span>
+                    </div>
+                    <div class="history-item">
+                        <div class="history-item-info">
+                            <div class="history-icon"><i class="fas fa-sign-in-alt"></i></div>
+                            <div>
+                                <h4>Login</h4>
+                                <p>Chrome on macOS</p>
+                            </div>
+                        </div>
+                        <span style="color: var(--text-muted); font-size: 13px;">1 day ago</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="account-section danger-zone">
+                <h2><i class="fas fa-exclamation-triangle"></i> Danger Zone</h2>
+                <div class="settings-item">
+                    <div class="settings-item-info">
+                        <h4>Delete Account</h4>
+                        <p>Permanently delete your account and all data</p>
+                    </div>
+                    <button class="btn btn-danger btn-sm">Delete Account</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

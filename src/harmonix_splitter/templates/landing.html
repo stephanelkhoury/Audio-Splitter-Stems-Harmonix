@@ -1,0 +1,1058 @@
+{% extends "base.html" %}
+
+{% block title %}Harmonix – AI-Powered Audio Stem Separation{% endblock %}
+{% block description %}Unmix the sound. Reveal the music. Extract vocals, drums, bass, and instruments from any song with AI-powered stem separation.{% endblock %}
+
+{% block extra_styles %}
+<style>
+    /* Override main-content padding for landing */
+    .main-content {
+        padding-top: 0;
+    }
+
+    /* Section Styles */
+    .section-header {
+        text-align: center;
+        margin-bottom: 60px;
+    }
+    .section-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: rgba(124, 58, 237, 0.1);
+        border: 1px solid var(--border);
+        padding: 8px 16px;
+        border-radius: 100px;
+        font-size: 13px;
+        color: var(--primary-light);
+        margin-bottom: 20px;
+    }
+    .section-header h1, .section-header h2 {
+        font-size: 48px;
+        font-weight: 700;
+        margin-bottom: 15px;
+        background: linear-gradient(135deg, #fff 0%, #a78bfa 50%, #06b6d4 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+    [data-theme="light"] .section-header h1,
+    [data-theme="light"] .section-header h2 {
+        background: linear-gradient(135deg, #0f172a 0%, var(--primary) 50%, #0891b2 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+    }
+    .section-header p {
+        font-size: 18px;
+        color: var(--text-muted);
+        max-width: 600px;
+        margin: 0 auto;
+    }
+
+    /* Hero Section */
+    .hero {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        padding: 120px 40px 80px;
+        position: relative;
+        overflow: hidden;
+    }
+    .hero::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: radial-gradient(ellipse at top, rgba(124, 58, 237, 0.15) 0%, transparent 60%),
+                    radial-gradient(ellipse at bottom right, rgba(6, 182, 212, 0.1) 0%, transparent 50%);
+        pointer-events: none;
+    }
+    .hero-content {
+        position: relative;
+        z-index: 1;
+        max-width: 900px;
+    }
+    .hero-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: rgba(124, 58, 237, 0.1);
+        border: 1px solid var(--border);
+        padding: 10px 20px;
+        border-radius: 100px;
+        font-size: 14px;
+        color: var(--primary-light);
+        margin-bottom: 30px;
+    }
+    .hero-badge i {
+        font-size: 8px;
+        animation: pulse 2s ease-in-out infinite;
+    }
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.4; }
+    }
+    .hero h1 {
+        font-size: clamp(42px, 7vw, 72px);
+        font-weight: 700;
+        line-height: 1.1;
+        margin-bottom: 25px;
+        background: linear-gradient(135deg, #fff 0%, #a78bfa 50%, #06b6d4 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+    [data-theme="light"] .hero h1 {
+        background: linear-gradient(135deg, #0f172a 0%, var(--primary) 50%, #0891b2 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+    }
+    .hero p {
+        font-size: 20px;
+        color: var(--text-muted);
+        max-width: 600px;
+        margin: 0 auto 40px;
+        line-height: 1.7;
+    }
+    .hero-cta {
+        display: flex;
+        gap: 20px;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+    .btn-hero {
+        padding: 16px 36px;
+        border-radius: 12px;
+        font-size: 16px;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.3s;
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        border: none;
+        cursor: pointer;
+    }
+    .btn-hero-primary {
+        background: linear-gradient(135deg, var(--primary), #6d28d9);
+        color: white;
+        box-shadow: 0 8px 30px rgba(124, 58, 237, 0.4);
+    }
+    .btn-hero-primary:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 12px 40px rgba(124, 58, 237, 0.5);
+    }
+    .btn-hero-ghost {
+        background: transparent;
+        color: var(--text);
+        border: 1px solid var(--border);
+    }
+    .btn-hero-ghost:hover {
+        background: rgba(124, 58, 237, 0.1);
+        border-color: var(--primary);
+    }
+
+    /* Hero Stats */
+    .hero-stats {
+        display: flex;
+        gap: 60px;
+        justify-content: center;
+        margin-top: 80px;
+        padding-top: 40px;
+        border-top: 1px solid var(--border);
+        position: relative;
+        z-index: 1;
+    }
+    .hero-stat {
+        text-align: center;
+    }
+    .hero-stat-value {
+        font-size: 36px;
+        font-weight: 700;
+        color: var(--text);
+        font-family: 'JetBrains Mono', monospace;
+    }
+    .hero-stat-label {
+        font-size: 13px;
+        color: var(--text-dim);
+        margin-top: 5px;
+    }
+
+    /* Demo Preview */
+    .demo-section {
+        padding: 0 40px 100px;
+        margin-top: -60px;
+        position: relative;
+        z-index: 2;
+    }
+    .demo-card {
+        max-width: 1000px;
+        margin: 0 auto;
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: 24px;
+        overflow: hidden;
+        box-shadow: 0 40px 100px rgba(0, 0, 0, 0.3);
+    }
+    [data-theme="light"] .demo-card {
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+    }
+    .demo-header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 15px 20px;
+        background: rgba(0, 0, 0, 0.2);
+        border-bottom: 1px solid var(--border);
+    }
+    [data-theme="light"] .demo-header {
+        background: rgba(0, 0, 0, 0.05);
+    }
+    .demo-dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+    }
+    .demo-dot.red { background: #ff5f57; }
+    .demo-dot.yellow { background: #febc2e; }
+    .demo-dot.green { background: #28c840; }
+    .demo-title {
+        margin-left: 15px;
+        font-size: 13px;
+        color: var(--text-dim);
+    }
+    .demo-content {
+        padding: 30px;
+    }
+    .demo-waveform {
+        height: 100px;
+        background: linear-gradient(90deg, 
+            rgba(124, 58, 237, 0.2) 0%, 
+            rgba(6, 182, 212, 0.2) 50%, 
+            rgba(16, 185, 129, 0.2) 100%
+        );
+        border-radius: 12px;
+        margin-bottom: 25px;
+        position: relative;
+        overflow: hidden;
+    }
+    .demo-waveform::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: linear-gradient(90deg, var(--primary), var(--secondary), var(--accent));
+    }
+    .demo-stems {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        gap: 15px;
+    }
+    .demo-stem {
+        background: var(--bg-dark);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 20px;
+        text-align: center;
+        transition: all 0.3s;
+    }
+    [data-theme="light"] .demo-stem {
+        background: #f8fafc;
+    }
+    .demo-stem:hover {
+        border-color: var(--primary);
+        transform: translateY(-3px);
+    }
+    .demo-stem-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 12px;
+        font-size: 20px;
+        color: white;
+    }
+    .demo-stem-icon.vocals { background: linear-gradient(135deg, #ef4444, #dc2626); }
+    .demo-stem-icon.drums { background: linear-gradient(135deg, #f59e0b, #d97706); }
+    .demo-stem-icon.bass { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }
+    .demo-stem-icon.other { background: linear-gradient(135deg, #06b6d4, #0891b2); }
+    .demo-stem-icon.lyrics { background: linear-gradient(135deg, #10b981, #059669); }
+    .demo-stem-name {
+        font-size: 14px;
+        font-weight: 600;
+        margin-bottom: 4px;
+    }
+    .demo-stem-status {
+        font-size: 12px;
+        color: var(--accent);
+    }
+
+    /* How It Works */
+    .how-section {
+        padding: 100px 40px;
+        background: var(--bg-darker);
+    }
+    [data-theme="light"] .how-section {
+        background: #f1f5f9;
+    }
+    .steps-container {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 20px;
+        max-width: 1200px;
+        margin: 0 auto;
+        position: relative;
+    }
+    .steps-container::before {
+        content: '';
+        position: absolute;
+        top: 50px;
+        left: 10%;
+        right: 10%;
+        height: 2px;
+        background: linear-gradient(90deg, var(--primary), var(--secondary));
+        z-index: 0;
+    }
+    .step {
+        text-align: center;
+        position: relative;
+        z-index: 1;
+    }
+    .step-icon {
+        width: 100px;
+        height: 100px;
+        background: var(--bg-card);
+        border: 2px solid var(--border);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 20px;
+        font-size: 32px;
+        transition: all 0.3s;
+    }
+    [data-theme="light"] .step-icon {
+        background: white;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    }
+    .step-icon i {
+        background: linear-gradient(135deg, var(--primary-light), var(--secondary));
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+    .step:hover .step-icon {
+        border-color: var(--primary);
+        transform: scale(1.1);
+        box-shadow: 0 0 40px rgba(124, 58, 237, 0.3);
+    }
+    .step h3 {
+        font-size: 16px;
+        font-weight: 600;
+        margin-bottom: 8px;
+    }
+    .step p {
+        font-size: 13px;
+        color: var(--text-dim);
+    }
+
+    /* Features Section */
+    .features-section {
+        padding: 100px 40px;
+    }
+    .features-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+        gap: 30px;
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+    .feature-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: 24px;
+        padding: 40px;
+        transition: all 0.3s;
+        position: relative;
+        overflow: hidden;
+    }
+    [data-theme="light"] .feature-card {
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    }
+    .feature-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, var(--primary), var(--secondary));
+        opacity: 0;
+        transition: opacity 0.3s;
+    }
+    .feature-card:hover {
+        transform: translateY(-5px);
+        border-color: var(--primary);
+        box-shadow: 0 20px 50px rgba(124, 58, 237, 0.2);
+    }
+    .feature-card:hover::before {
+        opacity: 1;
+    }
+    .feature-icon {
+        width: 70px;
+        height: 70px;
+        background: linear-gradient(135deg, rgba(124, 58, 237, 0.2), rgba(6, 182, 212, 0.2));
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 25px;
+    }
+    .feature-icon i {
+        font-size: 30px;
+        background: linear-gradient(135deg, var(--primary-light), var(--secondary));
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+    .feature-card h3 {
+        font-size: 22px;
+        margin-bottom: 12px;
+    }
+    .feature-card > p {
+        color: var(--text-muted);
+        line-height: 1.7;
+        margin-bottom: 20px;
+    }
+    .feature-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+    .feature-list li {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        color: var(--text-muted);
+        padding: 8px 0;
+        font-size: 14px;
+        border-bottom: 1px solid var(--border);
+    }
+    .feature-list li:last-child {
+        border-bottom: none;
+    }
+    .feature-list li i {
+        color: var(--accent);
+        font-size: 12px;
+    }
+
+    /* Use Cases */
+    .usecases-section {
+        padding: 100px 40px;
+        background: var(--bg-darker);
+    }
+    [data-theme="light"] .usecases-section {
+        background: #f1f5f9;
+    }
+    .usecases-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 25px;
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+    .usecase-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 30px;
+        display: flex;
+        align-items: flex-start;
+        gap: 20px;
+        transition: all 0.3s;
+    }
+    [data-theme="light"] .usecase-card {
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    }
+    .usecase-card:hover {
+        border-color: var(--secondary);
+        background: rgba(6, 182, 212, 0.05);
+        transform: translateY(-3px);
+    }
+    .usecase-icon {
+        width: 50px;
+        height: 50px;
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 22px;
+        color: white;
+        flex-shrink: 0;
+    }
+    .usecase-card h3 {
+        font-size: 18px;
+        font-weight: 600;
+        margin-bottom: 8px;
+    }
+    .usecase-card p {
+        font-size: 14px;
+        color: var(--text-dim);
+    }
+
+    /* Pricing Preview */
+    .pricing-section {
+        padding: 100px 40px;
+    }
+    .pricing-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 30px;
+        max-width: 1000px;
+        margin: 0 auto;
+    }
+    .pricing-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: 24px;
+        padding: 40px;
+        text-align: center;
+        transition: all 0.3s;
+        position: relative;
+    }
+    [data-theme="light"] .pricing-card {
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    }
+    .pricing-card.featured {
+        border-color: var(--primary);
+        transform: scale(1.05);
+        box-shadow: 0 30px 80px rgba(124, 58, 237, 0.2);
+    }
+    .pricing-card.featured::before {
+        content: 'MOST POPULAR';
+        position: absolute;
+        top: -12px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        padding: 6px 20px;
+        border-radius: 100px;
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 1px;
+        color: white;
+    }
+    .pricing-card:hover {
+        border-color: var(--primary);
+    }
+    .pricing-name {
+        font-size: 20px;
+        font-weight: 600;
+        margin-bottom: 10px;
+    }
+    .pricing-price {
+        font-size: 48px;
+        font-weight: 700;
+        margin-bottom: 5px;
+    }
+    .pricing-price span {
+        font-size: 16px;
+        color: var(--text-dim);
+        font-weight: 400;
+    }
+    .pricing-desc {
+        font-size: 14px;
+        color: var(--text-dim);
+        margin-bottom: 30px;
+    }
+    .pricing-features {
+        list-style: none;
+        text-align: left;
+        margin-bottom: 30px;
+    }
+    .pricing-features li {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 0;
+        border-bottom: 1px solid var(--border);
+        font-size: 14px;
+    }
+    .pricing-features li:last-child {
+        border-bottom: none;
+    }
+    .pricing-features li i {
+        color: var(--accent);
+    }
+    .pricing-features li i.fa-times {
+        color: var(--text-dim);
+    }
+    .pricing-btn {
+        display: block;
+        width: 100%;
+        padding: 14px;
+        border-radius: 12px;
+        font-size: 14px;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.3s;
+        text-align: center;
+    }
+    .pricing-btn-ghost {
+        background: transparent;
+        color: var(--text);
+        border: 1px solid var(--border);
+    }
+    .pricing-btn-ghost:hover {
+        background: rgba(124, 58, 237, 0.1);
+        border-color: var(--primary);
+    }
+    .pricing-btn-primary {
+        background: linear-gradient(135deg, var(--primary), #6d28d9);
+        color: white;
+        border: none;
+    }
+    .pricing-btn-primary:hover {
+        box-shadow: 0 8px 25px rgba(124, 58, 237, 0.4);
+    }
+
+    /* CTA Section */
+    .cta-section {
+        padding: 120px 40px;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+    .cta-section::before {
+        content: '';
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        top: 0;
+        left: 0;
+        background: radial-gradient(ellipse at center, rgba(124, 58, 237, 0.15) 0%, transparent 70%);
+        pointer-events: none;
+    }
+    .cta-content {
+        position: relative;
+        z-index: 1;
+    }
+    .cta-section h2 {
+        font-size: 42px;
+        font-weight: 700;
+        margin-bottom: 20px;
+        background: linear-gradient(135deg, #fff 0%, #a78bfa 50%, #06b6d4 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+    [data-theme="light"] .cta-section h2 {
+        background: linear-gradient(135deg, #0f172a 0%, var(--primary) 50%, #0891b2 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+    }
+    .cta-section p {
+        font-size: 18px;
+        color: var(--text-muted);
+        max-width: 500px;
+        margin: 0 auto 40px;
+    }
+    .cta-buttons {
+        display: flex;
+        gap: 20px;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+    .cta-btn {
+        padding: 16px 36px;
+        border-radius: 12px;
+        font-size: 16px;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.3s;
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .cta-btn-primary {
+        background: linear-gradient(135deg, var(--accent), #059669);
+        color: white;
+        box-shadow: 0 8px 30px rgba(16, 185, 129, 0.4);
+    }
+    .cta-btn-primary:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 12px 40px rgba(16, 185, 129, 0.5);
+    }
+    .cta-btn-ghost {
+        background: transparent;
+        color: var(--text);
+        border: 1px solid var(--border);
+    }
+    .cta-btn-ghost:hover {
+        background: rgba(124, 58, 237, 0.1);
+        border-color: var(--primary);
+    }
+
+    /* Responsive */
+    @media (max-width: 1024px) {
+        .steps-container {
+            grid-template-columns: repeat(3, 1fr);
+        }
+        .steps-container::before {
+            display: none;
+        }
+    }
+    @media (max-width: 768px) {
+        .hero {
+            padding: 100px 20px 60px;
+        }
+        .hero h1 {
+            font-size: 36px;
+        }
+        .hero-stats {
+            flex-direction: column;
+            gap: 25px;
+        }
+        .demo-section {
+            padding: 0 20px 60px;
+        }
+        .steps-container {
+            grid-template-columns: 1fr;
+            max-width: 300px;
+        }
+        .features-section,
+        .usecases-section,
+        .pricing-section,
+        .how-section {
+            padding: 60px 20px;
+        }
+        .pricing-card.featured {
+            transform: none;
+        }
+        .section-header h1,
+        .section-header h2 {
+            font-size: 32px;
+        }
+    }
+
+    /* Animations */
+    .fade-in {
+        opacity: 0;
+        transform: translateY(30px);
+        transition: all 0.8s ease-out;
+    }
+    .fade-in.visible {
+        opacity: 1;
+        transform: translateY(0);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero">
+    <div class="hero-content fade-in">
+        <div class="hero-badge">
+            <i class="fas fa-circle"></i>
+            AI-Powered Audio Intelligence
+        </div>
+        <h1>Extract. Separate.<br>Understand Music.</h1>
+        <p>Upload any song. Get clean stems, synced lyrics, and musical intelligence in seconds. Powered by state-of-the-art AI.</p>
+        <div class="hero-cta">
+            <a href="/register" class="btn-hero btn-hero-primary">
+                <i class="fas fa-rocket"></i> Start Free
+            </a>
+            <a href="/login" class="btn-hero btn-hero-ghost">
+                <i class="fas fa-sign-in-alt"></i> Sign In
+            </a>
+        </div>
+    </div>
+    <div class="hero-stats fade-in">
+        <div class="hero-stat">
+            <div class="hero-stat-value">6</div>
+            <div class="hero-stat-label">Stem Types</div>
+        </div>
+        <div class="hero-stat">
+            <div class="hero-stat-value">99%</div>
+            <div class="hero-stat-label">Accuracy</div>
+        </div>
+        <div class="hero-stat">
+            <div class="hero-stat-value">&lt;2min</div>
+            <div class="hero-stat-label">Processing Time</div>
+        </div>
+        <div class="hero-stat">
+            <div class="hero-stat-value">50+</div>
+            <div class="hero-stat-label">Languages</div>
+        </div>
+    </div>
+</section>
+
+<!-- Demo Preview -->
+<section class="demo-section">
+    <div class="demo-card fade-in">
+        <div class="demo-header">
+            <div class="demo-dot red"></div>
+            <div class="demo-dot yellow"></div>
+            <div class="demo-dot green"></div>
+            <span class="demo-title">Harmonix Studio – Processing Complete</span>
+        </div>
+        <div class="demo-content">
+            <div class="demo-waveform"></div>
+            <div class="demo-stems">
+                <div class="demo-stem">
+                    <div class="demo-stem-icon vocals"><i class="fas fa-microphone"></i></div>
+                    <div class="demo-stem-name">Vocals</div>
+                    <div class="demo-stem-status"><i class="fas fa-check"></i> Ready</div>
+                </div>
+                <div class="demo-stem">
+                    <div class="demo-stem-icon drums"><i class="fas fa-drum"></i></div>
+                    <div class="demo-stem-name">Drums</div>
+                    <div class="demo-stem-status"><i class="fas fa-check"></i> Ready</div>
+                </div>
+                <div class="demo-stem">
+                    <div class="demo-stem-icon bass"><i class="fas fa-guitar"></i></div>
+                    <div class="demo-stem-name">Bass</div>
+                    <div class="demo-stem-status"><i class="fas fa-check"></i> Ready</div>
+                </div>
+                <div class="demo-stem">
+                    <div class="demo-stem-icon other"><i class="fas fa-music"></i></div>
+                    <div class="demo-stem-name">Other</div>
+                    <div class="demo-stem-status"><i class="fas fa-check"></i> Ready</div>
+                </div>
+                <div class="demo-stem">
+                    <div class="demo-stem-icon lyrics"><i class="fas fa-closed-captioning"></i></div>
+                    <div class="demo-stem-name">Lyrics</div>
+                    <div class="demo-stem-status"><i class="fas fa-check"></i> Synced</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- How It Works -->
+<section class="how-section">
+    <div class="section-header fade-in">
+        <span class="section-badge"><i class="fas fa-bolt"></i> Simple Process</span>
+        <h2>How It Works</h2>
+        <p>From upload to export in five simple steps. No technical knowledge required.</p>
+    </div>
+    <div class="steps-container">
+        <div class="step fade-in">
+            <div class="step-icon"><i class="fas fa-cloud-upload-alt"></i></div>
+            <h3>Upload Audio</h3>
+            <p>MP3, WAV, FLAC, or paste a YouTube URL</p>
+        </div>
+        <div class="step fade-in">
+            <div class="step-icon"><i class="fas fa-brain"></i></div>
+            <h3>AI Analysis</h3>
+            <p>Deep spectral analysis with neural networks</p>
+        </div>
+        <div class="step fade-in">
+            <div class="step-icon"><i class="fas fa-layer-group"></i></div>
+            <h3>Stem Generation</h3>
+            <p>Each instrument isolated with precision</p>
+        </div>
+        <div class="step fade-in">
+            <div class="step-icon"><i class="fas fa-align-left"></i></div>
+            <h3>Lyrics & Structure</h3>
+            <p>Time-synced lyrics with word alignment</p>
+        </div>
+        <div class="step fade-in">
+            <div class="step-icon"><i class="fas fa-download"></i></div>
+            <h3>Export & Control</h3>
+            <p>Download stems or mix in the studio</p>
+        </div>
+    </div>
+</section>
+
+<!-- Features -->
+<section class="features-section">
+    <div class="section-header fade-in">
+        <span class="section-badge"><i class="fas fa-star"></i> Core Features</span>
+        <h2>Everything You Need</h2>
+        <p>Professional-grade audio tools, accessible to everyone.</p>
+    </div>
+    <div class="features-grid">
+        <div class="feature-card fade-in">
+            <div class="feature-icon"><i class="fas fa-sliders-h"></i></div>
+            <h3>Stem Extraction</h3>
+            <p>Isolate vocals, drums, bass, and instruments with AI-powered precision.</p>
+            <ul class="feature-list">
+                <li><i class="fas fa-check"></i> Vocals isolation</li>
+                <li><i class="fas fa-check"></i> Drums & percussion</li>
+                <li><i class="fas fa-check"></i> Bass extraction</li>
+                <li><i class="fas fa-check"></i> Guitar & piano detection</li>
+            </ul>
+        </div>
+        <div class="feature-card fade-in">
+            <div class="feature-icon"><i class="fas fa-closed-captioning"></i></div>
+            <h3>Lyrics Extraction</h3>
+            <p>Automatic transcription with word-level timing. 50+ languages supported.</p>
+            <ul class="feature-list">
+                <li><i class="fas fa-check"></i> Auto language detection</li>
+                <li><i class="fas fa-check"></i> Word-level timestamps</li>
+                <li><i class="fas fa-check"></i> Karaoke-style sync</li>
+                <li><i class="fas fa-check"></i> Export LRC/SRT formats</li>
+            </ul>
+        </div>
+        <div class="feature-card fade-in">
+            <div class="feature-icon"><i class="fas fa-headphones"></i></div>
+            <h3>Stem Studio</h3>
+            <p>Mix and control your stems with a professional DAW-like interface.</p>
+            <ul class="feature-list">
+                <li><i class="fas fa-check"></i> Solo & mute controls</li>
+                <li><i class="fas fa-check"></i> Volume & pan</li>
+                <li><i class="fas fa-check"></i> Waveform visualization</li>
+                <li><i class="fas fa-check"></i> Synchronized playback</li>
+            </ul>
+        </div>
+    </div>
+</section>
+
+<!-- Use Cases -->
+<section class="usecases-section">
+    <div class="section-header fade-in">
+        <span class="section-badge"><i class="fas fa-users"></i> Who It's For</span>
+        <h2>Built for Creators</h2>
+        <p>From bedroom producers to professional studios.</p>
+    </div>
+    <div class="usecases-grid">
+        <div class="usecase-card fade-in">
+            <div class="usecase-icon"><i class="fas fa-keyboard"></i></div>
+            <div>
+                <h3>Musicians & Bands</h3>
+                <p>Learn songs by isolating individual parts. Practice with stems.</p>
+            </div>
+        </div>
+        <div class="usecase-card fade-in">
+            <div class="usecase-icon"><i class="fas fa-headphones-alt"></i></div>
+            <div>
+                <h3>DJs & Remixers</h3>
+                <p>Extract acapellas and instrumentals for creative remixes.</p>
+            </div>
+        </div>
+        <div class="usecase-card fade-in">
+            <div class="usecase-icon"><i class="fas fa-church"></i></div>
+            <div>
+                <h3>Choirs & Worship</h3>
+                <p>Get lyrics and backing tracks for rehearsals and performances.</p>
+            </div>
+        </div>
+        <div class="usecase-card fade-in">
+            <div class="usecase-icon"><i class="fas fa-video"></i></div>
+            <div>
+                <h3>Content Creators</h3>
+                <p>Remove vocals for background music. Add custom lyrics to videos.</p>
+            </div>
+        </div>
+        <div class="usecase-card fade-in">
+            <div class="usecase-icon"><i class="fas fa-microphone-alt"></i></div>
+            <div>
+                <h3>Audio Engineers</h3>
+                <p>Stem separation for mixing, mastering, and restoration projects.</p>
+            </div>
+        </div>
+        <div class="usecase-card fade-in">
+            <div class="usecase-icon"><i class="fas fa-graduation-cap"></i></div>
+            <div>
+                <h3>Music Education</h3>
+                <p>Teach composition and arrangement with isolated instrument tracks.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Pricing -->
+<section class="pricing-section">
+    <div class="section-header fade-in">
+        <span class="section-badge"><i class="fas fa-tag"></i> Simple Pricing</span>
+        <h2>Choose Your Plan</h2>
+        <p>Start free, upgrade when you need more.</p>
+    </div>
+    <div class="pricing-grid">
+        <div class="pricing-card fade-in">
+            <div class="pricing-name">Free</div>
+            <div class="pricing-price">$0<span>/month</span></div>
+            <div class="pricing-desc">For trying out</div>
+            <ul class="pricing-features">
+                <li><i class="fas fa-check"></i> 3 songs per month</li>
+                <li><i class="fas fa-check"></i> 4-stem separation</li>
+                <li><i class="fas fa-check"></i> Basic lyrics extraction</li>
+                <li><i class="fas fa-times"></i> No commercial use</li>
+            </ul>
+            <a href="/register" class="pricing-btn pricing-btn-ghost">Get Started Free</a>
+        </div>
+        <div class="pricing-card featured fade-in">
+            <div class="pricing-name">Creator</div>
+            <div class="pricing-price">$19<span>/month</span></div>
+            <div class="pricing-desc">For musicians & creators</div>
+            <ul class="pricing-features">
+                <li><i class="fas fa-check"></i> 50 songs per month</li>
+                <li><i class="fas fa-check"></i> 6-stem separation</li>
+                <li><i class="fas fa-check"></i> Advanced lyrics + timing</li>
+                <li><i class="fas fa-check"></i> Priority processing</li>
+            </ul>
+            <a href="/register" class="pricing-btn pricing-btn-primary">Start Free Trial</a>
+        </div>
+        <div class="pricing-card fade-in">
+            <div class="pricing-name">Studio</div>
+            <div class="pricing-price">$49<span>/month</span></div>
+            <div class="pricing-desc">For professionals</div>
+            <ul class="pricing-features">
+                <li><i class="fas fa-check"></i> Unlimited songs</li>
+                <li><i class="fas fa-check"></i> 6-stem + custom models</li>
+                <li><i class="fas fa-check"></i> API access</li>
+                <li><i class="fas fa-check"></i> Commercial license</li>
+            </ul>
+            <a href="/contact" class="pricing-btn pricing-btn-ghost">Contact Sales</a>
+        </div>
+    </div>
+</section>
+
+<!-- CTA Section -->
+<section class="cta-section">
+    <div class="cta-content fade-in">
+        <h2>Ready to Unmix Your Music?</h2>
+        <p>Join thousands of musicians, producers, and creators using Harmonix.</p>
+        <div class="cta-buttons">
+            <a href="/register" class="cta-btn cta-btn-primary">
+                <i class="fas fa-rocket"></i> Get Started Free
+            </a>
+            <a href="/dashboard" class="cta-btn cta-btn-ghost">
+                <i class="fas fa-play"></i> Try Demo
+            </a>
+        </div>
+    </div>
+</section>
+
+<script>
+    // Fade-in animations on scroll
+    const observerOptions = {
+        root: null,
+        rootMargin: '0px',
+        threshold: 0.1
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('visible');
+            }
+        });
+    }, observerOptions);
+
+    document.querySelectorAll('.fade-in').forEach(el => {
+        observer.observe(el);
+    });
+</script>
+{% endblock %}

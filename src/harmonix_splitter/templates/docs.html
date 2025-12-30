@@ -1,0 +1,428 @@
+{% extends "base.html" %}
+
+{% block title %}Documentation – Harmonix{% endblock %}
+{% block description %}Complete documentation for Harmonix audio stem separation. Learn how to use all features effectively.{% endblock %}
+
+{% block extra_styles %}
+<style>
+    /* Section Styles */
+    .section-header {
+        text-align: center;
+        margin-bottom: 60px;
+    }
+    .section-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: rgba(124, 58, 237, 0.1);
+        border: 1px solid var(--border);
+        padding: 8px 16px;
+        border-radius: 100px;
+        font-size: 13px;
+        color: var(--primary-light);
+        margin-bottom: 20px;
+    }
+    .section-header h1 {
+        font-size: 48px;
+        font-weight: 700;
+        margin-bottom: 15px;
+        background: linear-gradient(135deg, #fff 0%, #a78bfa 50%, #06b6d4 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+    [data-theme="light"] .section-header h1 {
+        background: linear-gradient(135deg, #0f172a 0%, var(--primary) 50%, #0891b2 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+    }
+    .section-header p {
+        font-size: 18px;
+        color: var(--text-muted);
+        max-width: 600px;
+        margin: 0 auto;
+        line-height: 1.8;
+    }
+
+    /* Hero */
+    .docs-hero {
+        padding: 60px 40px 40px;
+        text-align: center;
+    }
+
+    /* Docs Layout */
+    .docs-wrapper {
+        display: flex;
+        max-width: 1300px;
+        margin: 0 auto;
+        padding: 0 40px 80px;
+        gap: 50px;
+    }
+    
+    /* Sidebar */
+    .docs-sidebar {
+        width: 260px;
+        flex-shrink: 0;
+    }
+    .docs-nav-wrapper {
+        position: sticky;
+        top: 100px;
+    }
+    .docs-nav {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 25px;
+        max-height: calc(100vh - 150px);
+        overflow-y: auto;
+    }
+    [data-theme="light"] .docs-nav {
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    }
+    .docs-nav-title {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+        color: var(--text-muted);
+        margin-bottom: 15px;
+        font-weight: 600;
+    }
+    .docs-nav-section {
+        margin-bottom: 20px;
+    }
+    .docs-nav-section h4 {
+        font-size: 13px;
+        color: var(--primary-light);
+        margin-bottom: 10px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .docs-nav-section ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+    .docs-nav-section li {
+        margin-bottom: 6px;
+    }
+    .docs-nav-section a {
+        color: var(--text-muted);
+        text-decoration: none;
+        font-size: 14px;
+        transition: color 0.3s;
+        display: block;
+        padding: 5px 0;
+    }
+    .docs-nav-section a:hover,
+    .docs-nav-section a.active {
+        color: var(--primary-light);
+    }
+
+    /* Main Content */
+    .docs-content {
+        flex: 1;
+        min-width: 0;
+        max-width: 850px;
+    }
+    .docs-content h2 {
+        font-size: 28px;
+        margin: 50px 0 20px;
+        padding-top: 30px;
+        border-top: 1px solid var(--border);
+        background: linear-gradient(135deg, #fff, var(--primary-light));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+    [data-theme="light"] .docs-content h2 {
+        background: linear-gradient(135deg, #0f172a, var(--primary));
+        -webkit-background-clip: text;
+        background-clip: text;
+    }
+    .docs-content h2:first-of-type {
+        border-top: none;
+        margin-top: 0;
+        padding-top: 0;
+    }
+    .docs-content h3 {
+        font-size: 20px;
+        margin: 35px 0 15px;
+    }
+    .docs-content p {
+        color: var(--text-muted);
+        line-height: 1.8;
+        margin-bottom: 20px;
+        font-size: 16px;
+    }
+    .docs-content ul, .docs-content ol {
+        color: var(--text-muted);
+        margin-bottom: 25px;
+        padding-left: 25px;
+        line-height: 1.8;
+    }
+    .docs-content li {
+        margin-bottom: 10px;
+    }
+    .docs-content a {
+        color: var(--primary-light);
+        text-decoration: none;
+    }
+    .docs-content a:hover {
+        text-decoration: underline;
+    }
+    .code-block {
+        background: var(--bg-darker);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 20px;
+        margin: 25px 0;
+        overflow-x: auto;
+    }
+    .code-block code {
+        font-family: 'JetBrains Mono', 'Monaco', 'Consolas', monospace;
+        font-size: 14px;
+        color: var(--primary-light);
+        white-space: pre;
+    }
+    .info-box {
+        background: rgba(124, 58, 237, 0.1);
+        border: 1px solid rgba(124, 58, 237, 0.3);
+        border-radius: 14px;
+        padding: 22px 28px;
+        margin: 25px 0;
+    }
+    .info-box h4 {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 15px;
+        margin-bottom: 10px;
+    }
+    .info-box h4 i {
+        color: var(--primary-light);
+    }
+    .info-box p {
+        margin: 0;
+        font-size: 14px;
+    }
+    .warning-box {
+        background: rgba(245, 158, 11, 0.1);
+        border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+    .warning-box h4 i {
+        color: #f59e0b;
+    }
+    .feature-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+        margin: 25px 0;
+    }
+    .feature-item {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 20px;
+        font-size: 14px;
+        transition: all 0.3s;
+    }
+    .feature-item:hover {
+        border-color: var(--primary);
+    }
+    .feature-item i {
+        color: var(--primary-light);
+        margin-right: 10px;
+    }
+
+    @media (max-width: 900px) {
+        .docs-wrapper { flex-direction: column; padding: 0 20px 60px; gap: 30px; }
+        .docs-sidebar { width: 100%; }
+        .docs-nav-wrapper { position: static; }
+        .docs-nav { max-height: none; }
+        .section-header h1 { font-size: 36px; }
+        .docs-hero { padding: 40px 20px; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero -->
+<section class="docs-hero">
+    <div class="section-header">
+        <div class="section-badge"><i class="fas fa-book"></i> Documentation</div>
+        <h1>User Guide</h1>
+        <p>Everything you need to know to get the most out of Harmonix</p>
+    </div>
+</section>
+
+<!-- Docs Layout -->
+<div class="docs-wrapper">
+    <!-- Sidebar -->
+    <aside class="docs-sidebar">
+        <div class="docs-nav-wrapper">
+            <nav class="docs-nav">
+                <div class="docs-nav-title">Contents</div>
+                
+                <div class="docs-nav-section">
+                    <h4><i class="fas fa-rocket"></i> Getting Started</h4>
+                    <ul>
+                        <li><a href="#introduction">Introduction</a></li>
+                        <li><a href="#quick-start">Quick Start Guide</a></li>
+                        <li><a href="#supported-formats">Supported Formats</a></li>
+                    </ul>
+                </div>
+                
+                <div class="docs-nav-section">
+                    <h4><i class="fas fa-layer-group"></i> Features</h4>
+                    <ul>
+                        <li><a href="#stem-separation">Stem Separation</a></li>
+                        <li><a href="#lyrics">Lyrics Extraction</a></li>
+                        <li><a href="#pitch-tempo">Pitch & Tempo</a></li>
+                        <li><a href="#export">Export Options</a></li>
+                    </ul>
+                </div>
+                
+                <div class="docs-nav-section">
+                    <h4><i class="fas fa-code"></i> API</h4>
+                    <ul>
+                        <li><a href="#api-overview">API Overview</a></li>
+                        <li><a href="#authentication">Authentication</a></li>
+                        <li><a href="#endpoints">Endpoints</a></li>
+                    </ul>
+                </div>
+                
+                <div class="docs-nav-section">
+                    <h4><i class="fas fa-question-circle"></i> Help</h4>
+                    <ul>
+                        <li><a href="#faq">FAQ</a></li>
+                        <li><a href="#troubleshooting">Troubleshooting</a></li>
+                    </ul>
+                </div>
+            </nav>
+        </div>
+    </aside>
+    
+    <!-- Main Content -->
+    <main class="docs-content">
+        <h2 id="introduction">Introduction</h2>
+        <p>Harmonix is an AI-powered audio stem separation tool that lets you extract individual instruments and vocals from any song. Using state-of-the-art deep learning models, you can isolate drums, bass, vocals, and other instruments with professional-quality results.</p>
+        
+        <div class="feature-grid">
+            <div class="feature-item"><i class="fas fa-microphone-alt"></i> Vocal Extraction</div>
+            <div class="feature-item"><i class="fas fa-drum"></i> Drum Isolation</div>
+            <div class="feature-item"><i class="fas fa-guitar"></i> Bass Separation</div>
+            <div class="feature-item"><i class="fas fa-language"></i> Lyrics Transcription</div>
+            <div class="feature-item"><i class="fas fa-sliders-h"></i> Pitch Shifting</div>
+            <div class="feature-item"><i class="fas fa-chart-line"></i> Audio Analysis</div>
+        </div>
+        
+        <h2 id="quick-start">Quick Start Guide</h2>
+        <p>Getting started with Harmonix is easy. Follow these steps:</p>
+        <ol>
+            <li><strong>Create an account</strong> or sign in to your existing account</li>
+            <li><strong>Upload an audio file</strong> by dragging and dropping or clicking the upload area</li>
+            <li><strong>Select your stems</strong> - choose which instruments you want to extract</li>
+            <li><strong>Wait for processing</strong> - our AI will separate the stems (usually 1-3 minutes)</li>
+            <li><strong>Preview and download</strong> - listen to each stem and download the ones you need</li>
+        </ol>
+        
+        <div class="info-box">
+            <h4><i class="fas fa-lightbulb"></i> Pro Tip</h4>
+            <p>For best results, use high-quality source audio (320kbps MP3 or lossless formats). Lower quality sources may result in artifacts in the separated stems.</p>
+        </div>
+        
+        <h2 id="supported-formats">Supported Formats</h2>
+        <h3>Input Formats</h3>
+        <ul>
+            <li><strong>Audio:</strong> MP3, WAV, FLAC, M4A, AAC, OGG, WMA</li>
+            <li><strong>Video:</strong> MP4, MKV, AVI, MOV (audio track will be extracted)</li>
+            <li><strong>URL:</strong> YouTube, SoundCloud, and other supported platforms</li>
+        </ul>
+        
+        <h3>Output Formats</h3>
+        <ul>
+            <li><strong>WAV:</strong> Lossless, best for further editing in DAWs</li>
+            <li><strong>MP3:</strong> Compressed, good for sharing and storage</li>
+            <li><strong>FLAC:</strong> Lossless compression, smaller than WAV</li>
+        </ul>
+        
+        <h2 id="stem-separation">Stem Separation</h2>
+        <p>Our AI model can separate audio into the following stems:</p>
+        <ul>
+            <li><strong>Vocals:</strong> Lead and backing vocals</li>
+            <li><strong>Drums:</strong> Kick, snare, hi-hats, cymbals, and all percussion</li>
+            <li><strong>Bass:</strong> Bass guitar, synth bass, and low-frequency instruments</li>
+            <li><strong>Other:</strong> Everything else - guitars, keyboards, synths, etc.</li>
+        </ul>
+        
+        <div class="warning-box info-box">
+            <h4><i class="fas fa-exclamation-triangle"></i> Note</h4>
+            <p>Stem separation quality depends on the complexity of the mix. Songs with clear separation between instruments will yield better results than heavily layered productions.</p>
+        </div>
+        
+        <h2 id="lyrics">Lyrics Extraction</h2>
+        <p>Harmonix uses OpenAI's Whisper model to automatically transcribe lyrics from your audio. Features include:</p>
+        <ul>
+            <li>Support for 50+ languages including Arabic, Chinese, and Japanese</li>
+            <li>Word-level timestamps for karaoke-style display</li>
+            <li>Export to LRC format for use with media players</li>
+            <li>Editable transcriptions to fix any errors</li>
+        </ul>
+        
+        <h2 id="pitch-tempo">Pitch & Tempo</h2>
+        <p>Adjust the pitch and tempo of your separated stems:</p>
+        <ul>
+            <li><strong>Pitch Shifting:</strong> Transpose up or down by semitones without affecting tempo</li>
+            <li><strong>Tempo Adjustment:</strong> Speed up or slow down without affecting pitch</li>
+            <li><strong>Real-time Preview:</strong> Hear changes instantly before exporting</li>
+        </ul>
+        
+        <h2 id="export">Export Options</h2>
+        <p>Download your separated stems in various ways:</p>
+        <ul>
+            <li>Individual stems as separate files</li>
+            <li>All stems in a single ZIP archive</li>
+            <li>Custom combinations (e.g., vocals only, instrumental only)</li>
+        </ul>
+        
+        <h2 id="api-overview">API Overview</h2>
+        <p>Harmonix provides a REST API for developers who want to integrate stem separation into their applications.</p>
+        
+        <div class="code-block"><code>POST /api/v1/separate
+Content-Type: multipart/form-data
+Authorization: Bearer YOUR_API_KEY
+
+{
+  "audio_file": [binary data],
+  "stems": ["vocals", "drums", "bass", "other"],
+  "output_format": "wav"
+}</code></div>
+        
+        <h2 id="faq">Frequently Asked Questions</h2>
+        <h3>How long does processing take?</h3>
+        <p>Processing time depends on the length of the audio file and current server load. Typically, a 4-minute song takes 1-3 minutes to process.</p>
+        
+        <h3>Can I use the stems commercially?</h3>
+        <p>The ability to use stems commercially depends on your subscription plan. See our <a href="/pricing">pricing page</a> for details. Note that you're responsible for obtaining rights to the original source material.</p>
+        
+        <h3>What's the maximum file size?</h3>
+        <p>Free accounts: 50MB / Creator accounts: 200MB / Studio accounts: 500MB</p>
+        
+        <h2 id="troubleshooting">Troubleshooting</h2>
+        <h3>My upload is failing</h3>
+        <ul>
+            <li>Check that your file is in a supported format</li>
+            <li>Ensure the file doesn't exceed your plan's size limit</li>
+            <li>Try a different browser or clear your cache</li>
+        </ul>
+        
+        <h3>The stems have artifacts or sound strange</h3>
+        <ul>
+            <li>Use a higher quality source file</li>
+            <li>Try the "High Quality" mode (Creator/Studio plans)</li>
+            <li>Some complex mixes are inherently difficult to separate cleanly</li>
+        </ul>
+    </main>
+</div>
+{% endblock %}

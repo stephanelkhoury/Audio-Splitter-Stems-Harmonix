@@ -108,9 +108,23 @@ class LyricsExtractor:
     
     # Known Whisper hallucinations - repetitive promotional/filler text
     HALLUCINATION_PATTERNS = [
-        'اشتركوا في القناة',  # Arabic: "Subscribe to the channel"
-        'شكرا للمشاهدة',  # Arabic: "Thanks for watching"
-        'لا تنسوا الاشتراك',  # Arabic: "Don't forget to subscribe"
+        # Arabic hallucinations
+        'اشتركوا في القناة',  # "Subscribe to the channel"
+        'شكرا للمشاهدة',  # "Thanks for watching"
+        'لا تنسوا الاشتراك',  # "Don't forget to subscribe"
+        'مرحبا بكم',  # "Welcome"
+        'المترجمات من قبل',  # "Translations by" - common hallucination
+        'الترجمة من قبل',  # "Translation by"
+        'ترجمة محمد',  # "Translation Mohammad"
+        'ترجمة:',  # "Translation:"
+        'محمد روحان',  # Fake translator name
+        'روحان',  # Part of fake translator name
+        'السلام عليكم ورحمة الله',  # Greeting that gets hallucinated
+        'بسم الله الرحمن الرحيم',  # Religious phrase often hallucinated
+        'صلى الله عليه وسلم',  # Religious phrase often hallucinated
+        'أمين',  # "Amen" - often hallucinated at end
+        
+        # English hallucinations
         'subscribe to the channel',
         'thanks for watching',
         'thank you for watching',
@@ -118,16 +132,32 @@ class LyricsExtractor:
         'like and subscribe',
         'please subscribe',
         'subscribe and like',
-        'مرحبا بكم',  # Arabic: "Welcome"
-        'السلام عليكم',  # Arabic: "Peace be upon you" (only if repeated)
-        '字幕由',  # Chinese: subtitle credits
-        '請訂閱',  # Chinese: please subscribe
-        'チャンネル登録',  # Japanese: channel subscription
-        'ご視聴ありがとう',  # Japanese: thanks for watching
-        'Merci d\'avoir regardé',  # French: thanks for watching
-        'Abonnez-vous',  # French: subscribe
-        'Gracias por ver',  # Spanish: thanks for watching
-        'Suscríbete',  # Spanish: subscribe
+        'subtitles by',
+        'translated by',
+        'captions by',
+        'transcribed by',
+        
+        # Chinese hallucinations
+        '字幕由',  # subtitle credits
+        '請訂閱',  # please subscribe
+        '謝謝觀看',  # thanks for watching
+        
+        # Japanese hallucinations
+        'チャンネル登録',  # channel subscription
+        'ご視聴ありがとう',  # thanks for watching
+        '字幕:',  # subtitles:
+        
+        # French hallucinations
+        'Merci d\'avoir regardé',  # thanks for watching
+        'Abonnez-vous',  # subscribe
+        'Sous-titres par',  # subtitles by
+        'Traduit par',  # translated by
+        
+        # Spanish hallucinations
+        'Gracias por ver',  # thanks for watching
+        'Suscríbete',  # subscribe
+        'Subtítulos por',  # subtitles by
+        'Traducido por',  # translated by
     ]
     
     def __init__(
@@ -192,9 +222,27 @@ class LyricsExtractor:
         """
         text_lower = text.lower().strip()
         
+        # Empty or very short text
+        if len(text_lower) < 2:
+            return True
+        
         # Check against known hallucination patterns
         for pattern in self.HALLUCINATION_PATTERNS:
             if pattern.lower() in text_lower:
+                logger.debug(f"Filtered hallucination: '{text}' (matched: '{pattern}')")
+                return True
+        
+        # Check for "by NAME" patterns (common hallucination)
+        # Match patterns like "subtitles by X", "translation by X", etc.
+        by_patterns = [
+            r'(subtitle|caption|translation|transcri|transl).*\s+by\s+\w+',
+            r'by\s+\w+\s+(subtitle|caption|translation)',
+            r'من قبل\s+\w+',  # Arabic "by NAME"
+            r'ترجمة\s*[:\s]\s*\w+',  # Arabic "translation: NAME"
+        ]
+        for pattern in by_patterns:
+            if re.search(pattern, text_lower, re.IGNORECASE):
+                logger.debug(f"Filtered hallucination: '{text}' (matched by-pattern)")
                 return True
         
         return False
@@ -261,7 +309,7 @@ class LyricsExtractor:
         word_timestamps: bool = True
     ) -> LyricsResult:
         """
-        Extract lyrics from audio file
+        Extract lyrics from audio file with maximum quality settings
         
         Args:
             audio_path: Path to audio file (preferably isolated vocals)
@@ -281,22 +329,42 @@ class LyricsExtractor:
         logger.info(f"Extracting lyrics from: {audio_path}")
         logger.info(f"Language: {language}, Task: {task}")
         
-        # Prepare transcription options with hallucination prevention
+        # MAXIMUM QUALITY settings for lyrics extraction
         options = {
             'task': task,
             'word_timestamps': word_timestamps,
             'verbose': False,
-            # Hallucination prevention settings
-            'condition_on_previous_text': False,  # Reduces repetition loops
-            'compression_ratio_threshold': 2.4,   # Lower = stricter (default 2.4)
-            'logprob_threshold': -1.0,            # Filter low confidence (default -1.0)
-            'no_speech_threshold': 0.6,           # Higher = stricter silence detection
-            'temperature': 0,                     # Deterministic output
+            
+            # === HALLUCINATION PREVENTION (STRICT) ===
+            'condition_on_previous_text': False,  # CRITICAL: Prevents repetition loops
+            'compression_ratio_threshold': 1.8,   # Stricter than default 2.4
+            'logprob_threshold': -0.5,            # Stricter than default -1.0, filters low confidence
+            'no_speech_threshold': 0.5,           # Stricter silence detection
+            
+            # === QUALITY SETTINGS ===
+            'temperature': 0,                     # Deterministic output (no randomness)
+            'best_of': 5,                         # Consider 5 beams for best result
+            'beam_size': 5,                       # Beam search width
+            'patience': 1.0,                      # Wait for full beam search
+            
+            # === SEGMENTATION ===
+            'fp16': False,                        # Use fp32 for accuracy on CPU
+            'without_timestamps': False,          # We want timestamps
+            
+            # === INITIAL PROMPT (helps with style) ===
+            'initial_prompt': "♪",                # Hint that this is music/lyrics
         }
         
         # Set language if not auto
         if language != 'auto' and language in self.SUPPORTED_LANGUAGES:
             options['language'] = language
+            # Add language-specific prompts to help the model
+            if language == 'ar':
+                options['initial_prompt'] = "♪ أغنية عربية"  # Arabic song
+            elif language == 'en':
+                options['initial_prompt'] = "♪ Song lyrics"
+            elif language == 'fr':
+                options['initial_prompt'] = "♪ Paroles de chanson"
         
         # Transcribe
         result = self.model.transcribe(str(audio_path), **options)
@@ -304,12 +372,32 @@ class LyricsExtractor:
         # Extract language info
         detected_language = result.get('language', language)
         
-        # Process segments into lyrics lines
+        # Process segments into lyrics lines with STRICT filtering
         lines = []
         for segment in result.get('segments', []):
+            text = segment.get('text', '').strip()
+            no_speech_prob = segment.get('no_speech_prob', 0)
+            avg_logprob = segment.get('avg_logprob', 0)
+            compression_ratio = segment.get('compression_ratio', 1)
+            
+            # STRICT FILTERING for better quality
             # Skip segments with high no_speech probability
-            if segment.get('no_speech_prob', 0) > 0.7:
-                logger.debug(f"Skipping segment with high no_speech_prob: {segment.get('text', '')}")
+            if no_speech_prob > 0.5:
+                logger.debug(f"Skipping (no_speech={no_speech_prob:.2f}): {text}")
+                continue
+            
+            # Skip segments with very low confidence
+            if avg_logprob < -1.0:
+                logger.debug(f"Skipping (low_conf={avg_logprob:.2f}): {text}")
+                continue
+            
+            # Skip segments with high compression (repetitive)
+            if compression_ratio > 2.0:
+                logger.debug(f"Skipping (compression={compression_ratio:.2f}): {text}")
+                continue
+            
+            # Skip very short segments (likely noise)
+            if len(text) < 2:
                 continue
             
             # Get word-level timing if available

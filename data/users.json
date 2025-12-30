@@ -1,0 +1,32 @@
+{
+  "admin": {
+    "email": "admin@harmonix.app",
+    "password_hash": "cef0515ee70da1db7cf9693fafa7cefdb917fd1a0507ef29ebe6fc3f32ac0875",
+    "salt": "8b78f1cc9eab6ff87e59097a1e599d5b",
+    "role": "admin",
+    "name": "Administrator",
+    "created_at": "2025-12-30T00:16:33.894633",
+    "last_login": null,
+    "is_active": true,
+    "plan": "studio",
+    "usage": {
+      "songs_processed": 0,
+      "stems_downloaded": 0
+    }
+  },
+  "stephanelkhoury2000_b18d2480": {
+    "email": "stephanelkhoury2000@gmail.com",
+    "password_hash": "7d2d46c6895ea23ec4386b69c9ee0d61e946f944dc279e3f536a66701a23c108",
+    "salt": "3907e53576961893c311fc63dd285601",
+    "role": "user",
+    "name": "Stephan El Khoury",
+    "created_at": "2025-12-30T00:16:33.929822",
+    "last_login": null,
+    "is_active": true,
+    "plan": "free",
+    "usage": {
+      "songs_processed": 0,
+      "stems_downloaded": 0
+    }
+  }
+}

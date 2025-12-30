@@ -1,0 +1,295 @@
+{% extends "base.html" %}
+
+{% block title %}Sign In – Harmonix{% endblock %}
+
+{% block extra_styles %}
+<style>
+    .auth-page {
+        min-height: calc(100vh - 80px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 60px 20px;
+        position: relative;
+        overflow: hidden;
+    }
+    .auth-page::before {
+        content: '';
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        top: 0;
+        left: 0;
+        background: radial-gradient(ellipse at top, rgba(124, 58, 237, 0.1) 0%, transparent 50%);
+        pointer-events: none;
+    }
+    .auth-container {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        max-width: 1000px;
+        width: 100%;
+        gap: 0;
+        position: relative;
+        z-index: 1;
+    }
+    .auth-visual {
+        background: linear-gradient(135deg, var(--primary-dark), var(--primary), #6d28d9);
+        border-radius: 24px 0 0 24px;
+        padding: 50px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+    }
+    .auth-visual i.fa-music {
+        font-size: 80px;
+        margin-bottom: 30px;
+        opacity: 0.9;
+    }
+    .auth-visual h2 {
+        font-size: 28px;
+        margin-bottom: 15px;
+        color: white;
+    }
+    .auth-visual p {
+        font-size: 16px;
+        color: rgba(255,255,255,0.85);
+        line-height: 1.7;
+    }
+    .auth-visual-features {
+        margin-top: 40px;
+        text-align: left;
+    }
+    .auth-visual-features li {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        color: rgba(255,255,255,0.9);
+        font-size: 14px;
+        margin-bottom: 15px;
+    }
+    .auth-visual-features li i {
+        color: var(--secondary);
+        font-size: 16px;
+    }
+    .auth-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: 0 24px 24px 0;
+        padding: 50px;
+    }
+    [data-theme="light"] .auth-card {
+        box-shadow: 0 8px 40px rgba(0, 0, 0, 0.08);
+    }
+    .auth-header {
+        margin-bottom: 35px;
+    }
+    .auth-header h1 {
+        font-size: 28px;
+        margin-bottom: 8px;
+        background: linear-gradient(135deg, #fff 0%, var(--primary-light) 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+    [data-theme="light"] .auth-header h1 {
+        background: linear-gradient(135deg, #0f172a 0%, var(--primary) 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+    }
+    .auth-header p {
+        color: var(--text-muted);
+        font-size: 15px;
+    }
+    .social-login {
+        display: flex;
+        gap: 12px;
+        margin-bottom: 25px;
+    }
+    .social-btn {
+        flex: 1;
+        padding: 14px;
+        background: var(--bg-dark);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        color: var(--text);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        font-size: 14px;
+        font-weight: 500;
+        transition: all 0.3s;
+    }
+    .social-btn:hover {
+        border-color: var(--primary);
+        background: rgba(124, 58, 237, 0.1);
+    }
+    .auth-divider {
+        display: flex;
+        align-items: center;
+        margin: 25px 0;
+        color: var(--text-dim);
+        font-size: 13px;
+    }
+    .auth-divider::before,
+    .auth-divider::after {
+        content: '';
+        flex: 1;
+        height: 1px;
+        background: var(--border);
+    }
+    .auth-divider span {
+        padding: 0 15px;
+    }
+    .form-group {
+        margin-bottom: 20px;
+    }
+    .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        font-size: 14px;
+        font-weight: 500;
+    }
+    .form-control {
+        width: 100%;
+        padding: 14px 16px;
+        background: var(--bg-darker);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        color: var(--text);
+        font-size: 15px;
+        transition: all 0.3s;
+    }
+    .form-control:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.2);
+    }
+    .remember-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 25px;
+        font-size: 14px;
+    }
+    .remember-row label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: var(--text-muted);
+        cursor: pointer;
+    }
+    .remember-row a {
+        color: var(--primary-light);
+        text-decoration: none;
+    }
+    .remember-row a:hover {
+        text-decoration: underline;
+    }
+    .btn-submit {
+        width: 100%;
+        padding: 16px;
+        background: var(--primary);
+        border: none;
+        border-radius: 12px;
+        color: white;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        transition: all 0.3s;
+    }
+    .btn-submit:hover {
+        background: var(--primary-dark);
+        transform: translateY(-2px);
+    }
+    .auth-footer {
+        text-align: center;
+        margin-top: 25px;
+        color: var(--text-muted);
+        font-size: 14px;
+    }
+    .auth-footer a {
+        color: var(--primary-light);
+        text-decoration: none;
+        font-weight: 500;
+    }
+    .auth-footer a:hover {
+        text-decoration: underline;
+    }
+
+    @media (max-width: 900px) {
+        .auth-container { grid-template-columns: 1fr; max-width: 450px; }
+        .auth-visual { display: none; }
+        .auth-card { border-radius: 24px; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="auth-page">
+    <div class="auth-container">
+        <div class="auth-visual">
+            <i class="fas fa-music"></i>
+            <h2>Welcome Back!</h2>
+            <p>Sign in to continue separating stems, extracting lyrics, and creating amazing music.</p>
+            <ul class="auth-visual-features">
+                <li><i class="fas fa-check"></i> Access your saved projects</li>
+                <li><i class="fas fa-check"></i> Continue where you left off</li>
+                <li><i class="fas fa-check"></i> Sync across devices</li>
+                <li><i class="fas fa-check"></i> Premium features unlocked</li>
+            </ul>
+        </div>
+        
+        <div class="auth-card">
+            <div class="auth-header">
+                <h1>Sign In</h1>
+                <p>Enter your credentials to continue</p>
+            </div>
+            
+            <div class="social-login">
+                <button class="social-btn">
+                    <i class="fab fa-google"></i> Google
+                </button>
+                <button class="social-btn">
+                    <i class="fab fa-github"></i> GitHub
+                </button>
+            </div>
+            
+            <div class="auth-divider"><span>or continue with email</span></div>
+            
+            <form action="/login" method="POST">
+                <div class="form-group">
+                    <label>Email or Username</label>
+                    <input type="text" name="username" class="form-control" placeholder="Enter your email or username" required>
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" name="password" class="form-control" placeholder="Enter your password" required>
+                </div>
+                
+                <div class="remember-row">
+                    <label>
+                        <input type="checkbox" name="remember"> Remember me
+                    </label>
+                    <a href="/forgot-password">Forgot password?</a>
+                </div>
+                
+                <button type="submit" class="btn-submit">
+                    <i class="fas fa-sign-in-alt"></i> Sign In
+                </button>
+            </form>
+            
+            <div class="auth-footer">
+                Don't have an account? <a href="/register">Create one</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

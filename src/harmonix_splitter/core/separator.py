@@ -39,8 +39,14 @@ class SeparationConfig:
     target_instruments: Optional[List[str]] = None
     use_gpu: bool = True
     sample_rate: int = 44100
+    preserve_sample_rate: bool = True  # Keep original sample rate if possible
     segment_duration: Optional[int] = None  # Auto-segment for long files
     overlap: float = 0.25  # Overlap ratio for segments
+    
+    # Output format settings
+    output_format: str = "wav"  # "wav" (lossless) or "mp3" (compressed)
+    bit_depth: int = 24  # 16, 24, or 32 for WAV
+    mp3_bitrate: int = 320  # kbps for MP3
     
     # Studio quality settings
     shifts: int = 1  # Number of random shifts for TTA (test-time augmentation)
@@ -227,6 +233,11 @@ class HarmonixSeparator:
         """
         Load and preprocess audio file
         
+        QUALITY PRESERVATION:
+        - Preserves original sample rate when possible (48kHz, 96kHz, etc.)
+        - No unnecessary resampling
+        - Maintains full bit depth
+        
         Args:
             path: Audio file path
             
@@ -234,8 +245,35 @@ class HarmonixSeparator:
             Tuple of (audio tensor, sample rate)
         """
         try:
-            # Load audio with librosa (more compatible than torchaudio)
-            audio_np, sr = librosa.load(str(path), sr=self.config.sample_rate, mono=False)
+            # First, get the native sample rate
+            import soundfile as sf
+            info = sf.info(str(path))
+            native_sr = info.samplerate
+            native_channels = info.channels
+            
+            logger.info(f"Source audio: {native_sr}Hz, {native_channels} channels, {info.subtype}")
+            
+            # Determine target sample rate
+            if self.config.preserve_sample_rate and native_sr >= 44100:
+                # Keep native rate if it's standard (44.1k, 48k, 88.2k, 96k)
+                target_sr = native_sr
+                logger.info(f"Preserving native sample rate: {native_sr}Hz")
+            else:
+                # Resample to config rate
+                target_sr = self.config.sample_rate
+                if target_sr != native_sr:
+                    logger.info(f"Resampling from {native_sr}Hz to {target_sr}Hz")
+            
+            # Load audio with target sample rate (None = native rate)
+            load_sr = target_sr if target_sr != native_sr else None
+            audio_np, sr = librosa.load(str(path), sr=load_sr, mono=False)
+            
+            # Update actual sample rate
+            if load_sr is None:
+                sr = native_sr
+            
+            # Store original sample rate for output
+            self._original_sample_rate = sr
             
             # Convert to tensor
             if audio_np.ndim == 1:
@@ -249,9 +287,10 @@ class HarmonixSeparator:
             # Move to device
             audio = audio.to(self.device)
             
+            duration = audio.shape[1] / sr
             logger.info(
-                f"Audio loaded: {audio.shape[1]/sr:.2f}s, "
-                f"{sr}Hz, {audio.shape[0]} channels"
+                f"Audio loaded: {duration:.2f}s, "
+                f"{sr}Hz, {audio.shape[0]} channels (NO QUALITY LOSS)"
             )
             
             return audio, sr
@@ -499,43 +538,66 @@ class HarmonixSeparator:
             clean_name = base_name
         
         for name, stem in stems.items():
-            # Save as MP3 for smaller file size (320kbps for high quality)
-            mp3_path = output_dir / f"{clean_name}_{name}.mp3"
+            # Determine output format based on config
+            output_format = getattr(self.config, 'output_format', 'wav')
+            bit_depth = getattr(self.config, 'bit_depth', 24)
+            mp3_bitrate = getattr(self.config, 'mp3_bitrate', 320)
             
-            # First save as WAV temp file, then convert to MP3
-            import tempfile
-            import subprocess
+            # Map bit depth to soundfile subtype
+            bit_depth_map = {
+                16: 'PCM_16',
+                24: 'PCM_24',
+                32: 'FLOAT'
+            }
+            subtype = bit_depth_map.get(bit_depth, 'PCM_24')
             
-            with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as tmp:
-                tmp_wav_path = tmp.name
-            
-            # Save temporary WAV
-            sf.write(
-                tmp_wav_path,
-                stem.audio.T,  # Transpose to (samples, channels)
-                stem.sample_rate,
-                subtype='PCM_16'
-            )
-            
-            # Convert to MP3 using ffmpeg (320kbps VBR for high quality)
-            try:
-                subprocess.run([
-                    'ffmpeg', '-y', '-i', tmp_wav_path,
-                    '-codec:a', 'libmp3lame',
-                    '-b:a', '320k',
-                    '-q:a', '0',  # Highest quality VBR
-                    str(mp3_path)
-                ], check=True, capture_output=True)
+            if output_format == 'mp3':
+                # Save as MP3 (compressed)
+                mp3_path = output_dir / f"{clean_name}_{name}.mp3"
                 
-                # Remove temp WAV
-                Path(tmp_wav_path).unlink()
-                logger.debug(f"Saved MP3: {mp3_path}")
-            except (subprocess.CalledProcessError, FileNotFoundError) as e:
-                # Fallback to WAV if ffmpeg not available
-                logger.warning(f"FFmpeg not available, saving as WAV instead: {e}")
+                import tempfile
+                import subprocess
+                
+                with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as tmp:
+                    tmp_wav_path = tmp.name
+                
+                # Save temporary WAV at full quality
+                sf.write(
+                    tmp_wav_path,
+                    stem.audio.T,
+                    stem.sample_rate,
+                    subtype=subtype
+                )
+                
+                # Convert to MP3 using ffmpeg
+                try:
+                    subprocess.run([
+                        'ffmpeg', '-y', '-i', tmp_wav_path,
+                        '-codec:a', 'libmp3lame',
+                        '-b:a', f'{mp3_bitrate}k',
+                        '-q:a', '0',
+                        str(mp3_path)
+                    ], check=True, capture_output=True)
+                    
+                    Path(tmp_wav_path).unlink()
+                    logger.debug(f"Saved MP3 ({mp3_bitrate}kbps): {mp3_path}")
+                except (subprocess.CalledProcessError, FileNotFoundError) as e:
+                    logger.warning(f"FFmpeg not available, saving as WAV: {e}")
+                    wav_path = output_dir / f"{clean_name}_{name}.wav"
+                    Path(tmp_wav_path).rename(wav_path)
+            else:
+                # Save as lossless WAV (default - best quality)
                 wav_path = output_dir / f"{clean_name}_{name}.wav"
-                Path(tmp_wav_path).rename(wav_path)
-                logger.debug(f"Saved WAV: {wav_path}")
+                
+                # Save with full quality
+                sf.write(
+                    str(wav_path),
+                    stem.audio.T,  # Transpose to (samples, channels)
+                    stem.sample_rate,
+                    subtype=subtype  # 24-bit by default for studio quality
+                )
+                
+                logger.debug(f"Saved lossless WAV ({bit_depth}-bit, {stem.sample_rate}Hz): {wav_path}")
         
         logger.info(f"All stems saved to: {output_dir}")
     

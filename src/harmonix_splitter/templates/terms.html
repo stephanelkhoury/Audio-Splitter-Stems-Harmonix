@@ -1,0 +1,314 @@
+{% extends "base.html" %}
+
+{% block title %}Terms of Service – Harmonix{% endblock %}
+{% block description %}Read the terms and conditions governing your use of Harmonix audio stem separation service.{% endblock %}
+
+{% block extra_styles %}
+<style>
+    /* Section Styles */
+    .section-header {
+        text-align: center;
+        margin-bottom: 40px;
+    }
+    .section-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: rgba(124, 58, 237, 0.1);
+        border: 1px solid var(--border);
+        padding: 8px 16px;
+        border-radius: 100px;
+        font-size: 13px;
+        color: var(--primary-light);
+        margin-bottom: 20px;
+    }
+    .section-header h1 {
+        font-size: 42px;
+        font-weight: 700;
+        margin-bottom: 10px;
+        background: linear-gradient(135deg, #fff 0%, #a78bfa 50%, #06b6d4 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+    [data-theme="light"] .section-header h1 {
+        background: linear-gradient(135deg, #0f172a 0%, var(--primary) 50%, #0891b2 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+    }
+
+    /* Hero */
+    .legal-hero {
+        padding: 60px 40px 20px;
+        text-align: center;
+    }
+
+    /* Legal Content */
+    .legal-container {
+        max-width: 850px;
+        margin: 0 auto;
+        padding: 0 40px 100px;
+    }
+    .legal-updated {
+        color: var(--text-muted);
+        font-size: 14px;
+        margin-bottom: 40px;
+        padding-bottom: 30px;
+        border-bottom: 1px solid var(--border);
+        text-align: center;
+    }
+    
+    /* TOC */
+    .toc {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 30px;
+        margin-bottom: 50px;
+    }
+    [data-theme="light"] .toc {
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    }
+    .toc h4 {
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+        margin-bottom: 18px;
+        color: var(--text-muted);
+    }
+    .toc ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        columns: 2;
+        column-gap: 30px;
+    }
+    .toc li {
+        margin-bottom: 10px;
+    }
+    .toc a {
+        color: var(--text);
+        text-decoration: none;
+        font-size: 14px;
+        transition: color 0.3s;
+    }
+    .toc a:hover {
+        color: var(--primary-light);
+    }
+    
+    /* Content */
+    .legal-content h2 {
+        font-size: 24px;
+        margin: 45px 0 18px;
+        background: linear-gradient(135deg, #fff, var(--primary-light));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+    [data-theme="light"] .legal-content h2 {
+        background: linear-gradient(135deg, #0f172a, var(--primary));
+        -webkit-background-clip: text;
+        background-clip: text;
+    }
+    .legal-content h3 {
+        font-size: 18px;
+        margin: 28px 0 12px;
+    }
+    .legal-content p {
+        color: var(--text-muted);
+        line-height: 1.8;
+        margin-bottom: 18px;
+        font-size: 15px;
+    }
+    .legal-content ul, .legal-content ol {
+        color: var(--text-muted);
+        margin-bottom: 20px;
+        padding-left: 25px;
+        line-height: 1.8;
+    }
+    .legal-content li {
+        margin-bottom: 10px;
+    }
+    .legal-content a {
+        color: var(--primary-light);
+    }
+    .highlight-box {
+        background: rgba(124, 58, 237, 0.1);
+        border: 1px solid rgba(124, 58, 237, 0.3);
+        border-radius: 14px;
+        padding: 22px 28px;
+        margin: 30px 0;
+    }
+    .highlight-box p {
+        margin: 0;
+    }
+    .highlight-box strong {
+        color: var(--text);
+    }
+    .warning-box {
+        background: rgba(245, 158, 11, 0.1);
+        border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+
+    @media (max-width: 768px) {
+        .section-header h1 { font-size: 32px; }
+        .legal-hero { padding: 40px 20px 10px; }
+        .legal-container { padding: 0 20px 80px; }
+        .toc ul { columns: 1; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero -->
+<section class="legal-hero">
+    <div class="section-header">
+        <div class="section-badge"><i class="fas fa-file-contract"></i> Legal</div>
+        <h1>Terms of Service</h1>
+    </div>
+</section>
+
+<!-- Legal Content -->
+<div class="legal-container">
+    <p class="legal-updated">Last updated: December 15, 2024</p>
+    
+    <div class="toc">
+        <h4>Table of Contents</h4>
+        <ul>
+            <li><a href="#acceptance">1. Acceptance of Terms</a></li>
+            <li><a href="#service">2. Service Description</a></li>
+            <li><a href="#accounts">3. User Accounts</a></li>
+            <li><a href="#usage">4. Acceptable Use</a></li>
+            <li><a href="#content">5. User Content</a></li>
+            <li><a href="#intellectual-property">6. Intellectual Property</a></li>
+            <li><a href="#subscriptions">7. Subscriptions & Payments</a></li>
+            <li><a href="#limitations">8. Limitations</a></li>
+            <li><a href="#disclaimers">9. Disclaimers</a></li>
+            <li><a href="#liability">10. Limitation of Liability</a></li>
+            <li><a href="#indemnification">11. Indemnification</a></li>
+            <li><a href="#termination">12. Termination</a></li>
+            <li><a href="#governing-law">13. Governing Law</a></li>
+            <li><a href="#changes">14. Changes to Terms</a></li>
+            <li><a href="#contact">15. Contact</a></li>
+        </ul>
+    </div>
+    
+    <div class="legal-content">
+        <div class="highlight-box">
+            <p><strong>Important:</strong> By using Harmonix, you agree to these Terms of Service. Please read them carefully before using our service.</p>
+        </div>
+        
+        <h2 id="acceptance">1. Acceptance of Terms</h2>
+        <p>By accessing or using the Harmonix service ("Service"), you agree to be bound by these Terms of Service ("Terms"). If you do not agree to these Terms, you may not access or use the Service.</p>
+        <p>These Terms constitute a legally binding agreement between you and Harmonix Inc. ("Harmonix," "we," "us," or "our").</p>
+        
+        <h2 id="service">2. Service Description</h2>
+        <p>Harmonix provides an AI-powered audio stem separation service that allows users to:</p>
+        <ul>
+            <li>Upload audio files or provide YouTube URLs for processing</li>
+            <li>Separate audio tracks into individual stems (vocals, drums, bass, other)</li>
+            <li>Extract and transcribe lyrics from audio</li>
+            <li>Adjust pitch and tempo of individual stems</li>
+            <li>Export processed stems in various formats</li>
+        </ul>
+        <p>We reserve the right to modify, suspend, or discontinue any aspect of the Service at any time without prior notice.</p>
+        
+        <h2 id="accounts">3. User Accounts</h2>
+        <h3>3.1 Account Creation</h3>
+        <p>To access certain features, you must create an account. You agree to:</p>
+        <ul>
+            <li>Provide accurate and complete information</li>
+            <li>Maintain the security of your account credentials</li>
+            <li>Promptly notify us of any unauthorized access</li>
+            <li>Be responsible for all activities under your account</li>
+        </ul>
+        
+        <h3>3.2 Account Requirements</h3>
+        <p>You must be at least 13 years old to use our Service. If you are under 18, you must have parental consent to use the Service.</p>
+        
+        <h2 id="usage">4. Acceptable Use</h2>
+        <p>You agree NOT to use the Service to:</p>
+        <ul>
+            <li>Process content that infringes on others' intellectual property rights</li>
+            <li>Upload malicious files or attempt to compromise our systems</li>
+            <li>Circumvent usage limits or access restrictions</li>
+            <li>Resell or redistribute the Service without authorization</li>
+            <li>Use automated systems to access the Service without permission</li>
+            <li>Process content that is illegal, harmful, or violates others' rights</li>
+            <li>Impersonate others or misrepresent your affiliation</li>
+        </ul>
+        
+        <div class="warning-box highlight-box">
+            <p><strong>Warning:</strong> Violation of these terms may result in immediate account termination without refund.</p>
+        </div>
+        
+        <h2 id="content">5. User Content</h2>
+        <h3>5.1 Your Responsibilities</h3>
+        <p>You are solely responsible for the content you upload to the Service. You represent that you have all necessary rights to process the audio content you upload.</p>
+        
+        <h3>5.2 Content Rights</h3>
+        <p>You retain all rights to your original content. By uploading content, you grant us a limited license to process and store your content solely for the purpose of providing the Service.</p>
+        
+        <h3>5.3 Content Deletion</h3>
+        <p>Uploaded audio files are automatically deleted within 24 hours of processing completion. You can delete your processed stems at any time from your account.</p>
+        
+        <h2 id="intellectual-property">6. Intellectual Property</h2>
+        <h3>6.1 Our Property</h3>
+        <p>The Service, including our AI models, software, design, and documentation, is owned by Harmonix and protected by intellectual property laws. You may not copy, modify, or reverse engineer any part of the Service.</p>
+        
+        <h3>6.2 Commercial Use of Outputs</h3>
+        <p>Your ability to use separated stems commercially depends on your subscription plan:</p>
+        <ul>
+            <li><strong>Free Plan:</strong> Personal, non-commercial use only</li>
+            <li><strong>Creator Plan:</strong> Limited commercial use (up to 10,000 streams/downloads per track)</li>
+            <li><strong>Studio Plan:</strong> Full commercial use rights for stems you process</li>
+        </ul>
+        <p>Note: Commercial use rights apply only to the separated stems you create, not to the underlying copyrighted music. You are responsible for obtaining proper licenses for any copyrighted source material.</p>
+        
+        <h2 id="subscriptions">7. Subscriptions & Payments</h2>
+        <h3>7.1 Billing</h3>
+        <p>Paid subscriptions are billed in advance on a monthly or annual basis. All fees are non-refundable except as required by law or as explicitly stated in our refund policy.</p>
+        
+        <h3>7.2 Cancellation</h3>
+        <p>You may cancel your subscription at any time. Cancellation takes effect at the end of your current billing period, and you will retain access until then.</p>
+        
+        <h3>7.3 Price Changes</h3>
+        <p>We reserve the right to change our prices. Any price changes will be communicated to you at least 30 days in advance and will apply to your next billing cycle.</p>
+        
+        <h2 id="limitations">8. Limitations</h2>
+        <p>Each subscription plan has specific limitations on:</p>
+        <ul>
+            <li>Number of songs processed per month</li>
+            <li>Maximum file size</li>
+            <li>Quality settings</li>
+            <li>Commercial use rights</li>
+        </ul>
+        <p>See our <a href="/pricing">pricing page</a> for current plan details.</p>
+        
+        <h2 id="disclaimers">9. Disclaimers</h2>
+        <p>THE SERVICE IS PROVIDED "AS IS" AND "AS AVAILABLE" WITHOUT WARRANTIES OF ANY KIND, EXPRESS OR IMPLIED. We do not warrant that the Service will be uninterrupted, secure, or error-free. Stem separation results may vary based on the complexity and quality of source audio.</p>
+        
+        <h2 id="liability">10. Limitation of Liability</h2>
+        <p>TO THE MAXIMUM EXTENT PERMITTED BY LAW, HARMONIX SHALL NOT BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES ARISING OUT OF YOUR USE OF THE SERVICE. Our total liability shall not exceed the amount you paid to us in the 12 months preceding the claim.</p>
+        
+        <h2 id="indemnification">11. Indemnification</h2>
+        <p>You agree to indemnify and hold Harmonix harmless from any claims, damages, or expenses arising from your use of the Service, your violation of these Terms, or your violation of any third-party rights.</p>
+        
+        <h2 id="termination">12. Termination</h2>
+        <p>We may terminate or suspend your account at any time for violation of these Terms. Upon termination, your right to use the Service ceases immediately. Provisions that by their nature should survive termination will survive.</p>
+        
+        <h2 id="governing-law">13. Governing Law</h2>
+        <p>These Terms shall be governed by the laws of the State of California, without regard to conflict of law principles. Any disputes shall be resolved in the courts of San Francisco County, California.</p>
+        
+        <h2 id="changes">14. Changes to Terms</h2>
+        <p>We reserve the right to modify these Terms at any time. Material changes will be communicated via email or prominent notice on our website. Your continued use of the Service after changes constitutes acceptance of the new Terms.</p>
+        
+        <h2 id="contact">15. Contact</h2>
+        <p>For questions about these Terms, please contact us:</p>
+        <ul>
+            <li>Email: <a href="mailto:legal@harmonix.app">legal@harmonix.app</a></li>
+            <li>Address: Harmonix Inc., San Francisco, CA, USA</li>
+        </ul>
+    </div>
+</div>
+{% endblock %}

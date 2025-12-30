@@ -1,0 +1,467 @@
+{% extends "base.html" %}
+
+{% block title %}Blog – Harmonix{% endblock %}
+{% block description %}Read the latest news, tutorials, and updates from the Harmonix team.{% endblock %}
+
+{% block extra_styles %}
+<style>
+    /* Section Styles */
+    .section-header {
+        text-align: center;
+        margin-bottom: 60px;
+    }
+    .section-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: rgba(124, 58, 237, 0.1);
+        border: 1px solid var(--border);
+        padding: 8px 16px;
+        border-radius: 100px;
+        font-size: 13px;
+        color: var(--primary-light);
+        margin-bottom: 20px;
+    }
+    .section-header h1, .section-header h2 {
+        font-size: 48px;
+        font-weight: 700;
+        margin-bottom: 15px;
+        background: linear-gradient(135deg, #fff 0%, #a78bfa 50%, #06b6d4 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+    [data-theme="light"] .section-header h1,
+    [data-theme="light"] .section-header h2 {
+        background: linear-gradient(135deg, #0f172a 0%, var(--primary) 50%, #0891b2 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+    }
+    .section-header p {
+        font-size: 18px;
+        color: var(--text-muted);
+        max-width: 600px;
+        margin: 0 auto;
+        line-height: 1.8;
+    }
+
+    /* Hero */
+    .blog-hero {
+        padding: 60px 40px 40px;
+        text-align: center;
+    }
+
+    /* Category Filter */
+    .filter-section {
+        padding: 0 40px 30px;
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+    .category-filter {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+    .category-btn {
+        padding: 10px 20px;
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: 100px;
+        color: var(--text-muted);
+        cursor: pointer;
+        transition: all 0.3s;
+        font-size: 14px;
+    }
+    .category-btn:hover,
+    .category-btn.active {
+        background: var(--primary);
+        border-color: var(--primary);
+        color: white;
+    }
+
+    /* Featured Post */
+    .featured-section {
+        padding: 20px 40px 60px;
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+    .featured-post {
+        display: grid;
+        grid-template-columns: 1.2fr 1fr;
+        gap: 50px;
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: 24px;
+        overflow: hidden;
+    }
+    [data-theme="light"] .featured-post {
+        box-shadow: 0 8px 40px rgba(0, 0, 0, 0.08);
+    }
+    .featured-image {
+        aspect-ratio: 16/10;
+        background: linear-gradient(135deg, var(--primary-dark), var(--primary));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .featured-image i {
+        font-size: 100px;
+        opacity: 0.4;
+        color: white;
+    }
+    .featured-content {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        padding: 40px 40px 40px 0;
+    }
+    .post-category {
+        display: inline-block;
+        background: rgba(124, 58, 237, 0.15);
+        color: var(--primary-light);
+        padding: 6px 14px;
+        border-radius: 100px;
+        font-size: 12px;
+        font-weight: 500;
+        margin-bottom: 15px;
+        width: fit-content;
+    }
+    .featured-content h2 {
+        font-size: 28px;
+        margin-bottom: 15px;
+        line-height: 1.3;
+    }
+    .featured-content h2 a {
+        color: var(--text);
+        text-decoration: none;
+        transition: color 0.3s;
+    }
+    .featured-content h2 a:hover {
+        color: var(--primary-light);
+    }
+    .post-excerpt {
+        color: var(--text-muted);
+        line-height: 1.8;
+        margin-bottom: 20px;
+        font-size: 15px;
+    }
+    .post-meta {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        font-size: 14px;
+        color: var(--text-muted);
+    }
+    .post-author {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .author-avatar {
+        width: 36px;
+        height: 36px;
+        background: linear-gradient(135deg, var(--primary), #6d28d9);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        color: white;
+    }
+
+    /* Blog Grid */
+    .blog-section {
+        padding: 60px 40px 80px;
+        background: var(--bg-darker);
+    }
+    .blog-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+        gap: 30px;
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+    .blog-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: 20px;
+        overflow: hidden;
+        transition: all 0.3s;
+    }
+    [data-theme="light"] .blog-card {
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    }
+    .blog-card:hover {
+        transform: translateY(-5px);
+        border-color: var(--primary);
+    }
+    .blog-thumbnail {
+        aspect-ratio: 16/9;
+        background: var(--bg-darker);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .blog-thumbnail i {
+        font-size: 50px;
+        opacity: 0.3;
+        background: linear-gradient(135deg, var(--primary-light), var(--secondary));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+    .blog-card-content {
+        padding: 25px;
+    }
+    .blog-card h3 {
+        font-size: 18px;
+        margin-bottom: 10px;
+        line-height: 1.4;
+    }
+    .blog-card h3 a {
+        color: var(--text);
+        text-decoration: none;
+        transition: color 0.3s;
+    }
+    .blog-card h3 a:hover {
+        color: var(--primary-light);
+    }
+    .blog-card p {
+        color: var(--text-muted);
+        font-size: 14px;
+        line-height: 1.7;
+        margin-bottom: 15px;
+    }
+    .card-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 13px;
+        color: var(--text-muted);
+    }
+    .read-more {
+        color: var(--primary-light);
+        text-decoration: none;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+    .read-more:hover {
+        text-decoration: underline;
+    }
+
+    /* Newsletter */
+    .newsletter-section {
+        padding: 80px 40px;
+    }
+    .newsletter-card {
+        background: linear-gradient(135deg, rgba(124, 58, 237, 0.15), rgba(236, 72, 153, 0.15));
+        border: 1px solid rgba(124, 58, 237, 0.3);
+        border-radius: 24px;
+        padding: 60px;
+        text-align: center;
+        max-width: 700px;
+        margin: 0 auto;
+    }
+    .newsletter-card h3 {
+        font-size: 28px;
+        margin-bottom: 15px;
+    }
+    .newsletter-card p {
+        color: var(--text-muted);
+        margin-bottom: 30px;
+        font-size: 16px;
+    }
+    .newsletter-form {
+        display: flex;
+        gap: 15px;
+        max-width: 450px;
+        margin: 0 auto;
+    }
+    .newsletter-form input {
+        flex: 1;
+        padding: 15px 20px;
+        background: var(--bg-darker);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        color: var(--text);
+        font-size: 15px;
+    }
+    .newsletter-form button {
+        padding: 15px 25px;
+        background: var(--primary);
+        border: none;
+        border-radius: 10px;
+        color: white;
+        cursor: pointer;
+        font-weight: 600;
+        transition: all 0.3s;
+    }
+    .newsletter-form button:hover {
+        background: var(--primary-dark);
+    }
+
+    @media (max-width: 900px) {
+        .featured-post { grid-template-columns: 1fr; }
+        .featured-content { padding: 30px; }
+        .featured-image { aspect-ratio: 16/9; }
+    }
+    @media (max-width: 768px) {
+        .section-header h1 { font-size: 36px; }
+        .blog-hero { padding: 40px 20px; }
+        .filter-section { padding: 0 20px 20px; }
+        .featured-section { padding: 20px 20px 40px; }
+        .blog-section { padding: 60px 20px; }
+        .newsletter-section { padding: 60px 20px; }
+        .newsletter-card { padding: 40px 25px; }
+        .newsletter-form { flex-direction: column; }
+        .blog-grid { grid-template-columns: 1fr; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero -->
+<section class="blog-hero">
+    <div class="section-header">
+        <div class="section-badge"><i class="fas fa-newspaper"></i> Blog</div>
+        <h1>Latest Updates</h1>
+        <p>News, tutorials, and insights from the Harmonix team</p>
+    </div>
+</section>
+
+<!-- Category Filter -->
+<section class="filter-section">
+    <div class="category-filter">
+        <button class="category-btn active">All Posts</button>
+        <button class="category-btn">Tutorials</button>
+        <button class="category-btn">Product Updates</button>
+        <button class="category-btn">Tips & Tricks</button>
+        <button class="category-btn">Community</button>
+        <button class="category-btn">Industry News</button>
+    </div>
+</section>
+
+<!-- Featured Post -->
+<section class="featured-section">
+    <div class="featured-post">
+        <div class="featured-image">
+            <i class="fas fa-layer-group"></i>
+        </div>
+        <div class="featured-content">
+            <div class="post-category">Product Update</div>
+            <h2><a href="#">Introducing Harmonix 2.0: Faster Processing, Better Quality</a></h2>
+            <p class="post-excerpt">We're excited to announce Harmonix 2.0 with 3x faster processing speeds, improved stem quality using our new neural network architecture, and a completely redesigned interface.</p>
+            <div class="post-meta">
+                <div class="post-author">
+                    <div class="author-avatar"><i class="fas fa-user"></i></div>
+                    <span>Alex Chen</span>
+                </div>
+                <span>Dec 28, 2024</span>
+                <span>5 min read</span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Blog Grid -->
+<section class="blog-section">
+    <div class="section-header">
+        <div class="section-badge"><i class="fas fa-clock"></i> Recent Posts</div>
+        <h2 style="font-size: 32px;">More Articles</h2>
+    </div>
+    <div class="blog-grid">
+        <article class="blog-card">
+            <div class="blog-thumbnail"><i class="fas fa-microphone-alt"></i></div>
+            <div class="blog-card-content">
+                <div class="post-category">Tutorial</div>
+                <h3><a href="#">How to Extract Clean Vocals for Your Next Remix</a></h3>
+                <p>Learn the best practices for getting crystal-clear vocal extractions from any song using Harmonix's AI.</p>
+                <div class="card-footer">
+                    <span>Dec 25, 2024</span>
+                    <a href="#" class="read-more">Read More <i class="fas fa-arrow-right"></i></a>
+                </div>
+            </div>
+        </article>
+        
+        <article class="blog-card">
+            <div class="blog-thumbnail"><i class="fas fa-drum"></i></div>
+            <div class="blog-card-content">
+                <div class="post-category">Tips & Tricks</div>
+                <h3><a href="#">5 Creative Ways to Use Drum Stems in Production</a></h3>
+                <p>Discover unique techniques for incorporating isolated drum tracks into your music productions.</p>
+                <div class="card-footer">
+                    <span>Dec 22, 2024</span>
+                    <a href="#" class="read-more">Read More <i class="fas fa-arrow-right"></i></a>
+                </div>
+            </div>
+        </article>
+        
+        <article class="blog-card">
+            <div class="blog-thumbnail"><i class="fas fa-language"></i></div>
+            <div class="blog-card-content">
+                <div class="post-category">Product Update</div>
+                <h3><a href="#">New: Arabic & Asian Language Support for Lyrics</a></h3>
+                <p>Our Whisper integration now supports 50+ languages including Arabic, Chinese, Japanese, and Korean.</p>
+                <div class="card-footer">
+                    <span>Dec 18, 2024</span>
+                    <a href="#" class="read-more">Read More <i class="fas fa-arrow-right"></i></a>
+                </div>
+            </div>
+        </article>
+        
+        <article class="blog-card">
+            <div class="blog-thumbnail"><i class="fas fa-users"></i></div>
+            <div class="blog-card-content">
+                <div class="post-category">Community</div>
+                <h3><a href="#">Creator Spotlight: DJ Maya's Workflow</a></h3>
+                <p>See how professional DJ Maya uses Harmonix to prepare her live sets and create unique mashups.</p>
+                <div class="card-footer">
+                    <span>Dec 15, 2024</span>
+                    <a href="#" class="read-more">Read More <i class="fas fa-arrow-right"></i></a>
+                </div>
+            </div>
+        </article>
+        
+        <article class="blog-card">
+            <div class="blog-thumbnail"><i class="fas fa-guitar"></i></div>
+            <div class="blog-card-content">
+                <div class="post-category">Tutorial</div>
+                <h3><a href="#">Isolating Bass Lines for Practice Sessions</a></h3>
+                <p>A guide for musicians who want to learn songs by isolating and slowing down bass tracks.</p>
+                <div class="card-footer">
+                    <span>Dec 12, 2024</span>
+                    <a href="#" class="read-more">Read More <i class="fas fa-arrow-right"></i></a>
+                </div>
+            </div>
+        </article>
+        
+        <article class="blog-card">
+            <div class="blog-thumbnail"><i class="fas fa-sliders-h"></i></div>
+            <div class="blog-card-content">
+                <div class="post-category">Tips & Tricks</div>
+                <h3><a href="#">Pitch Shifting Without Artifacts: Pro Tips</a></h3>
+                <p>Master the art of pitch-shifting vocals while maintaining natural sound quality.</p>
+                <div class="card-footer">
+                    <span>Dec 8, 2024</span>
+                    <a href="#" class="read-more">Read More <i class="fas fa-arrow-right"></i></a>
+                </div>
+            </div>
+        </article>
+    </div>
+</section>
+
+<!-- Newsletter -->
+<section class="newsletter-section">
+    <div class="newsletter-card">
+        <h3><i class="fas fa-bell"></i> Stay Updated</h3>
+        <p>Subscribe to our newsletter for the latest tutorials, product updates, and music production tips.</p>
+        <form class="newsletter-form">
+            <input type="email" placeholder="Enter your email address" required>
+            <button type="submit">Subscribe</button>
+        </form>
+    </div>
+</section>
+{% endblock %}

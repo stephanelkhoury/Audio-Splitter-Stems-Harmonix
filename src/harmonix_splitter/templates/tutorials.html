@@ -1,0 +1,561 @@
+{% extends "base.html" %}
+
+{% block title %}Tutorials – Harmonix{% endblock %}
+{% block description %}Learn how to use Harmonix with step-by-step video tutorials and guides.{% endblock %}
+
+{% block extra_styles %}
+<style>
+    /* Section Styles */
+    .section-header {
+        text-align: center;
+        margin-bottom: 60px;
+    }
+    .section-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: rgba(124, 58, 237, 0.1);
+        border: 1px solid var(--border);
+        padding: 8px 16px;
+        border-radius: 100px;
+        font-size: 13px;
+        color: var(--primary-light);
+        margin-bottom: 20px;
+    }
+    .section-header h1, .section-header h2 {
+        font-size: 48px;
+        font-weight: 700;
+        margin-bottom: 15px;
+        background: linear-gradient(135deg, #fff 0%, #a78bfa 50%, #06b6d4 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+    [data-theme="light"] .section-header h1,
+    [data-theme="light"] .section-header h2 {
+        background: linear-gradient(135deg, #0f172a 0%, var(--primary) 50%, #0891b2 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+    }
+    .section-header p {
+        font-size: 18px;
+        color: var(--text-muted);
+        max-width: 600px;
+        margin: 0 auto;
+        line-height: 1.8;
+    }
+
+    /* Hero */
+    .tutorials-hero {
+        padding: 60px 40px 40px;
+        text-align: center;
+    }
+
+    /* Featured Tutorial */
+    .featured-section {
+        padding: 0 40px 60px;
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+    .featured-tutorial {
+        background: linear-gradient(135deg, rgba(124, 58, 237, 0.15), rgba(236, 72, 153, 0.15));
+        border: 1px solid rgba(124, 58, 237, 0.3);
+        border-radius: 24px;
+        padding: 45px;
+        display: grid;
+        grid-template-columns: 1.3fr 1fr;
+        gap: 50px;
+        align-items: center;
+    }
+    .featured-video {
+        aspect-ratio: 16/9;
+        background: var(--bg-darker);
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        cursor: pointer;
+        overflow: hidden;
+    }
+    .featured-video:hover .play-btn {
+        transform: scale(1.1);
+    }
+    .featured-video i.fa-play-circle {
+        font-size: 80px;
+        opacity: 0.4;
+        background: linear-gradient(135deg, var(--primary-light), var(--secondary));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+    .featured-badge {
+        position: absolute;
+        top: 15px;
+        left: 15px;
+        background: var(--secondary);
+        color: white;
+        padding: 6px 14px;
+        border-radius: 8px;
+        font-size: 12px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .play-btn {
+        position: absolute;
+        width: 80px;
+        height: 80px;
+        background: var(--primary);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 28px;
+        color: white;
+        transition: transform 0.3s;
+        box-shadow: 0 10px 40px rgba(124, 58, 237, 0.4);
+    }
+    .featured-content h2 {
+        font-size: 28px;
+        margin-bottom: 15px;
+        background: linear-gradient(135deg, #fff, var(--primary-light));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+    [data-theme="light"] .featured-content h2 {
+        background: linear-gradient(135deg, #0f172a, var(--primary));
+        -webkit-background-clip: text;
+        background-clip: text;
+    }
+    .featured-content p {
+        color: var(--text-muted);
+        line-height: 1.8;
+        margin-bottom: 25px;
+    }
+    .featured-stats {
+        display: flex;
+        gap: 30px;
+        margin-bottom: 25px;
+    }
+    .featured-stat {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: var(--text-muted);
+        font-size: 14px;
+    }
+    .featured-stat i {
+        color: var(--primary-light);
+    }
+    .watch-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        padding: 14px 28px;
+        background: var(--primary);
+        border-radius: 10px;
+        color: white;
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.3s;
+    }
+    .watch-btn:hover {
+        background: var(--primary-dark);
+        transform: translateY(-2px);
+    }
+
+    /* Category Tabs */
+    .filter-section {
+        padding: 30px 40px;
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+    .category-tabs {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+    .category-tab {
+        padding: 10px 22px;
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: 100px;
+        color: var(--text-muted);
+        cursor: pointer;
+        transition: all 0.3s;
+        font-size: 14px;
+    }
+    .category-tab:hover,
+    .category-tab.active {
+        background: var(--primary);
+        border-color: var(--primary);
+        color: white;
+    }
+
+    /* Tutorials Grid */
+    .tutorials-section {
+        padding: 40px 40px 80px;
+        background: var(--bg-darker);
+    }
+    .tutorials-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+        gap: 30px;
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+    .tutorial-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: 20px;
+        overflow: hidden;
+        transition: all 0.3s;
+    }
+    [data-theme="light"] .tutorial-card {
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    }
+    .tutorial-card:hover {
+        transform: translateY(-5px);
+        border-color: var(--primary);
+    }
+    .tutorial-thumbnail {
+        position: relative;
+        aspect-ratio: 16/9;
+        background: var(--bg-darker);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+    }
+    .tutorial-thumbnail i {
+        font-size: 50px;
+        opacity: 0.3;
+        background: linear-gradient(135deg, var(--primary-light), var(--secondary));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+    .play-overlay {
+        position: absolute;
+        inset: 0;
+        background: rgba(0,0,0,0.4);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        transition: opacity 0.3s;
+    }
+    .tutorial-card:hover .play-overlay {
+        opacity: 1;
+    }
+    .small-play {
+        width: 60px;
+        height: 60px;
+        background: var(--primary);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 22px;
+        color: white;
+    }
+    .tutorial-content {
+        padding: 25px;
+    }
+    .tutorial-meta {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 12px;
+    }
+    .tutorial-badge {
+        background: rgba(124, 58, 237, 0.15);
+        color: var(--primary-light);
+        padding: 5px 12px;
+        border-radius: 100px;
+        font-size: 11px;
+        font-weight: 500;
+    }
+    .tutorial-duration {
+        color: var(--text-muted);
+        font-size: 13px;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+    .tutorial-card h3 {
+        font-size: 17px;
+        margin-bottom: 10px;
+        line-height: 1.4;
+    }
+    .tutorial-card p {
+        color: var(--text-muted);
+        font-size: 14px;
+        line-height: 1.6;
+    }
+
+    /* CTA */
+    .cta-section {
+        text-align: center;
+        padding: 100px 40px;
+        background: linear-gradient(180deg, var(--bg-darker) 0%, var(--bg-dark) 100%);
+        position: relative;
+        overflow: hidden;
+    }
+    .cta-section::before {
+        content: '';
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        top: 0;
+        left: 0;
+        background: radial-gradient(ellipse at center, rgba(124, 58, 237, 0.1) 0%, transparent 70%);
+        pointer-events: none;
+    }
+    .cta-content {
+        position: relative;
+        z-index: 1;
+    }
+    .cta-section h2 {
+        font-size: 36px;
+        font-weight: 700;
+        margin-bottom: 15px;
+    }
+    .cta-section > .cta-content > p {
+        font-size: 18px;
+        color: var(--text-muted);
+        max-width: 500px;
+        margin: 0 auto 30px;
+    }
+    .cta-btn {
+        padding: 16px 36px;
+        border-radius: 10px;
+        font-size: 15px;
+        font-weight: 600;
+        text-decoration: none;
+        background: var(--accent);
+        color: white;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.3s;
+        box-shadow: 0 4px 20px rgba(16, 185, 129, 0.4);
+    }
+    .cta-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 30px rgba(16, 185, 129, 0.5);
+    }
+
+    @media (max-width: 900px) {
+        .featured-tutorial { grid-template-columns: 1fr; gap: 30px; }
+    }
+    @media (max-width: 768px) {
+        .section-header h1 { font-size: 36px; }
+        .tutorials-hero { padding: 40px 20px; }
+        .featured-section { padding: 0 20px 40px; }
+        .featured-tutorial { padding: 25px; }
+        .filter-section { padding: 20px; }
+        .tutorials-section { padding: 40px 20px 60px; }
+        .tutorials-grid { grid-template-columns: 1fr; }
+        .cta-section { padding: 80px 20px; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero -->
+<section class="tutorials-hero">
+    <div class="section-header">
+        <div class="section-badge"><i class="fas fa-graduation-cap"></i> Tutorials</div>
+        <h1>Learn Harmonix</h1>
+        <p>Step-by-step video guides to master audio stem separation</p>
+    </div>
+</section>
+
+<!-- Featured Tutorial -->
+<section class="featured-section">
+    <div class="featured-tutorial">
+        <div class="featured-video">
+            <div class="featured-badge"><i class="fas fa-star"></i> Featured</div>
+            <div class="play-btn"><i class="fas fa-play"></i></div>
+        </div>
+        <div class="featured-content">
+            <h2>Complete Beginner's Guide to Harmonix</h2>
+            <p>Everything you need to know to get started with Harmonix. Learn how to upload songs, separate stems, adjust pitch, and download your files in this comprehensive tutorial.</p>
+            <div class="featured-stats">
+                <div class="featured-stat"><i class="fas fa-clock"></i> 15 minutes</div>
+                <div class="featured-stat"><i class="fas fa-eye"></i> 45.2K views</div>
+                <div class="featured-stat"><i class="fas fa-thumbs-up"></i> 98% liked</div>
+            </div>
+            <a href="#" class="watch-btn"><i class="fas fa-play"></i> Watch Tutorial</a>
+        </div>
+    </div>
+</section>
+
+<!-- Category Tabs -->
+<section class="filter-section">
+    <div class="category-tabs">
+        <button class="category-tab active">All Tutorials</button>
+        <button class="category-tab">Getting Started</button>
+        <button class="category-tab">Stem Separation</button>
+        <button class="category-tab">Lyrics & Transcription</button>
+        <button class="category-tab">Pitch & Tempo</button>
+        <button class="category-tab">Advanced</button>
+    </div>
+</section>
+
+<!-- Tutorials Grid -->
+<section class="tutorials-section">
+    <div class="tutorials-grid">
+        <div class="tutorial-card">
+            <div class="tutorial-thumbnail">
+                <i class="fas fa-upload"></i>
+                <div class="play-overlay"><div class="small-play"><i class="fas fa-play"></i></div></div>
+            </div>
+            <div class="tutorial-content">
+                <div class="tutorial-meta">
+                    <span class="tutorial-badge">Getting Started</span>
+                    <span class="tutorial-duration"><i class="fas fa-clock"></i> 4 min</span>
+                </div>
+                <h3>How to Upload Your First Song</h3>
+                <p>Learn the different ways to upload audio files - drag & drop, file browser, or YouTube URLs.</p>
+            </div>
+        </div>
+        
+        <div class="tutorial-card">
+            <div class="tutorial-thumbnail">
+                <i class="fas fa-microphone-alt"></i>
+                <div class="play-overlay"><div class="small-play"><i class="fas fa-play"></i></div></div>
+            </div>
+            <div class="tutorial-content">
+                <div class="tutorial-meta">
+                    <span class="tutorial-badge">Stem Separation</span>
+                    <span class="tutorial-duration"><i class="fas fa-clock"></i> 8 min</span>
+                </div>
+                <h3>Extracting Clean Vocals</h3>
+                <p>Tips and tricks for getting the highest quality vocal extractions from any song.</p>
+            </div>
+        </div>
+        
+        <div class="tutorial-card">
+            <div class="tutorial-thumbnail">
+                <i class="fas fa-drum"></i>
+                <div class="play-overlay"><div class="small-play"><i class="fas fa-play"></i></div></div>
+            </div>
+            <div class="tutorial-content">
+                <div class="tutorial-meta">
+                    <span class="tutorial-badge">Stem Separation</span>
+                    <span class="tutorial-duration"><i class="fas fa-clock"></i> 6 min</span>
+                </div>
+                <h3>Isolating Drums for Practice</h3>
+                <p>Learn how to extract drum tracks to practice along with your favorite songs.</p>
+            </div>
+        </div>
+        
+        <div class="tutorial-card">
+            <div class="tutorial-thumbnail">
+                <i class="fas fa-language"></i>
+                <div class="play-overlay"><div class="small-play"><i class="fas fa-play"></i></div></div>
+            </div>
+            <div class="tutorial-content">
+                <div class="tutorial-meta">
+                    <span class="tutorial-badge">Lyrics</span>
+                    <span class="tutorial-duration"><i class="fas fa-clock"></i> 5 min</span>
+                </div>
+                <h3>Auto-Transcribing Song Lyrics</h3>
+                <p>Use our Whisper-powered transcription to extract lyrics in 50+ languages.</p>
+            </div>
+        </div>
+        
+        <div class="tutorial-card">
+            <div class="tutorial-thumbnail">
+                <i class="fas fa-sliders-h"></i>
+                <div class="play-overlay"><div class="small-play"><i class="fas fa-play"></i></div></div>
+            </div>
+            <div class="tutorial-content">
+                <div class="tutorial-meta">
+                    <span class="tutorial-badge">Pitch & Tempo</span>
+                    <span class="tutorial-duration"><i class="fas fa-clock"></i> 7 min</span>
+                </div>
+                <h3>Pitch Shifting Vocals</h3>
+                <p>Change the key of vocals without affecting the tempo or introducing artifacts.</p>
+            </div>
+        </div>
+        
+        <div class="tutorial-card">
+            <div class="tutorial-thumbnail">
+                <i class="fas fa-download"></i>
+                <div class="play-overlay"><div class="small-play"><i class="fas fa-play"></i></div></div>
+            </div>
+            <div class="tutorial-content">
+                <div class="tutorial-meta">
+                    <span class="tutorial-badge">Getting Started</span>
+                    <span class="tutorial-duration"><i class="fas fa-clock"></i> 3 min</span>
+                </div>
+                <h3>Exporting Your Stems</h3>
+                <p>Download individual stems or all at once in WAV, MP3, or FLAC formats.</p>
+            </div>
+        </div>
+        
+        <div class="tutorial-card">
+            <div class="tutorial-thumbnail">
+                <i class="fas fa-guitar"></i>
+                <div class="play-overlay"><div class="small-play"><i class="fas fa-play"></i></div></div>
+            </div>
+            <div class="tutorial-content">
+                <div class="tutorial-meta">
+                    <span class="tutorial-badge">Stem Separation</span>
+                    <span class="tutorial-duration"><i class="fas fa-clock"></i> 6 min</span>
+                </div>
+                <h3>Separating Bass Lines</h3>
+                <p>Extract clear bass tracks for learning songs or creating backing tracks.</p>
+            </div>
+        </div>
+        
+        <div class="tutorial-card">
+            <div class="tutorial-thumbnail">
+                <i class="fas fa-magic"></i>
+                <div class="play-overlay"><div class="small-play"><i class="fas fa-play"></i></div></div>
+            </div>
+            <div class="tutorial-content">
+                <div class="tutorial-meta">
+                    <span class="tutorial-badge">Advanced</span>
+                    <span class="tutorial-duration"><i class="fas fa-clock"></i> 12 min</span>
+                </div>
+                <h3>Creating Instrumental Versions</h3>
+                <p>Advanced techniques for creating clean instrumentals and karaoke tracks.</p>
+            </div>
+        </div>
+        
+        <div class="tutorial-card">
+            <div class="tutorial-thumbnail">
+                <i class="fas fa-file-export"></i>
+                <div class="play-overlay"><div class="small-play"><i class="fas fa-play"></i></div></div>
+            </div>
+            <div class="tutorial-content">
+                <div class="tutorial-meta">
+                    <span class="tutorial-badge">Advanced</span>
+                    <span class="tutorial-duration"><i class="fas fa-clock"></i> 10 min</span>
+                </div>
+                <h3>Importing Stems into Your DAW</h3>
+                <p>A guide to using your separated stems in Ableton, FL Studio, Logic, and more.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section">
+    <div class="cta-content">
+        <h2>Ready to Try It Yourself?</h2>
+        <p>Start separating stems and extracting lyrics with Harmonix today.</p>
+        <a href="/register" class="cta-btn">
+            <i class="fas fa-rocket"></i> Get Started Free
+        </a>
+    </div>
+</section>
+{% endblock %}

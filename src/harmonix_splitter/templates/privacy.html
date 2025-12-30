@@ -1,0 +1,287 @@
+{% extends "base.html" %}
+
+{% block title %}Privacy Policy – Harmonix{% endblock %}
+{% block description %}Learn how Harmonix collects, uses, and protects your personal information.{% endblock %}
+
+{% block extra_styles %}
+<style>
+    /* Section Styles */
+    .section-header {
+        text-align: center;
+        margin-bottom: 40px;
+    }
+    .section-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: rgba(124, 58, 237, 0.1);
+        border: 1px solid var(--border);
+        padding: 8px 16px;
+        border-radius: 100px;
+        font-size: 13px;
+        color: var(--primary-light);
+        margin-bottom: 20px;
+    }
+    .section-header h1 {
+        font-size: 42px;
+        font-weight: 700;
+        margin-bottom: 10px;
+        background: linear-gradient(135deg, #fff 0%, #a78bfa 50%, #06b6d4 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+    [data-theme="light"] .section-header h1 {
+        background: linear-gradient(135deg, #0f172a 0%, var(--primary) 50%, #0891b2 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+    }
+
+    /* Hero */
+    .legal-hero {
+        padding: 60px 40px 20px;
+        text-align: center;
+    }
+
+    /* Legal Content */
+    .legal-container {
+        max-width: 850px;
+        margin: 0 auto;
+        padding: 0 40px 100px;
+    }
+    .legal-updated {
+        color: var(--text-muted);
+        font-size: 14px;
+        margin-bottom: 40px;
+        padding-bottom: 30px;
+        border-bottom: 1px solid var(--border);
+        text-align: center;
+    }
+    
+    /* TOC */
+    .toc {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 30px;
+        margin-bottom: 50px;
+    }
+    [data-theme="light"] .toc {
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    }
+    .toc h4 {
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+        margin-bottom: 18px;
+        color: var(--text-muted);
+    }
+    .toc ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        columns: 2;
+        column-gap: 30px;
+    }
+    .toc li {
+        margin-bottom: 10px;
+    }
+    .toc a {
+        color: var(--text);
+        text-decoration: none;
+        font-size: 14px;
+        transition: color 0.3s;
+    }
+    .toc a:hover {
+        color: var(--primary-light);
+    }
+    
+    /* Content */
+    .legal-content h2 {
+        font-size: 24px;
+        margin: 45px 0 18px;
+        background: linear-gradient(135deg, #fff, var(--primary-light));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+    [data-theme="light"] .legal-content h2 {
+        background: linear-gradient(135deg, #0f172a, var(--primary));
+        -webkit-background-clip: text;
+        background-clip: text;
+    }
+    .legal-content h3 {
+        font-size: 18px;
+        margin: 28px 0 12px;
+    }
+    .legal-content p {
+        color: var(--text-muted);
+        line-height: 1.8;
+        margin-bottom: 18px;
+        font-size: 15px;
+    }
+    .legal-content ul {
+        color: var(--text-muted);
+        margin-bottom: 20px;
+        padding-left: 25px;
+        line-height: 1.8;
+    }
+    .legal-content li {
+        margin-bottom: 10px;
+    }
+    .legal-content a {
+        color: var(--primary-light);
+    }
+    .highlight-box {
+        background: rgba(124, 58, 237, 0.1);
+        border: 1px solid rgba(124, 58, 237, 0.3);
+        border-radius: 14px;
+        padding: 22px 28px;
+        margin: 30px 0;
+    }
+    .highlight-box p {
+        margin: 0;
+    }
+    .highlight-box strong {
+        color: var(--text);
+    }
+
+    @media (max-width: 768px) {
+        .section-header h1 { font-size: 32px; }
+        .legal-hero { padding: 40px 20px 10px; }
+        .legal-container { padding: 0 20px 80px; }
+        .toc ul { columns: 1; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero -->
+<section class="legal-hero">
+    <div class="section-header">
+        <div class="section-badge"><i class="fas fa-shield-alt"></i> Legal</div>
+        <h1>Privacy Policy</h1>
+    </div>
+</section>
+
+<!-- Legal Content -->
+<div class="legal-container">
+    <p class="legal-updated">Last updated: December 15, 2024</p>
+    
+    <div class="toc">
+        <h4>Table of Contents</h4>
+        <ul>
+            <li><a href="#introduction">1. Introduction</a></li>
+            <li><a href="#information-collected">2. Information We Collect</a></li>
+            <li><a href="#how-we-use">3. How We Use Your Information</a></li>
+            <li><a href="#data-sharing">4. Data Sharing and Disclosure</a></li>
+            <li><a href="#data-retention">5. Data Retention</a></li>
+            <li><a href="#your-rights">6. Your Rights</a></li>
+            <li><a href="#security">7. Security</a></li>
+            <li><a href="#cookies">8. Cookies</a></li>
+            <li><a href="#children">9. Children's Privacy</a></li>
+            <li><a href="#changes">10. Changes to This Policy</a></li>
+            <li><a href="#contact">11. Contact Us</a></li>
+        </ul>
+    </div>
+    
+    <div class="legal-content">
+        <h2 id="introduction">1. Introduction</h2>
+        <p>Welcome to Harmonix ("we," "our," or "us"). We are committed to protecting your privacy and ensuring the security of your personal information. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our audio stem separation service.</p>
+        
+        <div class="highlight-box">
+            <p><strong>Key Point:</strong> We process your audio files solely to provide our stem separation service. We do not store your original audio files or separated stems beyond what is necessary to deliver the service.</p>
+        </div>
+        
+        <h2 id="information-collected">2. Information We Collect</h2>
+        
+        <h3>2.1 Information You Provide</h3>
+        <ul>
+            <li><strong>Account Information:</strong> When you create an account, we collect your name, email address, and password.</li>
+            <li><strong>Payment Information:</strong> If you subscribe to a paid plan, we collect billing information through our secure payment processor (Stripe). We do not store full credit card numbers.</li>
+            <li><strong>Audio Files:</strong> Files you upload for processing. These are temporarily stored during processing and automatically deleted after completion.</li>
+            <li><strong>Communications:</strong> When you contact us, we collect the information you provide in your message.</li>
+        </ul>
+        
+        <h3>2.2 Information Collected Automatically</h3>
+        <ul>
+            <li><strong>Usage Data:</strong> We collect information about how you use our service, including features accessed, processing history, and session duration.</li>
+            <li><strong>Device Information:</strong> Browser type, operating system, device type, and IP address.</li>
+            <li><strong>Cookies:</strong> We use cookies and similar technologies to enhance your experience. See Section 8 for details.</li>
+        </ul>
+        
+        <h2 id="how-we-use">3. How We Use Your Information</h2>
+        <p>We use the information we collect to:</p>
+        <ul>
+            <li>Provide, maintain, and improve our stem separation service</li>
+            <li>Process your audio files and deliver the separated stems</li>
+            <li>Manage your account and provide customer support</li>
+            <li>Process payments and send transaction notifications</li>
+            <li>Send service updates, security alerts, and promotional communications (with your consent)</li>
+            <li>Analyze usage patterns to improve our AI models and user experience</li>
+            <li>Prevent fraud and ensure the security of our service</li>
+        </ul>
+        
+        <h2 id="data-sharing">4. Data Sharing and Disclosure</h2>
+        <p>We do not sell your personal information. We may share your information with:</p>
+        <ul>
+            <li><strong>Service Providers:</strong> Third parties who assist us in operating our service (e.g., cloud hosting, payment processing, analytics)</li>
+            <li><strong>Legal Requirements:</strong> When required by law or to protect our rights and safety</li>
+            <li><strong>Business Transfers:</strong> In connection with a merger, acquisition, or sale of assets</li>
+        </ul>
+        
+        <h2 id="data-retention">5. Data Retention</h2>
+        <p>We retain your information for as long as your account is active or as needed to provide services:</p>
+        <ul>
+            <li><strong>Audio Files:</strong> Automatically deleted within 24 hours of processing completion</li>
+            <li><strong>Account Data:</strong> Retained until you request deletion</li>
+            <li><strong>Usage Logs:</strong> Retained for 90 days for security and analytics</li>
+            <li><strong>Payment Records:</strong> Retained as required by tax and accounting laws</li>
+        </ul>
+        
+        <h2 id="your-rights">6. Your Rights</h2>
+        <p>Depending on your location, you may have the following rights:</p>
+        <ul>
+            <li><strong>Access:</strong> Request a copy of your personal data</li>
+            <li><strong>Correction:</strong> Request correction of inaccurate data</li>
+            <li><strong>Deletion:</strong> Request deletion of your data</li>
+            <li><strong>Portability:</strong> Request your data in a portable format</li>
+            <li><strong>Opt-out:</strong> Unsubscribe from marketing communications</li>
+            <li><strong>Restriction:</strong> Request restriction of processing</li>
+        </ul>
+        <p>To exercise these rights, please contact us at <a href="mailto:privacy@harmonix.app">privacy@harmonix.app</a>.</p>
+        
+        <h2 id="security">7. Security</h2>
+        <p>We implement industry-standard security measures to protect your information:</p>
+        <ul>
+            <li>Encryption in transit (TLS 1.3) and at rest (AES-256)</li>
+            <li>Regular security audits and penetration testing</li>
+            <li>Access controls and authentication measures</li>
+            <li>Employee training on data protection</li>
+        </ul>
+        <p>While we strive to protect your information, no method of transmission over the Internet is 100% secure.</p>
+        
+        <h2 id="cookies">8. Cookies</h2>
+        <p>We use cookies and similar technologies for:</p>
+        <ul>
+            <li><strong>Essential Cookies:</strong> Required for the service to function</li>
+            <li><strong>Analytics Cookies:</strong> Help us understand how users interact with our service</li>
+            <li><strong>Preference Cookies:</strong> Remember your settings and preferences</li>
+        </ul>
+        <p>You can control cookies through your browser settings. Note that disabling certain cookies may affect service functionality.</p>
+        
+        <h2 id="children">9. Children's Privacy</h2>
+        <p>Our service is not intended for children under 13. We do not knowingly collect personal information from children under 13. If you believe we have collected information from a child, please contact us immediately.</p>
+        
+        <h2 id="changes">10. Changes to This Policy</h2>
+        <p>We may update this Privacy Policy from time to time. We will notify you of any material changes by posting the new policy on this page and updating the "Last updated" date. Your continued use of the service after changes constitutes acceptance of the updated policy.</p>
+        
+        <h2 id="contact">11. Contact Us</h2>
+        <p>If you have any questions about this Privacy Policy, please contact us:</p>
+        <ul>
+            <li>Email: <a href="mailto:privacy@harmonix.app">privacy@harmonix.app</a></li>
+            <li>Address: Harmonix Inc., San Francisco, CA, USA</li>
+        </ul>
+    </div>
+</div>
+{% endblock %}

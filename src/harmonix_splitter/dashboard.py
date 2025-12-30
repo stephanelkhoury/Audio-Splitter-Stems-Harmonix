@@ -6,9 +6,10 @@ Flask-based web interface for audio stem separation
 import os
 import uuid
 import json
+import secrets
 from pathlib import Path
-from datetime import datetime
-from flask import Flask, render_template, request, jsonify, send_file, url_for
+from datetime import datetime, timedelta
+from flask import Flask, render_template, request, jsonify, send_file, url_for, session, redirect, flash
 from werkzeug.utils import secure_filename
 import threading
 import logging
@@ -26,6 +27,7 @@ from harmonix_splitter.audio.lyrics import LyricsExtractor, LyricsResult
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'harmonix-secret-key-change-in-production'
 app.config['MAX_CONTENT_LENGTH'] = 500 * 1024 * 1024  # 500MB max file size
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=30)
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -50,12 +52,52 @@ jobs_lock = threading.Lock()
 ALLOWED_EXTENSIONS = {'.mp3', '.wav', '.flac', '.m4a', '.ogg', '.aac'}
 
 
-def scan_existing_outputs():
-    """Scan the output directory for existing processed jobs"""
-    logger.info("Scanning for existing outputs...")
+def get_user_output_dir(username: str | None) -> Path:
+    """Get user-specific output directory"""
+    if username:
+        user_dir = OUTPUT_DIR / "users" / username
+    else:
+        user_dir = OUTPUT_DIR / "anonymous"
+    user_dir.mkdir(parents=True, exist_ok=True)
+    return user_dir
+
+
+def get_user_upload_dir(username: str | None) -> Path:
+    """Get user-specific upload directory"""
+    if username:
+        user_dir = UPLOAD_DIR / username
+    else:
+        user_dir = UPLOAD_DIR / "anonymous"
+    user_dir.mkdir(parents=True, exist_ok=True)
+    return user_dir
+
+
+def scan_existing_outputs(username: str | None = None):
+    """Scan the output directory for existing processed jobs for a specific user"""
+    logger.info(f"Scanning for existing outputs for user: {username or 'all'}...")
     
-    for job_dir in OUTPUT_DIR.iterdir():
-        if job_dir.is_dir() and not job_dir.name.startswith('.'):
+    # Determine which directories to scan
+    if username:
+        # Only scan user's directory
+        user_output_dir = get_user_output_dir(username)
+        scan_dirs = [user_output_dir] if user_output_dir.exists() else []
+    else:
+        # Scan all user directories (for admin or legacy)
+        scan_dirs = []
+        users_dir = OUTPUT_DIR / "users"
+        if users_dir.exists():
+            scan_dirs.extend([d for d in users_dir.iterdir() if d.is_dir()])
+        anon_dir = OUTPUT_DIR / "anonymous"
+        if anon_dir.exists():
+            scan_dirs.append(anon_dir)
+        # Also scan legacy root output dir for backwards compatibility
+        scan_dirs.append(OUTPUT_DIR)
+    
+    for base_dir in scan_dirs:
+        for job_dir in base_dir.iterdir():
+            if not job_dir.is_dir() or job_dir.name.startswith('.') or job_dir.name in ['users', 'anonymous']:
+                continue
+                
             job_id = job_dir.name
             
             # Skip if already in storage AND has stems populated
@@ -79,8 +121,8 @@ def scan_existing_outputs():
             if not stem_files:
                 continue
             
-            # Valid stem types - include all possible Demucs output stems
-            valid_stem_types = {'vocals', 'drums', 'bass', 'guitar', 'piano', 'other', 'instrumental', 'synth', 'strings', 'melody', 'accompaniment', 'percussion', 'lead', 'background'}
+            # Valid stem types - include all possible Demucs output stems + original for URL downloads
+            valid_stem_types = {'vocals', 'drums', 'bass', 'guitar', 'piano', 'other', 'instrumental', 'synth', 'strings', 'melody', 'accompaniment', 'percussion', 'lead', 'background', 'original'}
             
             # Extract base name and stems from files
             stems = {}
@@ -112,6 +154,16 @@ def scan_existing_outputs():
                     jobs_storage[job_id]['has_lyrics'] = has_lyrics
                     logger.info(f"Updated job: {job_id} ({base_name}) with {len(stems)} stems")
                 else:
+                    # Determine owner from directory structure
+                    owner = None
+                    if 'users' in str(job_dir):
+                        # Extract username from path like /outputs/users/username/job_id
+                        parts = str(job_dir).split('/users/')
+                        if len(parts) > 1:
+                            owner = parts[1].split('/')[0]
+                    elif 'anonymous' in str(job_dir):
+                        owner = None
+                    
                     # Create new job record
                     jobs_storage[job_id] = {
                         'job_id': job_id,
@@ -121,10 +173,11 @@ def scan_existing_outputs():
                         'progress': 100,
                         'stems': stems,
                         'has_lyrics': has_lyrics,
+                        'user': owner,
                         'created_at': mod_time.isoformat(),
                         'completed_at': mod_time.isoformat()
                     }
-                    logger.info(f"Found existing job: {job_id} ({base_name}) with {len(stems)} stems")
+                    logger.info(f"Found existing job: {job_id} ({base_name}) for user: {owner or 'unknown'} with {len(stems)} stems")
     
     logger.info(f"Scan complete. Found {len(jobs_storage)} existing jobs.")
 
@@ -134,9 +187,12 @@ def allowed_file(filename):
     return Path(filename).suffix.lower() in ALLOWED_EXTENSIONS
 
 
-def process_audio_async(job_id, audio_path, quality, mode, instruments, display_name=None):
+def process_audio_async(job_id, audio_path, quality, mode, instruments, display_name=None, username=None):
     """Background task to process audio"""
     try:
+        # Get user-specific output directory
+        user_output_dir = get_user_output_dir(username)
+        
         with jobs_lock:
             jobs_storage[job_id]['status'] = 'analyzing'
             jobs_storage[job_id]['progress'] = 5
@@ -186,14 +242,14 @@ def process_audio_async(job_id, audio_path, quality, mode, instruments, display_
         with jobs_lock:
             jobs_storage[job_id]['progress'] = 30
         
-        # Process audio
+        # Process audio - use user-specific output directory
         result = orchestrator.process(
             audio_path=audio_path,
             job_id=job_id,
             quality=quality,
             mode=mode,
             target_instruments=instruments if instruments else None,
-            output_dir=str(OUTPUT_DIR),
+            output_dir=str(user_output_dir),
             custom_name=display_name
         )
         
@@ -207,9 +263,9 @@ def process_audio_async(job_id, audio_path, quality, mode, instruments, display_
             stem_urls = {}
             for stem_name in result.stems.keys():
                 # Check for MP3 first, then WAV
-                stem_file = OUTPUT_DIR / job_id / f"{base_name}_{stem_name}.mp3"
+                stem_file = user_output_dir / job_id / f"{base_name}_{stem_name}.mp3"
                 if not stem_file.exists():
-                    stem_file = OUTPUT_DIR / job_id / f"{base_name}_{stem_name}.wav"
+                    stem_file = user_output_dir / job_id / f"{base_name}_{stem_name}.wav"
                 if stem_file.exists():
                     stem_urls[stem_name] = f"/download/{job_id}/{stem_name}"
             
@@ -217,9 +273,9 @@ def process_audio_async(job_id, audio_path, quality, mode, instruments, display_
             if not stem_urls:
                 original_base = Path(audio_path).stem
                 for stem_name in result.stems.keys():
-                    stem_file = OUTPUT_DIR / job_id / f"{original_base}_{stem_name}.mp3"
+                    stem_file = user_output_dir / job_id / f"{original_base}_{stem_name}.mp3"
                     if not stem_file.exists():
-                        stem_file = OUTPUT_DIR / job_id / f"{original_base}_{stem_name}.wav"
+                        stem_file = user_output_dir / job_id / f"{original_base}_{stem_name}.wav"
                     if stem_file.exists():
                         stem_urls[stem_name] = f"/download/{job_id}/{stem_name}"
             
@@ -250,10 +306,422 @@ def process_audio_async(job_id, audio_path, quality, mode, instruments, display_
 
 
 @app.route('/')
+def landing():
+    """Landing page / marketing homepage"""
+    return render_template('landing.html')
+
+
+@app.route('/dashboard')
+@app.route('/app')
+@app.route('/studio')
 def index():
-    """Main dashboard page"""
+    """Main dashboard / studio page"""
     return render_template('dashboard.html')
 
+
+# ==================== AUTHENTICATION ROUTES ====================
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    """User login page"""
+    from harmonix_splitter.auth import authenticate_user
+    
+    if request.method == 'POST':
+        email = request.form.get('email', '')
+        password = request.form.get('password', '')
+        remember = request.form.get('remember', False)
+        
+        user = authenticate_user(email, password)
+        if user:
+            session['user_id'] = user.get('username')
+            session['user_email'] = user.get('email')
+            session['user_name'] = user.get('name')
+            session['user_role'] = user.get('role')
+            session['user_plan'] = user.get('plan', 'free')
+            
+            if remember:
+                session.permanent = True
+            
+            flash('Welcome back!', 'success')
+            
+            # Redirect admin to admin dashboard
+            if user.get('role') == 'admin':
+                return redirect('/admin')
+            return redirect('/dashboard')
+        else:
+            flash('Invalid email or password', 'error')
+    
+    return render_template('login.html')
+
+
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    """User registration page"""
+    from harmonix_splitter.auth import create_user, get_user_by_email
+    
+    if request.method == 'POST':
+        name = request.form.get('name', '')
+        email = request.form.get('email', '')
+        password = request.form.get('password', '')
+        
+        if not email or not password:
+            flash('Email and password are required', 'error')
+            return render_template('register.html')
+        
+        if get_user_by_email(email):
+            flash('An account with this email already exists', 'error')
+            return render_template('register.html')
+        
+        try:
+            # Use email as username, with name as display name
+            username = email.split('@')[0] + '_' + secrets.token_hex(4)
+            user = create_user(username, email, password, name)
+            if user:
+                session['user_id'] = username
+                session['user_email'] = email
+                session['user_name'] = name
+                session['user_role'] = user.get('role', 'user')
+                session['user_plan'] = user.get('plan', 'free')
+                
+                flash('Account created successfully!', 'success')
+                return redirect('/dashboard')
+        except Exception as e:
+            flash(f'Failed to create account: {str(e)}', 'error')
+    
+    return render_template('register.html')
+
+
+@app.route('/logout')
+def logout():
+    """User logout"""
+    session.clear()
+    flash('You have been logged out', 'info')
+    return redirect('/')
+
+
+@app.route('/admin')
+def admin_dashboard():
+    """Admin dashboard"""
+    from harmonix_splitter.auth import get_all_users, get_all_contacts, get_admin_stats
+    
+    # Check if user is logged in and is admin
+    if 'user_id' not in session or session.get('user_role') != 'admin':
+        return redirect('/login')
+    
+    users = get_all_users()
+    contacts = get_all_contacts()
+    stats = get_admin_stats()
+    
+    return render_template('admin.html', 
+                          users=users, 
+                          contacts=contacts,
+                          stats=stats,
+                          current_user={
+                              'name': session.get('user_name'),
+                              'email': session.get('user_email'),
+                              'role': session.get('user_role')
+                          })
+
+
+@app.route('/admin/users', methods=['GET', 'POST', 'PUT', 'DELETE'])
+def admin_users():
+    """Admin user management API"""
+    from harmonix_splitter.auth import (get_all_users, get_user_by_id, create_user, 
+                                        update_user, delete_user)
+    
+    if 'user_id' not in session or session.get('user_role') != 'admin':
+        return jsonify({'error': 'Unauthorized'}), 403
+    
+    if request.method == 'GET':
+        user_id = request.args.get('id')
+        if user_id:
+            user = get_user_by_id(user_id)
+            if user:
+                return jsonify(user)
+            return jsonify({'error': 'User not found'}), 404
+        return jsonify(get_all_users())
+    
+    elif request.method == 'POST':
+        data = request.get_json()
+        try:
+            # Generate a username from email
+            email = data.get('email')
+            username = email.split('@')[0] + '_' + secrets.token_hex(4)
+            user = create_user(
+                username,
+                email,
+                data.get('password'),
+                data.get('name', ''),
+                data.get('role', 'user')
+            )
+            return jsonify({'success': True, 'user': user})
+        except Exception as e:
+            return jsonify({'error': str(e)}), 400
+    
+    elif request.method == 'PUT':
+        data = request.get_json()
+        user_id = data.get('id')
+        updates = {k: v for k, v in data.items() if k != 'id'}
+        result = update_user(user_id, updates)
+        if result:
+            return jsonify({'success': True})
+        return jsonify({'error': 'Failed to update user'}), 400
+    
+    elif request.method == 'DELETE':
+        user_id = request.args.get('id')
+        if not user_id:
+            return jsonify({'error': 'User ID required'}), 400
+        if delete_user(user_id):
+            return jsonify({'success': True})
+        return jsonify({'error': 'Failed to delete user'}), 400
+    
+    return jsonify({'error': 'Method not allowed'}), 405
+
+
+@app.route('/admin/users/add', methods=['POST'])
+def admin_add_user():
+    """Add new user from admin panel"""
+    from harmonix_splitter.auth import create_user
+    
+    if 'user_id' not in session or session.get('user_role') != 'admin':
+        return jsonify({'error': 'Unauthorized'}), 403
+    
+    try:
+        data = request.get_json()
+        user = create_user(
+            username=data.get('username'),
+            email=data.get('email'),
+            password=data.get('password'),
+            name=data.get('name', ''),
+            role=data.get('role', 'user')
+        )
+        # Set plan if specified
+        if data.get('plan'):
+            from harmonix_splitter.auth import upgrade_plan
+            upgrade_plan(data.get('username'), data.get('plan'))
+        return jsonify({'success': True, 'user': user})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
+
+
+@app.route('/admin/users/update', methods=['POST'])
+def admin_update_user():
+    """Update user from admin panel"""
+    from harmonix_splitter.auth import update_user
+    
+    if 'user_id' not in session or session.get('user_role') != 'admin':
+        return jsonify({'error': 'Unauthorized'}), 403
+    
+    try:
+        data = request.get_json()
+        username = data.get('username')
+        updates = {}
+        
+        if 'name' in data:
+            updates['name'] = data['name']
+        if 'email' in data:
+            updates['email'] = data['email']
+        if 'role' in data:
+            updates['role'] = data['role']
+        if 'plan' in data:
+            updates['plan'] = data['plan']
+        if 'is_active' in data:
+            updates['is_active'] = data['is_active']
+        if 'password' in data and data['password']:
+            from harmonix_splitter.auth import hash_password
+            pw_hash, salt = hash_password(data['password'])
+            updates['password_hash'] = pw_hash
+            updates['salt'] = salt
+        
+        result = update_user(username, updates)
+        if result:
+            return jsonify({'success': True})
+        return jsonify({'error': 'Failed to update user'}), 400
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
+
+
+@app.route('/admin/users/delete/<username>', methods=['DELETE'])
+def admin_delete_user(username):
+    """Delete user from admin panel"""
+    from harmonix_splitter.auth import delete_user
+    
+    if 'user_id' not in session or session.get('user_role') != 'admin':
+        return jsonify({'error': 'Unauthorized'}), 403
+    
+    if username == 'admin':
+        return jsonify({'error': 'Cannot delete admin user'}), 400
+    
+    if delete_user(username):
+        return jsonify({'success': True})
+    return jsonify({'error': 'Failed to delete user'}), 400
+
+
+@app.route('/admin/contacts', methods=['GET', 'POST'])
+def admin_contacts():
+    """Admin contact management API"""
+    from harmonix_splitter.auth import get_all_contacts, get_contact_by_id, reply_to_contact
+    
+    if 'user_id' not in session or session.get('user_role') != 'admin':
+        return jsonify({'error': 'Unauthorized'}), 403
+    
+    if request.method == 'GET':
+        contact_id = request.args.get('id')
+        if contact_id:
+            contact = get_contact_by_id(contact_id)
+            if contact:
+                return jsonify(contact)
+            return jsonify({'error': 'Contact not found'}), 404
+        return jsonify(get_all_contacts())
+    
+    elif request.method == 'POST':
+        data = request.get_json()
+        contact_id = data.get('id')
+        reply_message = data.get('reply')
+        if reply_to_contact(contact_id, reply_message):
+            return jsonify({'success': True})
+        return jsonify({'error': 'Failed to reply'}), 400
+    
+    return jsonify({'error': 'Method not allowed'}), 405
+
+
+@app.route('/admin/contacts/reply/<contact_id>', methods=['POST'])
+def admin_reply_contact(contact_id):
+    """Reply to contact message"""
+    from harmonix_splitter.auth import reply_to_contact
+    
+    if 'user_id' not in session or session.get('user_role') != 'admin':
+        return jsonify({'error': 'Unauthorized'}), 403
+    
+    data = request.get_json()
+    reply_message = data.get('reply')
+    
+    if reply_to_contact(contact_id, reply_message):
+        return jsonify({'success': True})
+    return jsonify({'error': 'Failed to reply'}), 400
+
+
+@app.route('/admin/contacts/delete/<contact_id>', methods=['DELETE'])
+def admin_delete_contact(contact_id):
+    """Delete contact message"""
+    from harmonix_splitter.auth import delete_contact
+    
+    if 'user_id' not in session or session.get('user_role') != 'admin':
+        return jsonify({'error': 'Unauthorized'}), 403
+    
+    if delete_contact(contact_id):
+        return jsonify({'success': True})
+    return jsonify({'error': 'Failed to delete contact'}), 400
+
+
+# ==================== STATIC PAGES ====================
+
+@app.route('/features')
+def features():
+    """Features page"""
+    return render_template('features.html')
+
+
+@app.route('/pricing')
+def pricing():
+    """Pricing page"""
+    return render_template('pricing.html')
+
+
+@app.route('/about')
+def about():
+    """About page"""
+    return render_template('about.html')
+
+
+@app.route('/contact', methods=['GET', 'POST'])
+def contact():
+    """Contact page"""
+    from harmonix_splitter.auth import add_contact_submission
+    
+    if request.method == 'POST':
+        try:
+            result = add_contact_submission(
+                name=request.form.get('name', ''),
+                email=request.form.get('email', ''),
+                subject=request.form.get('subject', ''),
+                message=request.form.get('message', ''),
+                category=request.form.get('category', 'general')
+            )
+            if result:
+                flash('Thank you for your message! We will get back to you soon.', 'success')
+                return redirect('/contact')
+        except Exception as e:
+            flash(f'Failed to submit message: {str(e)}', 'error')
+    
+    return render_template('contact.html')
+
+
+@app.route('/docs')
+@app.route('/documentation')
+def docs():
+    """Documentation page"""
+    return render_template('docs.html')
+
+
+@app.route('/tutorials')
+def tutorials():
+    """Tutorials page"""
+    return render_template('tutorials.html')
+
+
+@app.route('/blog')
+def blog():
+    """Blog page"""
+    return render_template('blog.html')
+
+
+@app.route('/community')
+def community():
+    """Community page"""
+    return render_template('community.html')
+
+
+@app.route('/privacy')
+def privacy():
+    """Privacy policy page"""
+    return render_template('privacy.html')
+
+
+@app.route('/terms')
+def terms():
+    """Terms of service page"""
+    return render_template('terms.html')
+
+
+@app.route('/account')
+def account():
+    """User account page"""
+    if 'user_id' not in session:
+        return redirect('/login')
+    
+    # Get user stats from auth module
+    from harmonix_splitter.auth import get_user_stats, get_user
+    
+    username = session.get('user_id')
+    if not username:
+        return redirect('/login')
+    user_stats = get_user_stats(username)
+    user_data = get_user(username)
+    
+    return render_template('account.html',
+                          current_user={
+                              'id': session.get('user_id'),
+                              'username': username,
+                              'name': session.get('user_name'),
+                              'email': session.get('user_email'),
+                              'role': session.get('user_role'),
+                              'plan': session.get('user_plan', 'free'),
+                          },
+                          user_stats=user_stats)
+
+
+# ==================== API ROUTES ====================
 
 @app.route('/upload', methods=['POST'])
 def upload_file():
@@ -271,34 +739,64 @@ def upload_file():
         if not allowed_file(file.filename):
             return jsonify({'error': f'Invalid file type. Allowed: {", ".join(ALLOWED_EXTENSIONS)}'}), 400
         
+        # ===== PLAN LIMIT ENFORCEMENT =====
+        from harmonix_splitter.auth import check_usage_limit, get_plan, increment_song_usage
+        
+        username = session.get('user_id')
+        user_plan = session.get('user_plan', 'free')
+        plan_info = get_plan(user_plan)
+        
+        if username:
+            # Check usage limit
+            usage_check = check_usage_limit(username)
+            if not usage_check['allowed']:
+                return jsonify({
+                    'error': f"Monthly limit reached! You've processed {usage_check['used']} of {usage_check['limit']} songs this month.",
+                    'limit_reached': True,
+                    'upgrade_url': '/#pricing'
+                }), 403
+        
         # Get parameters
         quality = request.form.get('quality', 'balanced')
         mode = request.form.get('mode', 'grouped')
         instruments_str = request.form.get('instruments', '')
         output_name = request.form.get('output_name', '').strip()
         
-        # Parse instruments
+        # Parse instruments and validate against plan
         instruments = None
         if instruments_str:
-            instruments = [i.strip() for i in instruments_str.split(',') if i.strip()]
+            requested_instruments = [i.strip() for i in instruments_str.split(',') if i.strip()]
+            # Filter to allowed stems for the user's plan
+            allowed_stems = plan_info.get('stem_types', ['vocals', 'drums', 'bass', 'other'])
+            instruments = [i for i in requested_instruments if i in allowed_stems]
+            
+            # Warn if some stems were filtered
+            filtered_out = set(requested_instruments) - set(instruments)
+            if filtered_out:
+                logger.warning(f"User {username} requested stems not in their plan: {filtered_out}")
         
         # Generate job ID
         job_id = str(uuid.uuid4())
         
         # Save uploaded file with proper extension
         # Extract extension BEFORE secure_filename to preserve the dot
-        original_filename = file.filename
+        original_filename = file.filename or 'unknown.wav'
         file_ext = Path(original_filename).suffix.lower()  # e.g., ".mp3"
         base_name = secure_filename(Path(original_filename).stem)  # secure only the name part
         
         # Use custom output name if provided, otherwise use original filename
         display_name = secure_filename(output_name) if output_name else base_name
         
-        # Create the upload path with proper extension
-        upload_path = UPLOAD_DIR / f"{job_id}_{base_name}{file_ext}"
+        # Create the upload path in user-specific directory
+        user_upload_dir = get_user_upload_dir(username)
+        upload_path = user_upload_dir / f"{job_id}_{base_name}{file_ext}"
         file.save(str(upload_path))
         
-        logger.info(f"Job {job_id}: File uploaded - {base_name}{file_ext} (output as: {display_name})")
+        logger.info(f"Job {job_id}: File uploaded by {username or 'anonymous'} - {base_name}{file_ext} (output as: {display_name})")
+        
+        # Increment usage counter for logged-in users
+        if username:
+            increment_song_usage(username)
         
         # Create job record
         with jobs_lock:
@@ -311,13 +809,15 @@ def upload_file():
                 'quality': quality,
                 'mode': mode,
                 'instruments': instruments,
+                'user': username,
+                'user_plan': user_plan,
                 'created_at': datetime.now().isoformat()
             }
         
-        # Start background processing
+        # Start background processing with username for user-specific output
         thread = threading.Thread(
             target=process_audio_async,
-            args=(job_id, upload_path, quality, mode, instruments, display_name)
+            args=(job_id, upload_path, quality, mode, instruments, display_name, username)
         )
         thread.daemon = True
         thread.start()
@@ -333,37 +833,541 @@ def upload_file():
         return jsonify({'error': str(e)}), 500
 
 
+@app.route('/api/plan-info', methods=['GET'])
+def get_plan_info():
+    """Get current user's plan information and usage"""
+    from harmonix_splitter.auth import get_user_stats, get_plan, check_usage_limit, get_all_plans
+    
+    username = session.get('user_id')
+    user_plan = session.get('user_plan', 'free')
+    user_role = session.get('user_role', 'user')
+    user_name = session.get('user_name', '')
+    
+    # Get plan details
+    plan_info = get_plan(user_plan)
+    
+    # Get usage if logged in
+    usage_info = None
+    if username:
+        usage_info = check_usage_limit(username)
+        user_stats = get_user_stats(username)
+    else:
+        user_stats = None
+    
+    return jsonify({
+        'logged_in': username is not None,
+        'username': username,
+        'name': user_name,
+        'role': user_role,
+        'is_admin': user_role == 'admin',
+        'plan': user_plan,
+        'plan_details': plan_info,
+        'usage': usage_info,
+        'stats': user_stats,
+        'all_plans': get_all_plans()
+    })
+
+
+@app.route('/api/upgrade-plan', methods=['POST'])
+def upgrade_plan_api():
+    """Upgrade user's plan (would integrate with payment in production)"""
+    from harmonix_splitter.auth import upgrade_plan
+    
+    if 'user_id' not in session:
+        return jsonify({'error': 'Not logged in'}), 401
+    
+    data = request.get_json()
+    new_plan = data.get('plan')
+    
+    if new_plan not in ['free', 'creator', 'studio']:
+        return jsonify({'error': 'Invalid plan'}), 400
+    
+    username = session.get('user_id')
+    if not username:
+        return jsonify({'error': 'Not logged in'}), 401
+    
+    # In production, this would handle payment verification
+    # For now, just upgrade the plan directly
+    success = upgrade_plan(username, new_plan)
+    
+    if success:
+        session['user_plan'] = new_plan
+        return jsonify({
+            'success': True,
+            'message': f'Successfully upgraded to {new_plan} plan',
+            'new_plan': new_plan
+        })
+    else:
+        return jsonify({'error': 'Failed to upgrade plan'}), 500
+
+
+@app.route('/validate-url', methods=['POST'])
+def validate_url():
+    """Validate a URL and get video/audio info without downloading"""
+    try:
+        import yt_dlp
+        
+        data = request.get_json()
+        url = data.get('url', '').strip()
+        
+        if not url:
+            return jsonify({'valid': False, 'error': 'No URL provided'}), 400
+        
+        # Supported patterns
+        supported_patterns = [
+            'youtube.com', 'youtu.be', 'soundcloud.com', 
+            'vimeo.com', 'bandcamp.com'
+        ]
+        
+        is_supported = any(pattern in url.lower() for pattern in supported_patterns)
+        if not is_supported:
+            return jsonify({
+                'valid': False, 
+                'error': 'Unsupported URL. Supported: YouTube, SoundCloud, Vimeo, Bandcamp'
+            }), 400
+        
+        # Try to get info without downloading - use extract_flat for speed
+        ydl_opts = {
+            'quiet': True,
+            'no_warnings': True,
+            'extract_flat': 'in_playlist',  # Faster extraction
+            'skip_download': True,
+            'socket_timeout': 10,  # 10 second timeout
+        }
+        
+        try:
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:  # type: ignore[arg-type]
+                info = ydl.extract_info(url, download=False)
+                
+                if info:
+                    title = info.get('title', 'Unknown')
+                    duration = info.get('duration', 0)
+                    uploader = info.get('uploader', info.get('channel', info.get('uploader_id', '')))
+                    
+                    # Determine source
+                    source = 'Unknown'
+                    if 'youtube' in url.lower() or 'youtu.be' in url.lower():
+                        source = 'YouTube'
+                    elif 'soundcloud' in url.lower():
+                        source = 'SoundCloud'
+                    elif 'vimeo' in url.lower():
+                        source = 'Vimeo'
+                    elif 'bandcamp' in url.lower():
+                        source = 'Bandcamp'
+                    
+                    return jsonify({
+                        'valid': True,
+                        'title': title,
+                        'duration': duration,
+                        'uploader': uploader,
+                        'source': source
+                    })
+                else:
+                    return jsonify({
+                        'valid': False,
+                        'error': 'Could not extract info from URL'
+                    }), 400
+                    
+        except Exception as download_error:
+            error_msg = str(download_error)
+            logger.error(f"yt-dlp error: {error_msg}")
+            if 'Private video' in error_msg:
+                error_msg = 'This video is private'
+            elif 'Video unavailable' in error_msg or 'unavailable' in error_msg.lower():
+                error_msg = 'Video unavailable or removed'
+            elif 'age' in error_msg.lower():
+                error_msg = 'Age-restricted content cannot be downloaded'
+            elif 'Sign in' in error_msg or 'sign in' in error_msg.lower():
+                error_msg = 'This video requires sign-in'
+            elif 'timed out' in error_msg.lower():
+                error_msg = 'Request timed out. Please try again.'
+            else:
+                error_msg = f'Could not fetch video info: {error_msg[:100]}'
+            return jsonify({'valid': False, 'error': error_msg}), 400
+            
+    except ImportError:
+        return jsonify({
+            'valid': False, 
+            'error': 'yt-dlp not installed. Run: pip install yt-dlp'
+        }), 500
+    except Exception as e:
+        logger.error(f"URL validation failed: {e}")
+        return jsonify({'valid': False, 'error': str(e)}), 500
+        return jsonify({'valid': False, 'error': str(e)}), 500
+
+
+@app.route('/upload-url', methods=['POST'])
+def upload_from_url():
+    """Download audio from YouTube/URL and start processing"""
+    try:
+        data = request.get_json()
+        url = data.get('url', '').strip()
+        
+        if not url:
+            return jsonify({'error': 'No URL provided'}), 400
+        
+        # Validate URL (YouTube, SoundCloud, etc.)
+        supported_patterns = [
+            'youtube.com', 'youtu.be', 'soundcloud.com', 
+            'vimeo.com', 'bandcamp.com', 'spotify.com'
+        ]
+        
+        is_supported = any(pattern in url.lower() for pattern in supported_patterns)
+        if not is_supported:
+            return jsonify({'error': 'Unsupported URL. Supported: YouTube, SoundCloud, Vimeo, Bandcamp'}), 400
+        
+        # ===== PLAN LIMIT ENFORCEMENT =====
+        from harmonix_splitter.auth import check_usage_limit, get_plan, increment_song_usage
+        
+        username = session.get('user_id')
+        user_plan = session.get('user_plan', 'free')
+        plan_info = get_plan(user_plan)
+        
+        if username:
+            # Check usage limit
+            usage_check = check_usage_limit(username)
+            if not usage_check['allowed']:
+                return jsonify({
+                    'error': f"Monthly limit reached! You've processed {usage_check['used']} of {usage_check['limit']} songs this month.",
+                    'limit_reached': True,
+                    'upgrade_url': '/#pricing'
+                }), 403
+        
+        # Get parameters
+        quality = data.get('quality', 'balanced')
+        mode = data.get('mode', 'grouped')
+        instruments_str = data.get('instruments', '')
+        output_name = data.get('output_name', '').strip()
+        
+        # Parse instruments and validate against plan
+        instruments = None
+        if instruments_str:
+            requested_instruments = [i.strip() for i in instruments_str.split(',') if i.strip()]
+            # Filter to allowed stems for the user's plan
+            allowed_stems = plan_info.get('stem_types', ['vocals', 'drums', 'bass', 'other'])
+            instruments = [i for i in requested_instruments if i in allowed_stems]
+        
+        # Generate job ID
+        job_id = str(uuid.uuid4())
+        
+        # Create job output directory in user-specific location
+        user_output_dir = get_user_output_dir(username)
+        job_output_dir = user_output_dir / job_id
+        job_output_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Increment usage counter for logged-in users
+        if username:
+            increment_song_usage(username)
+        
+        # Create job record with downloading status
+        with jobs_lock:
+            jobs_storage[job_id] = {
+                'job_id': job_id,
+                'filename': url,
+                'display_name': output_name or 'Downloading...',
+                'status': 'downloading',
+                'progress': 0,
+                'stage': 'Downloading from URL...',
+                'quality': quality,
+                'mode': mode,
+                'instruments': instruments,
+                'source_url': url,
+                'user': username,
+                'user_plan': user_plan,
+                'created_at': datetime.now().isoformat()
+            }
+        
+        # Start background download and processing with username
+        thread = threading.Thread(
+            target=download_and_process_url,
+            args=(job_id, url, quality, mode, instruments, output_name, username)
+        )
+        thread.daemon = True
+        thread.start()
+        
+        return jsonify({
+            'job_id': job_id,
+            'status': 'downloading',
+            'message': 'Download started. Processing will begin automatically.'
+        })
+        
+    except Exception as e:
+        logger.error(f"URL upload failed: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+def download_and_process_url(job_id, url, quality, mode, instruments, output_name, username=None):
+    """Background task to download audio from URL and process it"""
+    try:
+        import yt_dlp
+        
+        # Use user-specific output directory
+        user_output_dir = get_user_output_dir(username)
+        job_output_dir = user_output_dir / job_id
+        job_output_dir.mkdir(parents=True, exist_ok=True)
+        
+        with jobs_lock:
+            jobs_storage[job_id]['progress'] = 5
+            jobs_storage[job_id]['stage'] = 'Fetching video info...'
+        
+        # Configure yt-dlp for best audio quality as MP3
+        ydl_opts = {
+            'format': 'bestaudio/best',
+            'outtmpl': str(job_output_dir / '%(title)s.%(ext)s'),
+            'postprocessors': [{
+                'key': 'FFmpegExtractAudio',
+                'preferredcodec': 'mp3',  # MP3 format
+                'preferredquality': '320',  # 320kbps
+            }],
+            'quiet': True,
+            'no_warnings': True,
+            'extract_flat': False,
+            'noplaylist': True,  # Download only single video, not playlist
+        }
+        
+        # Download the audio
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:  # type: ignore[arg-type]
+            # Get video info first
+            with jobs_lock:
+                jobs_storage[job_id]['progress'] = 10
+                jobs_storage[job_id]['stage'] = 'Extracting audio...'
+            
+            info = ydl.extract_info(url, download=True)
+            video_title = info.get('title', 'Unknown')
+            duration = info.get('duration', 0)
+            
+            logger.info(f"Job {job_id}: Downloaded '{video_title}' ({duration}s)")
+        
+        # Find the downloaded MP3 file (or other formats as fallback)
+        audio_files = list(job_output_dir.glob('*.mp3'))
+        if not audio_files:
+            # Try other formats as fallback
+            for ext in ['*.wav', '*.m4a', '*.webm', '*.opus']:
+                audio_files = list(job_output_dir.glob(ext))
+                if audio_files:
+                    break
+        
+        if not audio_files:
+            raise Exception("Failed to download audio file")
+        
+        audio_path = audio_files[0]
+        
+        # Use custom output name or video title
+        display_name = secure_filename(output_name) if output_name else secure_filename(video_title or 'Unknown')
+        
+        # Rename to use display_name as "original" audio
+        original_audio_path = job_output_dir / f"{display_name}_original{audio_path.suffix}"
+        audio_path.rename(original_audio_path)
+        audio_path = original_audio_path
+        
+        with jobs_lock:
+            jobs_storage[job_id]['filename'] = audio_path.name
+            jobs_storage[job_id]['display_name'] = display_name
+            jobs_storage[job_id]['duration'] = duration
+            jobs_storage[job_id]['video_title'] = video_title
+            jobs_storage[job_id]['progress'] = 15
+            jobs_storage[job_id]['status'] = 'analyzing'
+            jobs_storage[job_id]['stage'] = 'Analyzing audio...'
+        
+        logger.info(f"Job {job_id}: Audio saved as {original_audio_path.name}")
+        
+        # Now process the audio (reuse existing function logic)
+        process_downloaded_audio(job_id, audio_path, quality, mode, instruments, display_name, username)
+        
+    except Exception as e:
+        logger.error(f"Job {job_id}: URL download failed - {e}")
+        with jobs_lock:
+            jobs_storage[job_id].update({
+                'status': 'failed',
+                'error': str(e),
+                'stage': f'Download failed: {str(e)}'
+            })
+
+
+def process_downloaded_audio(job_id, audio_path, quality, mode, instruments, display_name, username=None):
+    """Process audio that was downloaded from URL (similar to process_audio_async)"""
+    # Get user-specific output directory
+    user_output_dir = get_user_output_dir(username)
+    
+    try:
+        # Step 1: Analyze audio for tempo/key
+        try:
+            analyzer = MusicAnalyzer()
+            analysis = analyzer.analyze(Path(audio_path))
+            
+            music_info = {
+                'tempo': {
+                    'bpm': analysis.tempo.bpm,
+                    'confidence': analysis.tempo.bpm_confidence
+                },
+                'key': {
+                    'key': analysis.key.key,
+                    'scale': analysis.key.scale,
+                    'confidence': analysis.key.confidence,
+                    'camelot': analyzer.get_camelot_wheel(analysis.key.key, analysis.key.scale)
+                },
+                'duration': analysis.duration
+            }
+            
+            with jobs_lock:
+                jobs_storage[job_id]['music_info'] = music_info
+                jobs_storage[job_id]['progress'] = 20
+                jobs_storage[job_id]['stage'] = f'Detected: {analysis.tempo.bpm} BPM, {analysis.key.key} {analysis.key.scale}'
+            
+            logger.info(f"Job {job_id}: Detected {analysis.tempo.bpm} BPM, {analysis.key.key} {analysis.key.scale}")
+        except Exception as e:
+            logger.warning(f"Job {job_id}: Music analysis failed - {e}")
+        
+        # Step 2: Start separation
+        with jobs_lock:
+            jobs_storage[job_id]['status'] = 'processing'
+            jobs_storage[job_id]['progress'] = 25
+            jobs_storage[job_id]['stage'] = f'Separating stems ({quality} quality)...'
+        
+        logger.info(f"Job {job_id}: Starting {quality} quality separation")
+        
+        # Create orchestrator
+        orchestrator = create_orchestrator(auto_route=True)
+        
+        with jobs_lock:
+            jobs_storage[job_id]['progress'] = 30
+        
+        # Process audio - output to the user-specific job directory
+        result = orchestrator.process(
+            audio_path=str(audio_path),
+            job_id=job_id,
+            quality=quality,
+            mode=mode,
+            target_instruments=instruments if instruments else None,
+            output_dir=str(user_output_dir),
+            custom_name=display_name
+        )
+        
+        with jobs_lock:
+            jobs_storage[job_id]['progress'] = 90
+            jobs_storage[job_id]['stage'] = 'Finalizing...'
+        
+        if result.status == "completed":
+            # Prepare stem URLs
+            stem_urls = {}
+            job_dir = user_output_dir / job_id
+            
+            for stem_name in result.stems.keys():
+                # Check for WAV first (lossless), then MP3
+                stem_file = job_dir / f"{display_name}_{stem_name}.wav"
+                if not stem_file.exists():
+                    stem_file = job_dir / f"{display_name}_{stem_name}.mp3"
+                if stem_file.exists():
+                    stem_urls[stem_name] = f"/download/{job_id}/{stem_name}"
+            
+            # Add original audio as a "stem"
+            original_files = list(job_dir.glob(f"*_original.*"))
+            if original_files:
+                stem_urls['original'] = f"/download/{job_id}/original"
+            
+            with jobs_lock:
+                jobs_storage[job_id].update({
+                    'status': 'completed',
+                    'progress': 100,
+                    'stage': 'Complete',
+                    'stems': stem_urls,
+                    'detected_instruments': result.detected_instruments,
+                    'processing_time': result.processing_time,
+                    'completed_at': datetime.now().isoformat()
+                })
+            
+            logger.info(f"Job {job_id}: Completed successfully in {result.processing_time:.1f}s")
+        else:
+            raise Exception(result.metadata.get('error', 'Unknown error'))
+            
+    except Exception as e:
+        logger.error(f"Job {job_id}: Processing failed - {e}")
+        with jobs_lock:
+            jobs_storage[job_id].update({
+                'status': 'failed',
+                'error': str(e),
+                'stage': f'Processing failed: {str(e)}'
+            })
+
+
 @app.route('/status/<job_id>')
 def get_status(job_id):
-    """Get job status"""
+    """Get job status - only owner can access"""
+    username = session.get('user_id')
+    user_role = session.get('user_role')
+    
     with jobs_lock:
         job = jobs_storage.get(job_id)
     
     if not job:
         return jsonify({'error': 'Job not found'}), 404
     
+    # Check ownership (admin can view any)
+    if user_role != 'admin' and job.get('user') != username:
+        return jsonify({'error': 'Access denied'}), 403
+    
     return jsonify(job)
 
 
 @app.route('/download/<job_id>/<stem_name>')
 def download_stem(job_id, stem_name):
-    """Download a specific stem"""
-    # First check if job folder exists on disk
-    job_dir = OUTPUT_DIR / job_id
+    """Download a specific stem - serves lossless WAV by default"""
+    username = session.get('user_id')
+    user_role = session.get('user_role')
+    
+    # Get job info to determine owner
+    with jobs_lock:
+        job = jobs_storage.get(job_id)
+    
+    # Check ownership if job exists in storage (admin can access any)
+    if job and user_role != 'admin' and job.get('user') != username:
+        return jsonify({'error': 'Access denied'}), 403
+    
+    # Determine which directory to look in
+    job_owner = job.get('user') if job else username
+    user_output_dir = get_user_output_dir(job_owner)
+    
+    # First check user-specific directory
+    job_dir = user_output_dir / job_id
+    
+    # Fallback to legacy location for backward compatibility
+    if not job_dir.exists():
+        job_dir = OUTPUT_DIR / job_id
+        
     if not job_dir.exists():
         return jsonify({'error': 'Job not found'}), 404
     
-    # Find stem file by searching for matching pattern (MP3 first, then WAV)
-    stem_files = list(job_dir.glob(f"*_{stem_name}.mp3"))
-    mimetype = 'audio/mpeg'
+    # Handle "original" stem (the downloaded source audio)
+    if stem_name == 'original':
+        original_files = list(job_dir.glob('*_original.*'))
+        if original_files:
+            stem_file = original_files[0]
+            ext = stem_file.suffix.lower()
+            mimetype = 'audio/wav' if ext == '.wav' else 'audio/mpeg' if ext == '.mp3' else 'audio/mp4'
+            return send_file(
+                stem_file,
+                as_attachment=False,
+                download_name=stem_file.name,
+                mimetype=mimetype
+            )
+        return jsonify({'error': 'Original audio not found'}), 404
+    
+    # Find stem file - prefer WAV (lossless) over MP3
+    stem_files = list(job_dir.glob(f"*_{stem_name}.wav"))
+    mimetype = 'audio/wav'
+    
     if not stem_files:
-        stem_files = list(job_dir.glob(f"*_{stem_name}.wav"))
-        mimetype = 'audio/wav'
+        # Fallback to MP3 if WAV not found
+        stem_files = list(job_dir.glob(f"*_{stem_name}.mp3"))
+        mimetype = 'audio/mpeg'
     
     if not stem_files:
         return jsonify({'error': f'Stem file not found: {stem_name}'}), 404
     
     stem_file = stem_files[0]
+    
+    # Log the file being served for debugging
+    logger.debug(f"Serving stem: {stem_file.name} ({stem_file.stat().st_size / 1024 / 1024:.1f} MB)")
     
     return send_file(
         stem_file,
@@ -375,12 +1379,21 @@ def download_stem(job_id, stem_name):
 
 @app.route('/jobs')
 def list_jobs():
-    """List all jobs"""
-    # Re-scan outputs to catch any new files
-    scan_existing_outputs()
+    """List jobs for the current user only"""
+    username = session.get('user_id')
+    user_role = session.get('user_role')
+    
+    # Re-scan outputs for current user to catch any new files
+    scan_existing_outputs(username)
     
     with jobs_lock:
-        jobs = list(jobs_storage.values())
+        # Filter jobs to only show user's own jobs (admin sees all)
+        if user_role == 'admin':
+            jobs = list(jobs_storage.values())
+        else:
+            jobs = [job for job in jobs_storage.values() 
+                    if job.get('user') == username or 
+                    (job.get('user') is None and username is None)]
     
     # Sort by creation time (newest first)
     jobs.sort(key=lambda x: x.get('created_at', ''), reverse=True)
@@ -390,17 +1403,34 @@ def list_jobs():
 
 @app.route('/delete/<job_id>', methods=['DELETE'])
 def delete_job(job_id):
-    """Delete a job and its files"""
+    """Delete a job and its files - only owner can delete"""
+    username = session.get('user_id')
+    user_role = session.get('user_role')
+    
     with jobs_lock:
         job = jobs_storage.get(job_id)
         if not job:
             return jsonify({'error': 'Job not found'}), 404
         
-        # Delete output files
-        output_dir = OUTPUT_DIR / job_id
+        # Check ownership (admin can delete any)
+        if user_role != 'admin' and job.get('user') != username:
+            return jsonify({'error': 'Access denied'}), 403
+        
+        # Get user-specific output directory
+        job_owner = job.get('user')
+        user_output_dir = get_user_output_dir(job_owner)
+        
+        # Delete output files from user's directory
+        output_dir = user_output_dir / job_id
         if output_dir.exists():
             import shutil
             shutil.rmtree(output_dir)
+        
+        # Also check legacy location for backward compatibility
+        legacy_dir = OUTPUT_DIR / job_id
+        if legacy_dir.exists():
+            import shutil
+            shutil.rmtree(legacy_dir)
         
         # Delete from storage
         del jobs_storage[job_id]
@@ -418,18 +1448,29 @@ def rename_job(job_id):
         if not new_name:
             return jsonify({'error': 'Name is required'}), 400
         
+        # Get current user
+        current_user = session.get('user_id')
+        is_admin = session.get('user_role') == 'admin'
+        
         with jobs_lock:
             job = jobs_storage.get(job_id)
             if not job:
                 return jsonify({'error': 'Job not found'}), 404
+            
+            # Check ownership - only owner or admin can rename
+            job_owner = job.get('username')
+            if not is_admin and job_owner != current_user:
+                return jsonify({'error': 'You do not have permission to rename this job'}), 403
             
             old_name = job.get('display_name', job.get('filename', ''))
             
             # Update display name in storage
             jobs_storage[job_id]['display_name'] = new_name
             
-            # Rename files on disk
-            job_dir = OUTPUT_DIR / job_id
+            # Get the user-specific output directory for file operations
+            user_output_dir = get_user_output_dir(job_owner)
+            job_dir = user_output_dir / job_id
+            
             if job_dir.exists():
                 # Find old base name from files
                 old_base = None
@@ -492,7 +1533,8 @@ def analyze_audio():
             return jsonify({'error': 'Invalid file type'}), 400
         
         # Save temporarily for analysis
-        temp_path = UPLOAD_DIR / f"analyze_{uuid.uuid4()}{Path(file.filename).suffix}"
+        filename = file.filename or 'unknown.wav'
+        temp_path = UPLOAD_DIR / f"analyze_{uuid.uuid4()}{Path(filename).suffix}"
         file.save(str(temp_path))
         
         try:
@@ -628,10 +1670,10 @@ def analyze_job(job_id):
         duration = len(y) / sr
         
         # Get tempo
-        tempo_analysis = analyzer.analyze_tempo(y, sr)
+        tempo_analysis = analyzer.analyze_tempo(y, int(sr))
         
         # Get key
-        key_analysis = analyzer.analyze_key(y, sr)
+        key_analysis = analyzer.analyze_key(y, int(sr))
         
         # Get Camelot notation
         camelot = analyzer.get_camelot_wheel(key_analysis.key, key_analysis.scale)
@@ -751,31 +1793,55 @@ def pitch_shift_stem(job_id, stem_name):
 @app.route('/extract-lyrics/<job_id>', methods=['POST'])
 def extract_lyrics(job_id):
     """
-    Extract lyrics from vocals stem
+    Extract lyrics from original audio track (better quality than vocals stem)
     
     POST body: {"language": "auto"}  (auto, en, ar, fr)
     """
     try:
+        # Get current user and check ownership
+        current_user = session.get('user_id')
+        is_admin = session.get('user_role') == 'admin'
+        
+        with jobs_lock:
+            job = jobs_storage.get(job_id)
+            if not job:
+                return jsonify({'error': 'Job not found'}), 404
+            
+            job_owner = job.get('username')
+            if not is_admin and job_owner != current_user:
+                return jsonify({'error': 'You do not have permission to extract lyrics for this job'}), 403
+        
         # Get parameters
         data = request.get_json() or {}
         language = data.get('language', 'auto')
         
-        # Find vocals stem
-        job_dir = OUTPUT_DIR / job_id
+        # Use user-specific output directory
+        user_output_dir = get_user_output_dir(job_owner)
+        job_dir = user_output_dir / job_id
+        
         if not job_dir.exists():
-            return jsonify({'error': 'Job not found'}), 404
+            return jsonify({'error': 'Job directory not found'}), 404
         
-        # Find vocals file (check MP3 first, then WAV)
-        vocals_files = list(job_dir.glob("*_vocals.mp3"))
-        if not vocals_files:
-            vocals_files = list(job_dir.glob("*_vocals.wav"))
-        if not vocals_files:
-            return jsonify({'error': 'Vocals stem not found'}), 404
+        # First try to find original audio file (from URL downloads)
+        audio_files = list(job_dir.glob("*_original.mp3"))
+        if not audio_files:
+            audio_files = list(job_dir.glob("*_original.wav"))
         
-        vocals_file = vocals_files[0]
+        # Fallback to vocals stem if no original exists
+        if not audio_files:
+            audio_files = list(job_dir.glob("*_vocals.mp3"))
+        if not audio_files:
+            audio_files = list(job_dir.glob("*_vocals.wav"))
         
-        # Check for cached lyrics
-        lyrics_cache = job_dir / f"{vocals_file.stem}_lyrics.json"
+        if not audio_files:
+            return jsonify({'error': 'No audio file found for lyrics extraction'}), 404
+        
+        audio_file = audio_files[0]
+        logger.info(f"Using {audio_file.name} for lyrics extraction")
+        
+        # Check for cached lyrics (use base name without stem type for cache)
+        base_name = audio_file.stem.rsplit('_', 1)[0]  # Remove _original or _vocals suffix
+        lyrics_cache = job_dir / f"{base_name}_lyrics.json"
         if lyrics_cache.exists():
             # Check if language matches
             with open(lyrics_cache, 'r', encoding='utf-8') as f:
@@ -785,13 +1851,13 @@ def extract_lyrics(job_id):
                     return jsonify(cached)
         
         # Extract lyrics
-        logger.info(f"Extracting lyrics from {vocals_file} (language: {language})")
+        logger.info(f"Extracting lyrics from {audio_file} (language: {language})")
         
         try:
             # Use "large" model for highest accuracy lyrics detection
             # Download size ~2.9GB but provides best transcription quality
             extractor = LyricsExtractor(model_size="large")
-            result = extractor.extract(vocals_file, language=language)
+            result = extractor.extract(audio_file, language=language)
             
             # Save to cache
             result_dict = result.to_dict()
@@ -799,7 +1865,7 @@ def extract_lyrics(job_id):
                 json.dump(result_dict, f, ensure_ascii=False, indent=2)
             
             # Also save LRC format for karaoke
-            lrc_file = job_dir / f"{vocals_file.stem}_lyrics.lrc"
+            lrc_file = job_dir / f"{base_name}_lyrics.lrc"
             with open(lrc_file, 'w', encoding='utf-8') as f:
                 f.write(result.to_lrc())
             
@@ -820,7 +1886,23 @@ def extract_lyrics(job_id):
 def get_lyrics(job_id):
     """Get cached lyrics for a job"""
     try:
-        job_dir = OUTPUT_DIR / job_id
+        # Get current user and check ownership
+        current_user = session.get('user_id')
+        is_admin = session.get('user_role') == 'admin'
+        
+        with jobs_lock:
+            job = jobs_storage.get(job_id)
+            if not job:
+                return jsonify({'error': 'Job not found', 'available': False}), 404
+            
+            job_owner = job.get('username')
+            if not is_admin and job_owner != current_user:
+                return jsonify({'error': 'Permission denied', 'available': False}), 403
+        
+        # Use user-specific output directory
+        user_output_dir = get_user_output_dir(job_owner)
+        job_dir = user_output_dir / job_id
+        
         if not job_dir.exists():
             return jsonify({'error': 'Job not found', 'available': False}), 404
         
@@ -845,7 +1927,23 @@ def get_lyrics(job_id):
 def get_lyrics_lrc(job_id):
     """Get lyrics in LRC format for karaoke"""
     try:
-        job_dir = OUTPUT_DIR / job_id
+        # Get current user and check ownership
+        current_user = session.get('user_id')
+        is_admin = session.get('user_role') == 'admin'
+        
+        with jobs_lock:
+            job = jobs_storage.get(job_id)
+            if not job:
+                return jsonify({'error': 'Job not found'}), 404
+            
+            job_owner = job.get('username')
+            if not is_admin and job_owner != current_user:
+                return jsonify({'error': 'Permission denied'}), 403
+        
+        # Use user-specific output directory
+        user_output_dir = get_user_output_dir(job_owner)
+        job_dir = user_output_dir / job_id
+        
         if not job_dir.exists():
             return jsonify({'error': 'Job not found'}), 404
         

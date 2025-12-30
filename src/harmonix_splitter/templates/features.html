@@ -1,0 +1,478 @@
+{% extends "base.html" %}
+
+{% block title %}Features – Harmonix{% endblock %}
+{% block description %}Discover all the powerful features of Harmonix audio stem separation{% endblock %}
+
+{% block extra_styles %}
+<style>
+    /* Section Styles - matching landing page */
+    .section-header {
+        text-align: center;
+        margin-bottom: 60px;
+    }
+    .section-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: rgba(124, 58, 237, 0.1);
+        border: 1px solid var(--border);
+        padding: 8px 16px;
+        border-radius: 100px;
+        font-size: 13px;
+        color: var(--primary-light);
+        margin-bottom: 20px;
+    }
+    .section-header h1, .section-header h2 {
+        font-size: 48px;
+        font-weight: 700;
+        margin-bottom: 15px;
+        background: linear-gradient(135deg, #fff 0%, #a78bfa 50%, #06b6d4 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+    [data-theme="light"] .section-header h1,
+    [data-theme="light"] .section-header h2 {
+        background: linear-gradient(135deg, #0f172a 0%, var(--primary) 50%, #0891b2 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+    }
+    .section-header p {
+        font-size: 18px;
+        color: var(--text-muted);
+        max-width: 600px;
+        margin: 0 auto;
+    }
+
+    /* Hero */
+    .features-hero {
+        padding: 60px 40px 40px;
+        text-align: center;
+    }
+
+    /* Main Features Grid */
+    .features-section {
+        padding: 40px 40px 80px;
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+    .features-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+        gap: 30px;
+    }
+    .feature-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: 24px;
+        padding: 40px;
+        transition: all 0.3s;
+        position: relative;
+        overflow: hidden;
+    }
+    [data-theme="light"] .feature-card {
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    }
+    .feature-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, var(--primary), var(--secondary));
+        opacity: 0;
+        transition: opacity 0.3s;
+    }
+    .feature-card:hover {
+        transform: translateY(-5px);
+        border-color: var(--primary);
+        box-shadow: 0 20px 50px rgba(124, 58, 237, 0.2);
+    }
+    .feature-card:hover::before {
+        opacity: 1;
+    }
+    .feature-icon {
+        width: 70px;
+        height: 70px;
+        background: linear-gradient(135deg, rgba(124, 58, 237, 0.2), rgba(6, 182, 212, 0.2));
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 25px;
+    }
+    .feature-icon i {
+        font-size: 32px;
+        background: linear-gradient(135deg, var(--primary-light), var(--secondary));
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+    .feature-card h3 {
+        font-size: 22px;
+        margin-bottom: 12px;
+        color: var(--text);
+    }
+    .feature-card > p {
+        color: var(--text-muted);
+        line-height: 1.7;
+        margin-bottom: 20px;
+    }
+    .feature-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+    .feature-list li {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        color: var(--text-muted);
+        padding: 8px 0;
+        font-size: 14px;
+        border-bottom: 1px solid var(--border);
+    }
+    .feature-list li:last-child {
+        border-bottom: none;
+    }
+    .feature-list li i {
+        color: var(--accent);
+        font-size: 12px;
+    }
+
+    /* Quality Section */
+    .quality-section {
+        padding: 80px 40px;
+        background: var(--bg-darker);
+    }
+    .quality-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 30px;
+        max-width: 1000px;
+        margin: 0 auto;
+    }
+    .quality-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: 24px;
+        padding: 40px;
+        text-align: center;
+        transition: all 0.3s;
+    }
+    [data-theme="light"] .quality-card {
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    }
+    .quality-card.featured {
+        border-color: var(--primary);
+        transform: scale(1.05);
+        box-shadow: 0 30px 80px rgba(124, 58, 237, 0.2);
+    }
+    .quality-card:hover {
+        border-color: var(--primary);
+    }
+    .quality-card h4 {
+        font-size: 18px;
+        margin-bottom: 15px;
+        color: var(--text);
+    }
+    .quality-value {
+        font-size: 48px;
+        font-weight: 700;
+        background: linear-gradient(135deg, var(--primary-light), var(--secondary));
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 15px;
+    }
+    .quality-card p {
+        color: var(--text-muted);
+        font-size: 14px;
+    }
+
+    /* Tech Section */
+    .tech-section {
+        padding: 80px 40px;
+    }
+    .tech-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 30px;
+        max-width: 1000px;
+        margin: 0 auto;
+    }
+    .tech-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: 20px;
+        padding: 35px;
+        text-align: center;
+        transition: all 0.3s;
+    }
+    [data-theme="light"] .tech-card {
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    }
+    .tech-card:hover {
+        border-color: var(--primary);
+        transform: translateY(-5px);
+    }
+    .tech-card i {
+        font-size: 40px;
+        color: var(--primary-light);
+        margin-bottom: 20px;
+    }
+    .tech-card h4 {
+        font-size: 18px;
+        margin-bottom: 10px;
+        color: var(--text);
+    }
+    .tech-card p {
+        color: var(--text-muted);
+        font-size: 14px;
+    }
+
+    /* CTA Section */
+    .cta-section {
+        text-align: center;
+        padding: 100px 40px;
+        background: linear-gradient(180deg, var(--bg-dark) 0%, var(--bg-darker) 100%);
+        position: relative;
+        overflow: hidden;
+    }
+    .cta-section::before {
+        content: '';
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        top: 0;
+        left: 0;
+        background: radial-gradient(ellipse at center, rgba(124, 58, 237, 0.1) 0%, transparent 70%);
+        pointer-events: none;
+    }
+    .cta-content {
+        position: relative;
+        z-index: 1;
+    }
+    .cta-section h2 {
+        font-size: 40px;
+        font-weight: 700;
+        margin-bottom: 15px;
+    }
+    .cta-section p {
+        font-size: 18px;
+        color: var(--text-muted);
+        max-width: 500px;
+        margin: 0 auto 35px;
+    }
+    .cta-buttons {
+        display: flex;
+        gap: 15px;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+    .cta-btn {
+        padding: 16px 36px;
+        border-radius: 8px;
+        font-size: 15px;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.3s;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .cta-btn-primary {
+        background: var(--accent);
+        color: white;
+        box-shadow: 0 4px 20px rgba(16, 185, 129, 0.4);
+    }
+    .cta-btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 30px rgba(16, 185, 129, 0.5);
+    }
+    .cta-btn-ghost {
+        background: transparent;
+        color: var(--text);
+        border: 1px solid var(--border);
+    }
+    .cta-btn-ghost:hover {
+        background: rgba(124, 58, 237, 0.1);
+        border-color: var(--primary);
+    }
+
+    @media (max-width: 1024px) {
+        .quality-grid { grid-template-columns: 1fr; max-width: 400px; }
+        .quality-card.featured { transform: none; }
+    }
+    @media (max-width: 768px) {
+        .section-header h1 { font-size: 32px; }
+        .features-section { padding: 40px 20px; }
+        .quality-section { padding: 60px 20px; }
+        .tech-section { padding: 60px 20px; }
+        .cta-section { padding: 80px 20px; }
+        .cta-section h2 { font-size: 28px; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero -->
+<section class="features-hero">
+    <div class="section-header">
+        <div class="section-badge"><i class="fas fa-magic"></i> Features</div>
+        <h1>Powerful Audio Tools</h1>
+        <p>Everything you need to separate, remix, and transform your audio with AI precision</p>
+    </div>
+</section>
+
+<!-- Main Features -->
+<section class="features-section">
+    <div class="features-grid">
+        <div class="feature-card">
+            <div class="feature-icon"><i class="fas fa-microphone"></i></div>
+            <h3>Vocal Extraction</h3>
+            <p>Isolate crystal-clear vocals from any song. Perfect for karaoke, remixes, or vocal sampling.</p>
+            <ul class="feature-list">
+                <li><i class="fas fa-check"></i> Lead vocal isolation</li>
+                <li><i class="fas fa-check"></i> Background vocal separation</li>
+                <li><i class="fas fa-check"></i> Harmony extraction</li>
+                <li><i class="fas fa-check"></i> Vocal removal for instrumentals</li>
+            </ul>
+        </div>
+        
+        <div class="feature-card">
+            <div class="feature-icon"><i class="fas fa-drum"></i></div>
+            <h3>Drum Isolation</h3>
+            <p>Extract drums and percussion with surgical precision. Great for producers and drummers.</p>
+            <ul class="feature-list">
+                <li><i class="fas fa-check"></i> Full drum kit extraction</li>
+                <li><i class="fas fa-check"></i> Kick, snare, hi-hat separation</li>
+                <li><i class="fas fa-check"></i> Percussion elements</li>
+                <li><i class="fas fa-check"></i> Rhythm section analysis</li>
+            </ul>
+        </div>
+        
+        <div class="feature-card">
+            <div class="feature-icon"><i class="fas fa-guitar"></i></div>
+            <h3>Bass & Instruments</h3>
+            <p>Separate bass lines and other instruments for detailed remixing and sampling.</p>
+            <ul class="feature-list">
+                <li><i class="fas fa-check"></i> Bass guitar extraction</li>
+                <li><i class="fas fa-check"></i> Synth bass separation</li>
+                <li><i class="fas fa-check"></i> Guitar isolation</li>
+                <li><i class="fas fa-check"></i> Piano and keys</li>
+            </ul>
+        </div>
+        
+        <div class="feature-card">
+            <div class="feature-icon"><i class="fas fa-closed-captioning"></i></div>
+            <h3>Lyrics Transcription</h3>
+            <p>Automatically transcribe lyrics with AI-powered speech recognition in 50+ languages.</p>
+            <ul class="feature-list">
+                <li><i class="fas fa-check"></i> Automatic language detection</li>
+                <li><i class="fas fa-check"></i> Word-level timestamps</li>
+                <li><i class="fas fa-check"></i> LRC file export</li>
+                <li><i class="fas fa-check"></i> 50+ languages supported</li>
+            </ul>
+        </div>
+        
+        <div class="feature-card">
+            <div class="feature-icon"><i class="fas fa-sliders-h"></i></div>
+            <h3>Pitch Control</h3>
+            <p>Change the key of any stem without affecting tempo. Perfect for mashups and DJ sets.</p>
+            <ul class="feature-list">
+                <li><i class="fas fa-check"></i> Real-time pitch shifting</li>
+                <li><i class="fas fa-check"></i> Tempo preservation</li>
+                <li><i class="fas fa-check"></i> ±12 semitone range</li>
+                <li><i class="fas fa-check"></i> High-quality algorithm</li>
+            </ul>
+        </div>
+        
+        <div class="feature-card">
+            <div class="feature-icon"><i class="fas fa-chart-line"></i></div>
+            <h3>Audio Analysis</h3>
+            <p>Get detailed insights about your audio including BPM, key, and spectral analysis.</p>
+            <ul class="feature-list">
+                <li><i class="fas fa-check"></i> BPM detection</li>
+                <li><i class="fas fa-check"></i> Key detection</li>
+                <li><i class="fas fa-check"></i> Waveform visualization</li>
+                <li><i class="fas fa-check"></i> Spectral display</li>
+            </ul>
+        </div>
+    </div>
+</section>
+
+<!-- Quality Comparison -->
+<section class="quality-section">
+    <div class="section-header">
+        <div class="section-badge"><i class="fas fa-tachometer-alt"></i> Quality Modes</div>
+        <h2 style="font-size: 32px;">Processing Quality</h2>
+        <p>Choose the right quality level for your needs</p>
+    </div>
+    <div class="quality-grid">
+        <div class="quality-card">
+            <h4>Standard</h4>
+            <div class="quality-value">Fast</div>
+            <p>Quick processing for previews and drafts. ~1 minute per song.</p>
+        </div>
+        <div class="quality-card featured">
+            <h4>High</h4>
+            <div class="quality-value">Balanced</div>
+            <p>Perfect balance of quality and speed. ~2 minutes per song.</p>
+        </div>
+        <div class="quality-card">
+            <h4>Ultra</h4>
+            <div class="quality-value">Pro</div>
+            <p>Maximum quality for professional production. ~5 minutes per song.</p>
+        </div>
+    </div>
+</section>
+
+<!-- Tech Stack -->
+<section class="tech-section">
+    <div class="section-header">
+        <div class="section-badge"><i class="fas fa-microchip"></i> Technology</div>
+        <h2 style="font-size: 32px;">Powered by Advanced AI</h2>
+        <p>State-of-the-art machine learning models for superior results</p>
+    </div>
+    <div class="tech-grid">
+        <div class="tech-card">
+            <i class="fas fa-brain"></i>
+            <h4>Demucs</h4>
+            <p>Meta's cutting-edge audio separation model</p>
+        </div>
+        <div class="tech-card">
+            <i class="fas fa-language"></i>
+            <h4>Whisper</h4>
+            <p>OpenAI's speech recognition for lyrics</p>
+        </div>
+        <div class="tech-card">
+            <i class="fas fa-bolt"></i>
+            <h4>GPU Accelerated</h4>
+            <p>Lightning-fast CUDA processing</p>
+        </div>
+        <div class="tech-card">
+            <i class="fas fa-shield-halved"></i>
+            <h4>Private & Secure</h4>
+            <p>Your audio never leaves your machine</p>
+        </div>
+    </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section">
+    <div class="cta-content">
+        <h2>Ready to Get Started?</h2>
+        <p>Start separating stems for free. No credit card required.</p>
+        <div class="cta-buttons">
+            <a href="/register" class="cta-btn cta-btn-primary">
+                <i class="fas fa-rocket"></i> Get Started Free
+            </a>
+            <a href="/docs" class="cta-btn cta-btn-ghost">
+                <i class="fas fa-book"></i> View Documentation
+            </a>
+        </div>
+    </div>
+</section>
+{% endblock %}

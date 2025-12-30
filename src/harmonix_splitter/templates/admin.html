@@ -1,0 +1,1325 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard – Harmonix{% endblock %}
+
+{% block extra_styles %}
+<style>
+    .admin-layout {
+        display: flex;
+        min-height: calc(100vh - 80px);
+    }
+    .admin-sidebar {
+        width: 260px;
+        background: var(--bg-darker);
+        border-right: 1px solid var(--border);
+        padding: 25px 0;
+        position: fixed;
+        top: 66px;
+        bottom: 0;
+        overflow-y: auto;
+    }
+    .admin-logo {
+        padding: 0 25px 25px;
+        border-bottom: 1px solid var(--border);
+        margin-bottom: 20px;
+    }
+    .admin-logo h2 {
+        font-size: 18px;
+        color: var(--primary-light);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .admin-nav-title {
+        font-size: 10px;
+        text-transform: uppercase;
+        color: var(--text-dim);
+        padding: 0 25px;
+        margin: 20px 0 10px;
+        letter-spacing: 1.5px;
+        font-weight: 600;
+    }
+    .admin-nav-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 25px;
+        color: var(--text-muted);
+        text-decoration: none;
+        font-size: 14px;
+        transition: all 0.2s;
+        border-left: 3px solid transparent;
+        cursor: pointer;
+    }
+    .admin-nav-item:hover {
+        background: rgba(124, 58, 237, 0.1);
+        color: var(--text);
+    }
+    .admin-nav-item.active {
+        background: rgba(124, 58, 237, 0.15);
+        color: var(--primary-light);
+        border-left-color: var(--primary);
+    }
+    .admin-nav-item i {
+        width: 20px;
+        text-align: center;
+    }
+    .admin-nav-badge {
+        margin-left: auto;
+        background: var(--danger);
+        color: white;
+        font-size: 10px;
+        padding: 2px 8px;
+        border-radius: 10px;
+    }
+    .admin-main {
+        flex: 1;
+        margin-left: 260px;
+        padding: 30px 40px;
+        background: var(--bg-dark);
+        min-height: calc(100vh - 66px);
+    }
+    .admin-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+    }
+    .admin-header h1 {
+        font-size: 26px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    .admin-header h1 i {
+        color: var(--primary);
+    }
+    
+    /* Stats Cards */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+    .stat-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 25px;
+        position: relative;
+        overflow: hidden;
+    }
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+    }
+    .stat-card.purple::before { background: linear-gradient(90deg, var(--primary), var(--secondary)); }
+    .stat-card.blue::before { background: linear-gradient(90deg, #06b6d4, #3b82f6); }
+    .stat-card.green::before { background: linear-gradient(90deg, #10b981, #34d399); }
+    .stat-card.orange::before { background: linear-gradient(90deg, #f59e0b, #fb923c); }
+    
+    .stat-card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 15px;
+    }
+    .stat-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+    }
+    .stat-icon.purple { background: rgba(124, 58, 237, 0.15); color: var(--primary-light); }
+    .stat-icon.blue { background: rgba(6, 182, 212, 0.15); color: #06b6d4; }
+    .stat-icon.green { background: rgba(16, 185, 129, 0.15); color: #10b981; }
+    .stat-icon.orange { background: rgba(245, 158, 11, 0.15); color: #f59e0b; }
+    .stat-value {
+        font-size: 32px;
+        font-weight: 700;
+        line-height: 1;
+    }
+    .stat-label {
+        color: var(--text-muted);
+        font-size: 13px;
+        margin-top: 5px;
+    }
+    .stat-change {
+        font-size: 12px;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+    .stat-change.up { color: #10b981; }
+    .stat-change.down { color: var(--danger); }
+    
+    /* Data Table */
+    .data-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        overflow: hidden;
+        margin-bottom: 25px;
+    }
+    .data-card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 20px 25px;
+        border-bottom: 1px solid var(--border);
+    }
+    .data-card-header h2 {
+        font-size: 16px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .data-card-actions {
+        display: flex;
+        gap: 10px;
+    }
+    .search-input {
+        padding: 10px 15px;
+        padding-left: 40px;
+        background: var(--bg-dark);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        color: var(--text);
+        font-size: 13px;
+        width: 250px;
+    }
+    .search-wrapper {
+        position: relative;
+    }
+    .search-wrapper i {
+        position: absolute;
+        left: 14px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--text-dim);
+        font-size: 13px;
+    }
+    .search-input:focus {
+        outline: none;
+        border-color: var(--primary);
+    }
+    table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    th, td {
+        padding: 15px 25px;
+        text-align: left;
+        border-bottom: 1px solid var(--border);
+    }
+    th {
+        background: var(--bg-darker);
+        font-size: 11px;
+        text-transform: uppercase;
+        color: var(--text-dim);
+        letter-spacing: 0.5px;
+        font-weight: 600;
+    }
+    td {
+        font-size: 14px;
+    }
+    tr:hover td {
+        background: rgba(124, 58, 237, 0.03);
+    }
+    .user-cell {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    .user-avatar {
+        width: 40px;
+        height: 40px;
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        font-weight: 600;
+        color: white;
+    }
+    .user-info span {
+        display: block;
+    }
+    .user-info .name {
+        font-weight: 500;
+    }
+    .user-info .email {
+        font-size: 12px;
+        color: var(--text-dim);
+    }
+    .badge {
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+    }
+    .badge-admin { background: rgba(124, 58, 237, 0.2); color: var(--primary-light); }
+    .badge-user { background: rgba(148, 163, 184, 0.2); color: var(--text-muted); }
+    .badge-free { background: rgba(100, 116, 139, 0.2); color: #94a3b8; }
+    .badge-creator { background: rgba(6, 182, 212, 0.2); color: #06b6d4; }
+    .badge-studio { background: rgba(245, 158, 11, 0.2); color: #f59e0b; }
+    .badge-active { background: rgba(16, 185, 129, 0.2); color: #10b981; }
+    .badge-inactive { background: rgba(239, 68, 68, 0.2); color: var(--danger); }
+    .badge-new { background: rgba(124, 58, 237, 0.2); color: var(--primary-light); }
+    .badge-replied { background: rgba(16, 185, 129, 0.2); color: #10b981; }
+    .badge-pending { background: rgba(245, 158, 11, 0.2); color: #f59e0b; }
+    
+    .action-btns {
+        display: flex;
+        gap: 6px;
+    }
+    .action-btn {
+        width: 34px;
+        height: 34px;
+        border-radius: 8px;
+        border: none;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+        font-size: 13px;
+    }
+    .action-btn.view {
+        background: rgba(124, 58, 237, 0.15);
+        color: var(--primary-light);
+    }
+    .action-btn.edit {
+        background: rgba(6, 182, 212, 0.15);
+        color: #06b6d4;
+    }
+    .action-btn.delete {
+        background: rgba(239, 68, 68, 0.15);
+        color: var(--danger);
+    }
+    .action-btn:hover {
+        transform: scale(1.1);
+    }
+    
+    /* Sections */
+    .admin-section {
+        display: none;
+    }
+    .admin-section.active {
+        display: block;
+    }
+    
+    /* Modal */
+    .modal-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.8);
+        backdrop-filter: blur(4px);
+        z-index: 2000;
+        align-items: center;
+        justify-content: center;
+    }
+    .modal-overlay.active {
+        display: flex;
+    }
+    .modal {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: 20px;
+        width: 100%;
+        max-width: 500px;
+        max-height: 85vh;
+        overflow-y: auto;
+        animation: modalIn 0.3s ease;
+    }
+    @keyframes modalIn {
+        from { opacity: 0; transform: scale(0.95) translateY(-20px); }
+        to { opacity: 1; transform: scale(1) translateY(0); }
+    }
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 25px;
+        border-bottom: 1px solid var(--border);
+    }
+    .modal-header h3 {
+        font-size: 18px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .modal-close {
+        background: var(--bg-dark);
+        border: 1px solid var(--border);
+        color: var(--text-muted);
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        font-size: 18px;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .modal-close:hover {
+        background: var(--danger);
+        border-color: var(--danger);
+        color: white;
+    }
+    .modal-body {
+        padding: 25px;
+    }
+    .modal-footer {
+        padding: 20px 25px;
+        border-top: 1px solid var(--border);
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+    }
+    
+    /* Form in modal */
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 15px;
+    }
+    
+    /* Contact Message */
+    .contact-detail {
+        background: var(--bg-dark);
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+    .contact-detail-row {
+        display: flex;
+        margin-bottom: 12px;
+    }
+    .contact-detail-row:last-child {
+        margin-bottom: 0;
+    }
+    .contact-detail-label {
+        width: 100px;
+        color: var(--text-dim);
+        font-size: 13px;
+    }
+    .contact-detail-value {
+        flex: 1;
+        font-size: 14px;
+    }
+    .contact-message-box {
+        background: var(--bg-darker);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 20px;
+        font-size: 14px;
+        line-height: 1.7;
+        margin-bottom: 20px;
+    }
+    
+    /* User Detail Card */
+    .user-detail-header {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        padding-bottom: 20px;
+        border-bottom: 1px solid var(--border);
+        margin-bottom: 20px;
+    }
+    .user-detail-avatar {
+        width: 80px;
+        height: 80px;
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 32px;
+        font-weight: 600;
+        color: white;
+    }
+    .user-detail-info h4 {
+        font-size: 20px;
+        margin-bottom: 4px;
+    }
+    .user-detail-info p {
+        color: var(--text-dim);
+        font-size: 14px;
+    }
+    .user-stats-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 15px;
+        margin-top: 20px;
+    }
+    .user-stat-item {
+        background: var(--bg-dark);
+        border-radius: 10px;
+        padding: 15px;
+        text-align: center;
+    }
+    .user-stat-item .value {
+        font-size: 24px;
+        font-weight: 700;
+        color: var(--primary-light);
+    }
+    .user-stat-item .label {
+        font-size: 11px;
+        color: var(--text-dim);
+        text-transform: uppercase;
+        margin-top: 4px;
+    }
+    
+    /* Quick Actions */
+    .quick-actions {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 15px;
+        margin-bottom: 30px;
+    }
+    .quick-action {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 20px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+    .quick-action:hover {
+        border-color: var(--primary);
+        transform: translateY(-2px);
+    }
+    .quick-action i {
+        font-size: 24px;
+        color: var(--primary-light);
+        margin-bottom: 10px;
+    }
+    .quick-action span {
+        display: block;
+        font-size: 13px;
+        color: var(--text-muted);
+    }
+    
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: var(--text-muted);
+    }
+    .empty-state i {
+        font-size: 48px;
+        margin-bottom: 15px;
+        opacity: 0.5;
+    }
+    
+    /* Responsive */
+    @media (max-width: 1200px) {
+        .stats-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+    @media (max-width: 1024px) {
+        .admin-sidebar {
+            width: 220px;
+        }
+        .admin-main {
+            margin-left: 220px;
+            padding: 25px;
+        }
+        .quick-actions {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+    @media (max-width: 768px) {
+        .admin-sidebar {
+            display: none;
+        }
+        .admin-main {
+            margin-left: 0;
+        }
+        .stats-grid {
+            grid-template-columns: 1fr;
+        }
+        .form-row {
+            grid-template-columns: 1fr;
+        }
+        .data-card-header {
+            flex-direction: column;
+            gap: 15px;
+            align-items: flex-start;
+        }
+        .search-input {
+            width: 100%;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="admin-layout">
+    <aside class="admin-sidebar">
+        <div class="admin-logo">
+            <h2><i class="fas fa-shield-alt"></i> Admin Panel</h2>
+        </div>
+        
+        <div class="admin-nav-title">Overview</div>
+        <div class="admin-nav-item active" data-section="dashboard" onclick="showSection('dashboard')">
+            <i class="fas fa-chart-pie"></i> Dashboard
+        </div>
+        
+        <div class="admin-nav-title">Management</div>
+        <div class="admin-nav-item" data-section="users" onclick="showSection('users')">
+            <i class="fas fa-users"></i> Users
+            <span class="admin-nav-badge">{{ stats.total_users }}</span>
+        </div>
+        <div class="admin-nav-item" data-section="contacts" onclick="showSection('contacts')">
+            <i class="fas fa-envelope"></i> Messages
+            {% if stats.pending_contacts > 0 %}
+            <span class="admin-nav-badge">{{ stats.pending_contacts }}</span>
+            {% endif %}
+        </div>
+        
+        <div class="admin-nav-title">System</div>
+        <a href="/dashboard" class="admin-nav-item">
+            <i class="fas fa-desktop"></i> Main App
+        </a>
+        <a href="/account" class="admin-nav-item">
+            <i class="fas fa-user-circle"></i> My Account
+        </a>
+        <a href="/logout" class="admin-nav-item">
+            <i class="fas fa-sign-out-alt"></i> Logout
+        </a>
+    </aside>
+    
+    <main class="admin-main">
+        <!-- Dashboard Section -->
+        <div id="section-dashboard" class="admin-section active">
+            <div class="admin-header">
+                <h1><i class="fas fa-chart-pie"></i> Dashboard Overview</h1>
+                <div>
+                    <span style="color: var(--text-muted); font-size: 14px;">Welcome back, {{ current_user.name }}</span>
+                </div>
+            </div>
+            
+            <div class="stats-grid">
+                <div class="stat-card purple">
+                    <div class="stat-card-header">
+                        <div>
+                            <div class="stat-value">{{ stats.total_users }}</div>
+                            <div class="stat-label">Total Users</div>
+                        </div>
+                        <div class="stat-icon purple"><i class="fas fa-users"></i></div>
+                    </div>
+                    <div class="stat-change up"><i class="fas fa-arrow-up"></i> {{ stats.new_users_week }} this week</div>
+                </div>
+                
+                <div class="stat-card blue">
+                    <div class="stat-card-header">
+                        <div>
+                            <div class="stat-value">{{ stats.total_songs }}</div>
+                            <div class="stat-label">Songs Processed</div>
+                        </div>
+                        <div class="stat-icon blue"><i class="fas fa-music"></i></div>
+                    </div>
+                    <div class="stat-change up"><i class="fas fa-arrow-up"></i> {{ stats.songs_today }} today</div>
+                </div>
+                
+                <div class="stat-card green">
+                    <div class="stat-card-header">
+                        <div>
+                            <div class="stat-value">{{ stats.pending_contacts }}</div>
+                            <div class="stat-label">Pending Messages</div>
+                        </div>
+                        <div class="stat-icon green"><i class="fas fa-envelope"></i></div>
+                    </div>
+                </div>
+                
+                <div class="stat-card orange">
+                    <div class="stat-card-header">
+                        <div>
+                            <div class="stat-value">${{ stats.monthly_revenue }}</div>
+                            <div class="stat-label">Monthly Revenue</div>
+                        </div>
+                        <div class="stat-icon orange"><i class="fas fa-dollar-sign"></i></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="quick-actions">
+                <div class="quick-action" onclick="showAddUserModal()">
+                    <i class="fas fa-user-plus"></i>
+                    <span>Add User</span>
+                </div>
+                <div class="quick-action" onclick="showSection('contacts')">
+                    <i class="fas fa-reply"></i>
+                    <span>Reply Messages</span>
+                </div>
+                <div class="quick-action" onclick="showSection('users')">
+                    <i class="fas fa-user-cog"></i>
+                    <span>Manage Users</span>
+                </div>
+                <div class="quick-action" onclick="window.location='/dashboard'">
+                    <i class="fas fa-music"></i>
+                    <span>Process Audio</span>
+                </div>
+            </div>
+            
+            <!-- Recent Users Preview -->
+            <div class="data-card">
+                <div class="data-card-header">
+                    <h2><i class="fas fa-user-clock"></i> Recent Users</h2>
+                    <button class="btn btn-outline btn-sm" onclick="showSection('users')">View All</button>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>User</th>
+                            <th>Plan</th>
+                            <th>Joined</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in users[:5] %}
+                        <tr>
+                            <td>
+                                <div class="user-cell">
+                                    <div class="user-avatar">{{ user.name[0]|upper if user.name else 'U' }}</div>
+                                    <div class="user-info">
+                                        <span class="name">{{ user.name or user.username }}</span>
+                                        <span class="email">{{ user.email }}</span>
+                                    </div>
+                                </div>
+                            </td>
+                            <td><span class="badge badge-{{ user.plan }}">{{ user.plan }}</span></td>
+                            <td>{{ user.created_at[:10] if user.created_at else 'N/A' }}</td>
+                            <td>
+                                <div class="action-btns">
+                                    <button class="action-btn view" title="View" onclick="viewUser('{{ user.username }}')"><i class="fas fa-eye"></i></button>
+                                    <button class="action-btn edit" title="Edit" onclick="editUser('{{ user.username }}')"><i class="fas fa-edit"></i></button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- Users Section -->
+        <div id="section-users" class="admin-section">
+            <div class="admin-header">
+                <h1><i class="fas fa-users"></i> User Management</h1>
+                <button class="btn btn-primary" onclick="showAddUserModal()">
+                    <i class="fas fa-user-plus"></i> Add User
+                </button>
+            </div>
+            
+            <div class="data-card">
+                <div class="data-card-header">
+                    <h2>All Users ({{ users|length }})</h2>
+                    <div class="data-card-actions">
+                        <div class="search-wrapper">
+                            <i class="fas fa-search"></i>
+                            <input type="text" class="search-input" placeholder="Search users..." onkeyup="searchTable(this, 'usersTable')">
+                        </div>
+                        <select class="search-input" style="width: 150px; padding-left: 15px;" onchange="filterByPlan(this.value)">
+                            <option value="">All Plans</option>
+                            <option value="free">Free</option>
+                            <option value="creator">Creator</option>
+                            <option value="studio">Studio</option>
+                        </select>
+                    </div>
+                </div>
+                <table id="usersTable">
+                    <thead>
+                        <tr>
+                            <th>User</th>
+                            <th>Role</th>
+                            <th>Plan</th>
+                            <th>Songs</th>
+                            <th>Status</th>
+                            <th>Joined</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in users %}
+                        <tr data-plan="{{ user.plan }}">
+                            <td>
+                                <div class="user-cell">
+                                    <div class="user-avatar">{{ user.name[0]|upper if user.name else 'U' }}</div>
+                                    <div class="user-info">
+                                        <span class="name">{{ user.name or user.username }}</span>
+                                        <span class="email">{{ user.email }}</span>
+                                    </div>
+                                </div>
+                            </td>
+                            <td><span class="badge badge-{{ user.role }}">{{ user.role }}</span></td>
+                            <td><span class="badge badge-{{ user.plan }}">{{ user.plan }}</span></td>
+                            <td>{{ user.usage.songs_processed if user.usage else 0 }}</td>
+                            <td><span class="badge badge-{{ 'active' if user.is_active else 'inactive' }}">{{ 'Active' if user.is_active else 'Inactive' }}</span></td>
+                            <td>{{ user.created_at[:10] if user.created_at else 'N/A' }}</td>
+                            <td>
+                                <div class="action-btns">
+                                    <button class="action-btn view" title="View Details" onclick="viewUser('{{ user.username }}')"><i class="fas fa-eye"></i></button>
+                                    <button class="action-btn edit" title="Edit User" onclick="editUser('{{ user.username }}')"><i class="fas fa-edit"></i></button>
+                                    {% if user.username != 'admin' %}
+                                    <button class="action-btn delete" title="Delete User" onclick="deleteUser('{{ user.username }}')"><i class="fas fa-trash"></i></button>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- Contacts Section -->
+        <div id="section-contacts" class="admin-section">
+            <div class="admin-header">
+                <h1><i class="fas fa-envelope"></i> Contact Messages</h1>
+            </div>
+            
+            <div class="data-card">
+                <div class="data-card-header">
+                    <h2>All Messages ({{ contacts|length }})</h2>
+                    <div class="data-card-actions">
+                        <div class="search-wrapper">
+                            <i class="fas fa-search"></i>
+                            <input type="text" class="search-input" placeholder="Search messages..." onkeyup="searchTable(this, 'contactsTable')">
+                        </div>
+                    </div>
+                </div>
+                {% if contacts %}
+                <table id="contactsTable">
+                    <thead>
+                        <tr>
+                            <th>From</th>
+                            <th>Subject</th>
+                            <th>Category</th>
+                            <th>Status</th>
+                            <th>Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for contact in contacts %}
+                        <tr>
+                            <td>
+                                <div class="user-cell">
+                                    <div class="user-avatar" style="background: linear-gradient(135deg, #10b981, #34d399);">{{ contact.name[0]|upper }}</div>
+                                    <div class="user-info">
+                                        <span class="name">{{ contact.name }}</span>
+                                        <span class="email">{{ contact.email }}</span>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>{{ contact.subject[:40] }}{% if contact.subject|length > 40 %}...{% endif %}</td>
+                            <td>{{ contact.category|capitalize }}</td>
+                            <td><span class="badge badge-{{ contact.status }}">{{ contact.status }}</span></td>
+                            <td>{{ contact.created_at[:10] }}</td>
+                            <td>
+                                <div class="action-btns">
+                                    <button class="action-btn view" title="View & Reply" onclick="viewContact('{{ contact.id }}')"><i class="fas fa-reply"></i></button>
+                                    <button class="action-btn delete" title="Delete" onclick="deleteContact('{{ contact.id }}')"><i class="fas fa-trash"></i></button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <div class="empty-state">
+                    <i class="fas fa-inbox"></i>
+                    <h3>No messages yet</h3>
+                    <p>Contact form submissions will appear here</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- Add User Modal -->
+<div class="modal-overlay" id="addUserModal">
+    <div class="modal">
+        <div class="modal-header">
+            <h3><i class="fas fa-user-plus" style="color: var(--primary);"></i> Add New User</h3>
+            <button class="modal-close" onclick="closeModal('addUserModal')">&times;</button>
+        </div>
+        <form id="addUserForm" onsubmit="submitAddUser(event)">
+            <div class="modal-body">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Full Name *</label>
+                        <input type="text" name="name" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Username *</label>
+                        <input type="text" name="username" class="form-control" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Email *</label>
+                    <input type="email" name="email" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label>Password *</label>
+                    <input type="password" name="password" class="form-control" required minlength="6">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Role</label>
+                        <select name="role" class="form-control">
+                            <option value="user">User</option>
+                            <option value="admin">Admin</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Plan</label>
+                        <select name="plan" class="form-control">
+                            <option value="free">Free</option>
+                            <option value="creator">Creator ($19/mo)</option>
+                            <option value="studio">Studio ($49/mo)</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-ghost" onclick="closeModal('addUserModal')">Cancel</button>
+                <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> Create User</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Edit User Modal -->
+<div class="modal-overlay" id="editUserModal">
+    <div class="modal">
+        <div class="modal-header">
+            <h3><i class="fas fa-user-edit" style="color: #06b6d4;"></i> Edit User</h3>
+            <button class="modal-close" onclick="closeModal('editUserModal')">&times;</button>
+        </div>
+        <form id="editUserForm" onsubmit="submitEditUser(event)">
+            <input type="hidden" name="username" id="editUsername">
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Full Name</label>
+                    <input type="text" name="name" id="editName" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" name="email" id="editEmail" class="form-control" required>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Role</label>
+                        <select name="role" id="editRole" class="form-control">
+                            <option value="user">User</option>
+                            <option value="admin">Admin</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Plan</label>
+                        <select name="plan" id="editPlan" class="form-control">
+                            <option value="free">Free</option>
+                            <option value="creator">Creator</option>
+                            <option value="studio">Studio</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Status</label>
+                    <select name="is_active" id="editStatus" class="form-control">
+                        <option value="true">Active</option>
+                        <option value="false">Inactive</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>New Password (leave blank to keep current)</label>
+                    <input type="password" name="password" id="editPassword" class="form-control" minlength="6" placeholder="Enter new password...">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-ghost" onclick="closeModal('editUserModal')">Cancel</button>
+                <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Save Changes</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- View User Modal -->
+<div class="modal-overlay" id="viewUserModal">
+    <div class="modal" style="max-width: 550px;">
+        <div class="modal-header">
+            <h3><i class="fas fa-user" style="color: var(--primary);"></i> User Details</h3>
+            <button class="modal-close" onclick="closeModal('viewUserModal')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="user-detail-header">
+                <div class="user-detail-avatar" id="viewUserAvatar">U</div>
+                <div class="user-detail-info">
+                    <h4 id="viewUserName">User Name</h4>
+                    <p id="viewUserEmail">user@email.com</p>
+                </div>
+            </div>
+            <div class="contact-detail">
+                <div class="contact-detail-row">
+                    <span class="contact-detail-label">Username</span>
+                    <span class="contact-detail-value" id="viewUserUsername">-</span>
+                </div>
+                <div class="contact-detail-row">
+                    <span class="contact-detail-label">Role</span>
+                    <span class="contact-detail-value" id="viewUserRole">-</span>
+                </div>
+                <div class="contact-detail-row">
+                    <span class="contact-detail-label">Plan</span>
+                    <span class="contact-detail-value" id="viewUserPlan">-</span>
+                </div>
+                <div class="contact-detail-row">
+                    <span class="contact-detail-label">Status</span>
+                    <span class="contact-detail-value" id="viewUserStatus">-</span>
+                </div>
+                <div class="contact-detail-row">
+                    <span class="contact-detail-label">Joined</span>
+                    <span class="contact-detail-value" id="viewUserJoined">-</span>
+                </div>
+            </div>
+            <div class="user-stats-grid">
+                <div class="user-stat-item">
+                    <div class="value" id="viewUserSongs">0</div>
+                    <div class="label">Total Songs</div>
+                </div>
+                <div class="user-stat-item">
+                    <div class="value" id="viewUserStems">0</div>
+                    <div class="label">Downloads</div>
+                </div>
+                <div class="user-stat-item">
+                    <div class="value" id="viewUserMonthly">0</div>
+                    <div class="label">This Month</div>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-ghost" onclick="closeModal('viewUserModal')">Close</button>
+            <button type="button" class="btn btn-primary" onclick="editUserFromView()"><i class="fas fa-edit"></i> Edit User</button>
+        </div>
+    </div>
+</div>
+
+<!-- View Contact Modal -->
+<div class="modal-overlay" id="viewContactModal">
+    <div class="modal" style="max-width: 600px;">
+        <div class="modal-header">
+            <h3><i class="fas fa-envelope-open" style="color: #10b981;"></i> Contact Message</h3>
+            <button class="modal-close" onclick="closeModal('viewContactModal')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="contact-detail">
+                <div class="contact-detail-row">
+                    <span class="contact-detail-label">From</span>
+                    <span class="contact-detail-value" id="contactFrom">-</span>
+                </div>
+                <div class="contact-detail-row">
+                    <span class="contact-detail-label">Email</span>
+                    <span class="contact-detail-value" id="contactEmail">-</span>
+                </div>
+                <div class="contact-detail-row">
+                    <span class="contact-detail-label">Category</span>
+                    <span class="contact-detail-value" id="contactCategory">-</span>
+                </div>
+                <div class="contact-detail-row">
+                    <span class="contact-detail-label">Date</span>
+                    <span class="contact-detail-value" id="contactDate">-</span>
+                </div>
+                <div class="contact-detail-row">
+                    <span class="contact-detail-label">Subject</span>
+                    <span class="contact-detail-value" id="contactSubject">-</span>
+                </div>
+            </div>
+            <h4 style="margin-bottom: 10px; font-size: 14px; color: var(--text-muted);">Message</h4>
+            <div class="contact-message-box" id="contactMessage"></div>
+            
+            <div id="existingReplySection" style="display: none; margin-bottom: 20px;">
+                <h4 style="margin-bottom: 10px; font-size: 14px; color: #10b981;">Previous Reply</h4>
+                <div class="contact-message-box" id="existingReply" style="background: rgba(16, 185, 129, 0.1); border-color: rgba(16, 185, 129, 0.3);"></div>
+            </div>
+            
+            <div class="form-group">
+                <label>Reply to Message</label>
+                <textarea class="form-control" id="contactReply" rows="4" placeholder="Type your reply here..."></textarea>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-ghost" onclick="closeModal('viewContactModal')">Close</button>
+            <button type="button" class="btn btn-primary" onclick="sendReply()"><i class="fas fa-paper-plane"></i> Send Reply</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Data
+    var usersData = {{ users|tojson }};
+    var contactsData = {{ contacts|tojson }};
+    var currentContactId = null;
+    var currentViewUser = null;
+    
+    // Section Navigation
+    function showSection(sectionName) {
+        document.querySelectorAll('.admin-section').forEach(s => s.classList.remove('active'));
+        document.querySelectorAll('.admin-nav-item[data-section]').forEach(n => n.classList.remove('active'));
+        
+        document.getElementById('section-' + sectionName).classList.add('active');
+        var navItem = document.querySelector('[data-section="' + sectionName + '"]');
+        if (navItem) navItem.classList.add('active');
+    }
+    
+    // Modal Functions
+    function showAddUserModal() {
+        document.getElementById('addUserForm').reset();
+        document.getElementById('addUserModal').classList.add('active');
+    }
+    
+    function closeModal(id) {
+        document.getElementById(id).classList.remove('active');
+    }
+    
+    // Search & Filter
+    function searchTable(input, tableId) {
+        var filter = input.value.toLowerCase();
+        var table = document.getElementById(tableId);
+        var rows = table.getElementsByTagName('tr');
+        
+        for (var i = 1; i < rows.length; i++) {
+            var text = rows[i].textContent.toLowerCase();
+            rows[i].style.display = text.includes(filter) ? '' : 'none';
+        }
+    }
+    
+    function filterByPlan(plan) {
+        var rows = document.querySelectorAll('#usersTable tbody tr');
+        rows.forEach(function(row) {
+            if (!plan || row.dataset.plan === plan) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    }
+    
+    // User Functions
+    function viewUser(username) {
+        var user = usersData.find(u => u.username === username);
+        if (!user) return;
+        
+        currentViewUser = username;
+        
+        document.getElementById('viewUserAvatar').textContent = (user.name || user.username)[0].toUpperCase();
+        document.getElementById('viewUserName').textContent = user.name || user.username;
+        document.getElementById('viewUserEmail').textContent = user.email;
+        document.getElementById('viewUserUsername').textContent = user.username;
+        document.getElementById('viewUserRole').innerHTML = '<span class="badge badge-' + user.role + '">' + user.role + '</span>';
+        document.getElementById('viewUserPlan').innerHTML = '<span class="badge badge-' + user.plan + '">' + user.plan + '</span>';
+        document.getElementById('viewUserStatus').innerHTML = '<span class="badge badge-' + (user.is_active ? 'active' : 'inactive') + '">' + (user.is_active ? 'Active' : 'Inactive') + '</span>';
+        document.getElementById('viewUserJoined').textContent = user.created_at ? user.created_at.substring(0, 10) : 'N/A';
+        
+        var usage = user.usage || {};
+        document.getElementById('viewUserSongs').textContent = usage.songs_processed || 0;
+        document.getElementById('viewUserStems').textContent = usage.stems_downloaded || 0;
+        
+        var monthly = usage.monthly || {};
+        var currentMonth = new Date().toISOString().substring(0, 7);
+        document.getElementById('viewUserMonthly').textContent = monthly[currentMonth] || 0;
+        
+        document.getElementById('viewUserModal').classList.add('active');
+    }
+    
+    function editUserFromView() {
+        closeModal('viewUserModal');
+        editUser(currentViewUser);
+    }
+    
+    function editUser(username) {
+        var user = usersData.find(u => u.username === username);
+        if (!user) return;
+        
+        document.getElementById('editUsername').value = user.username;
+        document.getElementById('editName').value = user.name || '';
+        document.getElementById('editEmail').value = user.email;
+        document.getElementById('editRole').value = user.role;
+        document.getElementById('editPlan').value = user.plan;
+        document.getElementById('editStatus').value = user.is_active ? 'true' : 'false';
+        document.getElementById('editPassword').value = '';
+        
+        document.getElementById('editUserModal').classList.add('active');
+    }
+    
+    function submitAddUser(e) {
+        e.preventDefault();
+        var form = document.getElementById('addUserForm');
+        var formData = new FormData(form);
+        var data = Object.fromEntries(formData.entries());
+        
+        fetch('/admin/users/add', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        })
+        .then(r => r.json())
+        .then(result => {
+            if (result.success) {
+                alert('User created successfully!');
+                location.reload();
+            } else {
+                alert('Error: ' + (result.error || 'Failed to create user'));
+            }
+        })
+        .catch(err => alert('Error: ' + err.message));
+    }
+    
+    function submitEditUser(e) {
+        e.preventDefault();
+        var form = document.getElementById('editUserForm');
+        var formData = new FormData(form);
+        var data = Object.fromEntries(formData.entries());
+        data.is_active = data.is_active === 'true';
+        
+        // Remove empty password
+        if (!data.password) delete data.password;
+        
+        fetch('/admin/users/update', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        })
+        .then(r => r.json())
+        .then(result => {
+            if (result.success) {
+                alert('User updated successfully!');
+                location.reload();
+            } else {
+                alert('Error: ' + (result.error || 'Failed to update user'));
+            }
+        })
+        .catch(err => alert('Error: ' + err.message));
+    }
+    
+    function deleteUser(username) {
+        if (!confirm('Are you sure you want to delete user "' + username + '"?\n\nThis action cannot be undone.')) {
+            return;
+        }
+        
+        fetch('/admin/users/delete/' + username, { method: 'DELETE' })
+            .then(r => r.json())
+            .then(result => {
+                if (result.success) {
+                    alert('User deleted successfully!');
+                    location.reload();
+                } else {
+                    alert('Error: ' + (result.error || 'Failed to delete user'));
+                }
+            })
+            .catch(err => alert('Error: ' + err.message));
+    }
+    
+    // Contact Functions
+    function viewContact(id) {
+        var contact = contactsData.find(c => c.id === id);
+        if (!contact) return;
+        
+        currentContactId = id;
+        
+        document.getElementById('contactFrom').textContent = contact.name;
+        document.getElementById('contactEmail').textContent = contact.email;
+        document.getElementById('contactCategory').textContent = contact.category;
+        document.getElementById('contactDate').textContent = contact.created_at.substring(0, 10);
+        document.getElementById('contactSubject').textContent = contact.subject;
+        document.getElementById('contactMessage').textContent = contact.message;
+        
+        if (contact.reply) {
+            document.getElementById('existingReplySection').style.display = 'block';
+            document.getElementById('existingReply').textContent = contact.reply;
+        } else {
+            document.getElementById('existingReplySection').style.display = 'none';
+        }
+        
+        document.getElementById('contactReply').value = '';
+        document.getElementById('viewContactModal').classList.add('active');
+    }
+    
+    function sendReply() {
+        var reply = document.getElementById('contactReply').value.trim();
+        if (!reply) {
+            alert('Please enter a reply message');
+            return;
+        }
+        
+        fetch('/admin/contacts/reply/' + currentContactId, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ reply: reply })
+        })
+        .then(r => r.json())
+        .then(result => {
+            if (result.success) {
+                alert('Reply sent successfully!');
+                closeModal('viewContactModal');
+                location.reload();
+            } else {
+                alert('Error: ' + (result.error || 'Failed to send reply'));
+            }
+        })
+        .catch(err => alert('Error: ' + err.message));
+    }
+    
+    function deleteContact(id) {
+        if (!confirm('Are you sure you want to delete this message?')) {
+            return;
+        }
+        
+        fetch('/admin/contacts/delete/' + id, { method: 'DELETE' })
+            .then(r => r.json())
+            .then(result => {
+                if (result.success) {
+                    location.reload();
+                } else {
+                    alert('Error: ' + (result.error || 'Failed to delete message'));
+                }
+            })
+            .catch(err => alert('Error: ' + err.message));
+    }
+    
+    // Close modals on overlay click
+    document.querySelectorAll('.modal-overlay').forEach(function(overlay) {
+        overlay.addEventListener('click', function(e) {
+            if (e.target === overlay) {
+                overlay.classList.remove('active');
+            }
+        });
+    });
+    
+    // Check URL params for initial section
+    var urlParams = new URLSearchParams(window.location.search);
+    var tab = urlParams.get('tab');
+    if (tab) {
+        showSection(tab);
+    }
+</script>
+{% endblock %}
