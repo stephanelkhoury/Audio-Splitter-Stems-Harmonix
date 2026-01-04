@@ -9,7 +9,7 @@ import json
 import secrets
 from pathlib import Path
 from datetime import datetime, timedelta
-from flask import Flask, render_template, request, jsonify, send_file, url_for, session, redirect, flash
+from flask import Flask, render_template, request, jsonify, send_file, send_from_directory, url_for, session, redirect, flash
 from werkzeug.utils import secure_filename
 import threading
 import logging
@@ -28,6 +28,26 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = 'harmonix-secret-key-change-in-production'
 app.config['MAX_CONTENT_LENGTH'] = 500 * 1024 * 1024  # 500MB max file size
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=30)
+
+
+@app.context_processor
+def inject_user():
+    """Inject current_user into all templates"""
+    if 'user_id' in session:
+        return {
+            'current_user': {
+                'id': session.get('user_id'),
+                'username': session.get('user_id'),
+                'name': session.get('user_name'),
+                'email': session.get('user_email'),
+                'role': session.get('user_role'),
+                'plan': session.get('user_plan', 'free'),
+                'avatar': session.get('user_avatar'),
+                'bio': session.get('user_bio'),
+            }
+        }
+    return {'current_user': None}
+
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -344,6 +364,8 @@ def login():
             session['user_name'] = user.get('name')
             session['user_role'] = user.get('role')
             session['user_plan'] = user.get('plan', 'free')
+            session['user_avatar'] = user.get('avatar')
+            session['user_bio'] = user.get('bio')
             
             if remember:
                 session.permanent = True
@@ -806,6 +828,7 @@ def account():
     user_stats = get_user_stats(username)
     user_data = get_user(username)
     
+    # Include avatar and bio from user_data (or session fallback)
     return render_template('account.html',
                           current_user={
                               'id': session.get('user_id'),
@@ -814,8 +837,205 @@ def account():
                               'email': session.get('user_email'),
                               'role': session.get('user_role'),
                               'plan': session.get('user_plan', 'free'),
+                              'avatar': user_data.get('avatar') if user_data else session.get('user_avatar'),
+                              'bio': user_data.get('bio', '') if user_data else session.get('user_bio', ''),
                           },
                           user_stats=user_stats)
+
+
+@app.route('/account/update', methods=['POST'])
+def update_account():
+    """Update user profile information"""
+    if 'user_id' not in session:
+        return jsonify({'success': False, 'error': 'Not authenticated'}), 401
+    
+    from harmonix_splitter.auth import update_user
+    
+    username = session.get('user_id')
+    data = request.get_json()
+    
+    if not data:
+        return jsonify({'success': False, 'error': 'No data provided'}), 400
+    
+    # Build updates dict from allowed fields
+    updates = {}
+    if 'name' in data:
+        updates['name'] = data['name'].strip()
+    if 'email' in data:
+        updates['email'] = data['email'].strip()
+    if 'bio' in data:
+        updates['bio'] = data['bio'].strip() if data['bio'] else ''
+    
+    if not updates:
+        return jsonify({'success': False, 'error': 'No valid fields to update'}), 400
+    
+    result = update_user(username, updates)
+    
+    if result:
+        # Update session with new values
+        if 'name' in updates:
+            session['user_name'] = updates['name']
+        if 'email' in updates:
+            session['user_email'] = updates['email']
+        if 'bio' in updates:
+            session['user_bio'] = updates['bio']
+        
+        return jsonify({'success': True, 'message': 'Profile updated successfully'})
+    else:
+        return jsonify({'success': False, 'error': 'Failed to update profile'}), 500
+
+
+@app.route('/account/upload-avatar', methods=['POST'])
+def upload_avatar():
+    """Upload and update user avatar"""
+    if 'user_id' not in session:
+        return jsonify({'success': False, 'error': 'Not authenticated'}), 401
+    
+    from harmonix_splitter.auth import update_user
+    from PIL import Image
+    import uuid
+    import io
+    
+    username = session.get('user_id')
+    
+    if 'avatar' not in request.files:
+        return jsonify({'success': False, 'error': 'No file provided'}), 400
+    
+    file = request.files['avatar']
+    
+    if file.filename == '':
+        return jsonify({'success': False, 'error': 'No file selected'}), 400
+    
+    # Check file extension (default to jpg for cropped images from frontend)
+    allowed_extensions = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
+    file_ext = file.filename.rsplit('.', 1)[-1].lower() if '.' in file.filename else 'jpg'
+    
+    if file_ext not in allowed_extensions:
+        return jsonify({'success': False, 'error': 'Invalid file type. Allowed: PNG, JPG, JPEG, GIF, WEBP'}), 400
+    
+    # Create avatars directory if it doesn't exist
+    avatars_dir = Path(__file__).parent.parent.parent / 'data' / 'avatars'
+    avatars_dir.mkdir(parents=True, exist_ok=True)
+    
+    # Generate unique filename (always save as jpg for consistency)
+    unique_filename = f"{username}_{uuid.uuid4().hex[:8]}.jpg"
+    avatar_path = avatars_dir / unique_filename
+    
+    try:
+        # Delete old avatar if exists
+        from harmonix_splitter.auth import load_users
+        users = load_users()
+        if username in users and 'avatar' in users[username]:
+            old_avatar = avatars_dir / users[username]['avatar'].split('/')[-1]
+            if old_avatar.exists():
+                old_avatar.unlink()
+        
+        # Open image with PIL and crop to square
+        img = Image.open(file)
+        
+        # Convert to RGB if necessary (for PNG with transparency)
+        if img.mode in ('RGBA', 'P'):
+            img = img.convert('RGB')
+        
+        # Crop to square (center crop)
+        width, height = img.size
+        min_dimension = min(width, height)
+        left = (width - min_dimension) // 2
+        top = (height - min_dimension) // 2
+        right = left + min_dimension
+        bottom = top + min_dimension
+        img = img.crop((left, top, right, bottom))
+        
+        # Resize to standard avatar size (256x256)
+        img = img.resize((256, 256), Image.LANCZOS)
+        
+        # Save the cropped image
+        img.save(str(avatar_path), quality=90)
+        
+        # Update user record
+        avatar_url = f'/avatars/{unique_filename}'
+        result = update_user(username, {'avatar': avatar_url})
+        
+        if result:
+            session['user_avatar'] = avatar_url
+            return jsonify({'success': True, 'message': 'Avatar updated successfully', 'avatar_url': avatar_url})
+        else:
+            return jsonify({'success': False, 'error': 'Failed to update user record'}), 500
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/avatars/<filename>')
+def serve_avatar(filename):
+    """Serve avatar files"""
+    avatars_dir = Path(__file__).parent.parent.parent / 'data' / 'avatars'
+    return send_from_directory(str(avatars_dir), filename)
+
+
+@app.route('/account/change-password', methods=['POST'])
+def change_user_password():
+    """Change user password"""
+    if 'user_id' not in session:
+        return jsonify({'success': False, 'error': 'Not authenticated'}), 401
+    
+    from harmonix_splitter.auth import change_password
+    
+    username = session.get('user_id')
+    data = request.get_json()
+    
+    if not data:
+        return jsonify({'success': False, 'error': 'No data provided'}), 400
+    
+    current_password = data.get('current_password', '')
+    new_password = data.get('new_password', '')
+    confirm_password = data.get('confirm_password', '')
+    
+    if not current_password or not new_password:
+        return jsonify({'success': False, 'error': 'Current and new passwords are required'}), 400
+    
+    if new_password != confirm_password:
+        return jsonify({'success': False, 'error': 'New passwords do not match'}), 400
+    
+    if len(new_password) < 6:
+        return jsonify({'success': False, 'error': 'Password must be at least 6 characters'}), 400
+    
+    result = change_password(username, current_password, new_password)
+    
+    if result:
+        return jsonify({'success': True, 'message': 'Password changed successfully'})
+    else:
+        return jsonify({'success': False, 'error': 'Current password is incorrect'}), 400
+
+
+@app.route('/account/delete', methods=['POST'])
+def delete_account():
+    """Delete user account"""
+    if 'user_id' not in session:
+        return jsonify({'success': False, 'error': 'Not authenticated'}), 401
+    
+    from harmonix_splitter.auth import delete_user
+    
+    username = session.get('user_id')
+    data = request.get_json()
+    
+    # Require password confirmation
+    password = data.get('password', '') if data else ''
+    
+    if not password:
+        return jsonify({'success': False, 'error': 'Password confirmation required'}), 400
+    
+    # Verify password first
+    from harmonix_splitter.auth import authenticate_user
+    if not authenticate_user(username, password):
+        return jsonify({'success': False, 'error': 'Incorrect password'}), 400
+    
+    result = delete_user(username)
+    
+    if result:
+        session.clear()
+        return jsonify({'success': True, 'message': 'Account deleted successfully'})
+    else:
+        return jsonify({'success': False, 'error': 'Cannot delete this account'}), 400
 
 
 # ==================== API ROUTES ====================
@@ -928,6 +1148,266 @@ def upload_file():
     except Exception as e:
         logger.error(f"Upload failed: {e}")
         return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/convert-to-midi', methods=['POST'])
+def convert_to_midi():
+    """Convert audio file to MIDI using Basic Pitch"""
+    try:
+        from basic_pitch.inference import predict, Model
+        from basic_pitch import ICASSP_2022_MODEL_PATH
+        import os
+        import yt_dlp
+        
+        username = session.get('user_id', 'anonymous')
+        
+        # Get audio file from upload, stem URL, or YouTube URL
+        audio_file = request.files.get('audio')
+        stem_url = request.form.get('stem_url')
+        youtube_url = request.form.get('youtube_url')
+        
+        temp_audio_path = None
+        original_name = 'audio'
+        cleanup_temp = False
+        
+        if audio_file:
+            # Save uploaded file temporarily
+            original_name = Path(audio_file.filename).stem
+            temp_audio_path = UPLOAD_DIR / f"midi_temp_{uuid.uuid4().hex}{Path(audio_file.filename).suffix}"
+            audio_file.save(str(temp_audio_path))
+            cleanup_temp = True
+        elif youtube_url:
+            # Download from YouTube/URL
+            logger.info(f"Downloading from URL for MIDI conversion: {youtube_url}")
+            
+            # Create temp file for download
+            temp_filename = f"midi_url_{uuid.uuid4().hex}"
+            temp_audio_path = UPLOAD_DIR / temp_filename
+            
+            ydl_opts = {
+                'format': 'bestaudio/best',
+                'outtmpl': str(temp_audio_path),
+                'quiet': True,
+                'no_warnings': True,
+                'extract_audio': True,
+                'postprocessors': [{
+                    'key': 'FFmpegExtractAudio',
+                    'preferredcodec': 'mp3',
+                    'preferredquality': '192',
+                }],
+            }
+            
+            try:
+                with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                    info = ydl.extract_info(youtube_url, download=True)
+                    original_name = info.get('title', 'audio')
+                    # Clean filename
+                    original_name = "".join(c for c in original_name if c.isalnum() or c in (' ', '-', '_')).strip()
+                    
+                # Find the downloaded file (might have .mp3 extension added)
+                for ext in ['.mp3', '.m4a', '.webm', '.opus', '']:
+                    check_path = Path(str(temp_audio_path) + ext)
+                    if check_path.exists():
+                        temp_audio_path = check_path
+                        break
+                        
+                if not temp_audio_path.exists():
+                    return jsonify({'success': False, 'error': 'Failed to download audio from URL'}), 500
+                    
+                cleanup_temp = True
+                logger.info(f"Downloaded: {original_name}")
+                
+            except Exception as e:
+                logger.error(f"URL download failed: {e}")
+                return jsonify({'success': False, 'error': f'Failed to download: {str(e)}'}), 500
+                
+        elif stem_url:
+            # Use existing stem file
+            # stem_url is like /output/job_id/stem.mp3
+            stem_path = Path(__file__).parent.parent.parent / stem_url.lstrip('/')
+            if stem_path.exists():
+                temp_audio_path = stem_path
+                original_name = stem_path.stem
+            else:
+                return jsonify({'success': False, 'error': 'Stem file not found'}), 404
+        else:
+            return jsonify({'success': False, 'error': 'No audio file provided'}), 400
+        
+        # Create output directory for MIDI files - unified under user folder
+        midi_output_dir = Path(__file__).parent.parent.parent / 'data' / 'outputs' / 'users' / username / 'midi'
+        midi_output_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Generate unique filename
+        midi_filename = f"{original_name}_{uuid.uuid4().hex[:8]}.mid"
+        midi_path = midi_output_dir / midi_filename
+        
+        # Use ONNX model for better compatibility with Python 3.13
+        onnx_model_path = os.path.join(os.path.dirname(ICASSP_2022_MODEL_PATH), 'nmp.onnx')
+        
+        # Convert to MIDI using Basic Pitch with ONNX model
+        logger.info(f"Converting {temp_audio_path} to MIDI using ONNX model...")
+        model_output, midi_data, note_events = predict(str(temp_audio_path), model_or_model_path=onnx_model_path)
+        
+        # Save MIDI file
+        midi_data.write(str(midi_path))
+        
+        # Get duration and note count
+        duration = midi_data.get_end_time() if midi_data.instruments else 0
+        notes_count = sum(len(inst.notes) for inst in midi_data.instruments) if midi_data.instruments else 0
+        
+        # Cleanup temp file if we created one
+        if cleanup_temp and temp_audio_path and temp_audio_path.exists():
+            temp_audio_path.unlink()
+        
+        logger.info(f"MIDI conversion complete: {midi_path} ({notes_count} notes)")
+        
+        return jsonify({
+            'success': True,
+            'filename': midi_filename,
+            'download_url': f'/download-midi/{username}/{midi_filename}',
+            'notes_count': notes_count,
+            'duration': duration
+        })
+        
+    except ImportError as e:
+        logger.error(f"Basic Pitch not installed: {e}")
+        return jsonify({'success': False, 'error': 'MIDI conversion not available. Basic Pitch not installed.'}), 500
+    except Exception as e:
+        logger.error(f"MIDI conversion failed: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/download-midi/<username>/<filename>')
+def download_midi(username, filename):
+    """Download a MIDI file"""
+    midi_dir = Path(__file__).parent.parent.parent / 'data' / 'outputs' / 'users' / username / 'midi'
+    return send_from_directory(str(midi_dir), filename, as_attachment=True)
+
+
+@app.route('/api/midi-library', methods=['GET'])
+def get_midi_library():
+    """Get list of user's MIDI files"""
+    try:
+        username = session.get('user_id', 'anonymous')
+        midi_dir = Path(__file__).parent.parent.parent / 'data' / 'outputs' / 'users' / username / 'midi'
+        
+        files = []
+        if midi_dir.exists():
+            for midi_file in sorted(midi_dir.glob('*.mid'), key=lambda x: x.stat().st_mtime, reverse=True):
+                stat = midi_file.stat()
+                
+                # Try to get note count and duration from the file
+                notes_count = 0
+                duration = 0
+                try:
+                    import pretty_midi
+                    pm = pretty_midi.PrettyMIDI(str(midi_file))
+                    duration = pm.get_end_time()
+                    notes_count = sum(len(inst.notes) for inst in pm.instruments)
+                except:
+                    pass
+                
+                files.append({
+                    'filename': midi_file.name,
+                    'download_url': f'/download-midi/{username}/{midi_file.name}',
+                    'size': stat.st_size,
+                    'date': datetime.fromtimestamp(stat.st_mtime).strftime('%Y-%m-%d %H:%M'),
+                    'notes': notes_count,
+                    'duration': duration
+                })
+        
+        return jsonify({
+            'success': True,
+            'files': files
+        })
+        
+    except Exception as e:
+        logger.error(f"Failed to get MIDI library: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/midi-library/delete', methods=['POST'])
+def delete_midi_file():
+    """Delete a MIDI file"""
+    try:
+        username = session.get('user_id', 'anonymous')
+        data = request.get_json()
+        filename = data.get('filename')
+        
+        if not filename:
+            return jsonify({'success': False, 'error': 'No filename provided'}), 400
+        
+        midi_path = Path(__file__).parent.parent.parent / 'data' / 'outputs' / 'users' / username / 'midi' / filename
+        
+        if midi_path.exists():
+            midi_path.unlink()
+            logger.info(f"Deleted MIDI file: {midi_path}")
+            return jsonify({'success': True})
+        else:
+            return jsonify({'success': False, 'error': 'File not found'}), 404
+            
+    except Exception as e:
+        logger.error(f"Failed to delete MIDI file: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/midi-parse', methods=['GET'])
+def parse_midi_file():
+    """Parse a MIDI file and return note data for playback"""
+    try:
+        import pretty_midi
+        
+        url = request.args.get('url')
+        if not url:
+            return jsonify({'success': False, 'error': 'No URL provided'}), 400
+        
+        # Parse the URL to get the file path
+        # URL format: /download-midi/username/filename
+        parts = url.strip('/').split('/')
+        if len(parts) >= 3 and parts[0] == 'download-midi':
+            username = parts[1]
+            filename = parts[2]
+            # Check in users folder first (main location)
+            midi_path = Path(__file__).parent.parent.parent / 'data' / 'outputs' / 'users' / username / 'midi' / filename
+            # Fallback to old location
+            if not midi_path.exists():
+                midi_path = Path(__file__).parent.parent.parent / 'data' / 'outputs' / 'midi' / username / filename
+        else:
+            return jsonify({'success': False, 'error': 'Invalid URL format'}), 400
+        
+        if not midi_path.exists():
+            return jsonify({'success': False, 'error': f'File not found: {filename}'}), 404
+        
+        # Parse MIDI file
+        pm = pretty_midi.PrettyMIDI(str(midi_path))
+        
+        # Extract all notes
+        notes = []
+        for instrument in pm.instruments:
+            for note in instrument.notes:
+                notes.append({
+                    'pitch': note.pitch,
+                    'start': note.start,
+                    'duration': note.end - note.start,
+                    'velocity': note.velocity
+                })
+        
+        # Sort by start time
+        notes.sort(key=lambda x: x['start'])
+        
+        return jsonify({
+            'success': True,
+            'notes': notes,
+            'duration': pm.get_end_time(),
+            'tracks': len(pm.instruments),
+            'tempo': pm.estimate_tempo()
+        })
+        
+    except ImportError:
+        return jsonify({'success': False, 'error': 'pretty_midi not installed'}), 500
+    except Exception as e:
+        logger.error(f"Failed to parse MIDI file: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 
 @app.route('/api/plan-info', methods=['GET'])
@@ -1555,7 +2035,7 @@ def rename_job(job_id):
                 return jsonify({'error': 'Job not found'}), 404
             
             # Check ownership - only owner or admin can rename
-            job_owner = job.get('username')
+            job_owner = job.get('user')  # Job stores username as 'user'
             if not is_admin and job_owner != current_user:
                 return jsonify({'error': 'You do not have permission to rename this job'}), 403
             
@@ -1904,7 +2384,7 @@ def extract_lyrics(job_id):
             if not job:
                 return jsonify({'error': 'Job not found'}), 404
             
-            job_owner = job.get('username')
+            job_owner = job.get('user')  # Job stores username as 'user'
             if not is_admin and job_owner != current_user:
                 return jsonify({'error': 'You do not have permission to extract lyrics for this job'}), 403
         
@@ -1992,7 +2472,7 @@ def get_lyrics(job_id):
             if not job:
                 return jsonify({'error': 'Job not found', 'available': False}), 404
             
-            job_owner = job.get('username')
+            job_owner = job.get('user')  # Job stores username as 'user'
             if not is_admin and job_owner != current_user:
                 return jsonify({'error': 'Permission denied', 'available': False}), 403
         
@@ -2033,7 +2513,7 @@ def get_lyrics_lrc(job_id):
             if not job:
                 return jsonify({'error': 'Job not found'}), 404
             
-            job_owner = job.get('username')
+            job_owner = job.get('user')  # Job stores username as 'user'
             if not is_admin and job_owner != current_user:
                 return jsonify({'error': 'Permission denied'}), 403
         

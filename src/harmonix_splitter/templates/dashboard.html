@@ -4,10 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Harmonix Audio Splitter - Professional Dashboard</title>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎵</text></svg>">
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/logo.png') }}">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <script src="https://unpkg.com/wavesurfer.js@7"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.min.js"></script>
+    <!-- Prevent theme flash -->
+    <script>
+        (function() {
+            const theme = localStorage.getItem('harmonix-theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', theme);
+        })();
+    </script>
     <style>
         * {
             margin: 0;
@@ -32,6 +39,139 @@
             --text-dim: #71717a;
         }
 
+        /* Light Theme Override */
+        [data-theme="light"] {
+            --dark: #ffffff;
+            --darker: #f1f5f9;
+            --card: #ffffff;
+            --border: rgba(0, 0, 0, 0.1);
+            --text-muted: #475569;
+            --text-dim: #64748b;
+        }
+        
+        [data-theme="light"] body {
+            background: #f1f5f9;
+            color: #0f172a;
+        }
+        
+        [data-theme="light"] .sidebar {
+            background: #ffffff;
+            border-right-color: rgba(0, 0, 0, 0.1);
+        }
+        
+        [data-theme="light"] .nav-item {
+            color: #475569;
+        }
+        
+        [data-theme="light"] .nav-item:hover,
+        [data-theme="light"] .nav-item.active {
+            background: rgba(124, 58, 237, 0.1);
+            color: #7c3aed;
+        }
+        
+        [data-theme="light"] .main-content {
+            background: #f1f5f9;
+        }
+        
+        [data-theme="light"] .card,
+        [data-theme="light"] .upload-area,
+        [data-theme="light"] .stems-section,
+        [data-theme="light"] .player-card,
+        [data-theme="light"] .stats-card,
+        [data-theme="light"] .section {
+            background: #ffffff;
+            border-color: rgba(0, 0, 0, 0.1);
+        }
+        
+        [data-theme="light"] .page-title,
+        [data-theme="light"] h1, [data-theme="light"] h2, [data-theme="light"] h3, [data-theme="light"] h4 {
+            color: #0f172a;
+        }
+        
+        [data-theme="light"] .track-name,
+        [data-theme="light"] .stem-name,
+        [data-theme="light"] .stat-value {
+            color: #0f172a;
+        }
+        
+        [data-theme="light"] .track-card {
+            background: #ffffff;
+            border-color: rgba(0, 0, 0, 0.1);
+        }
+        
+        [data-theme="light"] .track-card:hover {
+            border-color: rgba(124, 58, 237, 0.3);
+        }
+        
+        [data-theme="light"] .btn-secondary {
+            background: #f1f5f9;
+            color: #0f172a;
+            border-color: rgba(0, 0, 0, 0.1);
+        }
+        
+        [data-theme="light"] .dashboard-navbar {
+            background: rgba(255, 255, 255, 0.95);
+            border-bottom-color: rgba(0, 0, 0, 0.1);
+        }
+        
+        [data-theme="light"] .dashboard-navbar .nav-link,
+        [data-theme="light"] .dashboard-navbar .nav-dropdown-item {
+            color: #475569;
+        }
+        
+        [data-theme="light"] .dashboard-navbar .nav-link:hover,
+        [data-theme="light"] .dashboard-navbar .nav-dropdown-item:hover {
+            color: #0f172a;
+        }
+        
+        [data-theme="light"] .dashboard-navbar .nav-dropdown-menu {
+            background: #ffffff;
+            border-color: rgba(0, 0, 0, 0.1);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+        }
+        
+        [data-theme="light"] .dashboard-navbar .user-menu {
+            color: #0f172a;
+            border-color: rgba(0, 0, 0, 0.1);
+        }
+        
+        [data-theme="light"] .dashboard-navbar .btn-ghost {
+            color: #0f172a;
+            border-color: rgba(0, 0, 0, 0.1);
+        }
+        
+        [data-theme="light"] .theme-toggle {
+            color: #475569;
+            border-color: rgba(0, 0, 0, 0.1);
+        }
+        
+        [data-theme="light"] .theme-toggle:hover {
+            color: #0f172a;
+            background: rgba(124, 58, 237, 0.1);
+        }
+        
+        [data-theme="light"] .modal-content {
+            background: #ffffff;
+            border-color: rgba(0, 0, 0, 0.1);
+        }
+        
+        [data-theme="light"] input,
+        [data-theme="light"] select,
+        [data-theme="light"] textarea {
+            background: #f8fafc;
+            color: #0f172a;
+            border-color: rgba(0, 0, 0, 0.1);
+        }
+        
+        [data-theme="light"] .waveform-container {
+            background: #f8fafc;
+        }
+        
+        [data-theme="light"] .empty-state,
+        [data-theme="light"] .lyrics-panel {
+            background: #f8fafc;
+        }
+
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: var(--dark);
@@ -43,9 +183,9 @@
         .sidebar {
             position: fixed;
             left: 0;
-            top: 0;
+            top: 70px;
             width: 260px;
-            height: 100vh;
+            height: calc(100vh - 70px);
             background: var(--darker);
             padding: 20px;
             overflow-y: auto;
@@ -108,6 +248,7 @@
         .main-content {
             margin-left: 260px;
             padding: 25px;
+            padding-top: 95px;
             min-height: 100vh;
         }
 
@@ -609,6 +750,20 @@
             background: var(--primary);
             color: white;
             transform: scale(1.1);
+        }
+        
+        /* MIDI Conversion Button */
+        .convert-midi-btn {
+            background: linear-gradient(135deg, var(--primary), var(--secondary)) !important;
+            color: white !important;
+        }
+        .convert-midi-btn:hover {
+            transform: scale(1.15);
+            box-shadow: 0 0 15px rgba(124, 58, 237, 0.5);
+        }
+        .convert-midi-btn:disabled {
+            opacity: 0.6;
+            cursor: wait;
         }
 
         /* Empty State */
@@ -1518,13 +1673,13 @@
                 padding: 10px;
             }
             /* Lyrics buttons */
-            #section-player .btn.extract-lyrics-btn,
-            #section-player .btn-secondary {
+            #stems-tab-player .btn.extract-lyrics-btn,
+            #stems-tab-player .btn-secondary {
                 flex: 1;
                 padding: 10px 12px;
                 font-size: 12px;
             }
-            #section-player > div > div:nth-child(7) {
+            #stems-tab-player > div > div:nth-child(7) {
                 flex-wrap: wrap;
             }
             .language-select {
@@ -1746,8 +1901,8 @@
             .timeline-bar {
                 height: 10px;
             }
-            #section-player .btn.extract-lyrics-btn,
-            #section-player .btn-secondary {
+            #stems-tab-player .btn.extract-lyrics-btn,
+            #stems-tab-player .btn-secondary {
                 padding: 8px 10px;
                 font-size: 11px;
             }
@@ -1756,11 +1911,375 @@
                 padding: 6px 8px;
             }
         }
+
+        /* Dashboard Navbar */
+        .dashboard-navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 70px;
+            background: rgba(5, 5, 8, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+            z-index: 1001;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 25px;
+        }
+        .dashboard-navbar .navbar-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+            font-size: 20px;
+            font-weight: bold;
+        }
+        .dashboard-navbar .navbar-logo-text {
+            background: linear-gradient(135deg, var(--primary), #06b6d4);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .dashboard-navbar .navbar-nav {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .dashboard-navbar .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 10px 16px;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+        .dashboard-navbar .nav-link:hover {
+            color: #fff;
+            background: rgba(124, 58, 237, 0.1);
+        }
+        .dashboard-navbar .nav-dropdown {
+            position: relative;
+        }
+        .dashboard-navbar .nav-dropdown-trigger {
+            cursor: pointer;
+        }
+        .dashboard-navbar .nav-dropdown-trigger i.fa-chevron-down {
+            font-size: 10px;
+            transition: transform 0.2s;
+        }
+        .dashboard-navbar .nav-dropdown:hover .nav-dropdown-trigger i.fa-chevron-down {
+            transform: rotate(180deg);
+        }
+        .dashboard-navbar .nav-dropdown-menu {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            min-width: 200px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 8px;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(10px);
+            transition: all 0.2s;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+        }
+        .dashboard-navbar .nav-dropdown:hover .nav-dropdown-menu {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+        .dashboard-navbar .nav-dropdown-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 14px;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 14px;
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+        .dashboard-navbar .nav-dropdown-item:hover {
+            color: #fff;
+            background: rgba(124, 58, 237, 0.1);
+        }
+        .dashboard-navbar .nav-dropdown-item i {
+            width: 20px;
+            text-align: center;
+            color: var(--primary-light);
+        }
+        .dashboard-navbar .navbar-actions {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .dashboard-navbar .theme-toggle {
+            width: 40px;
+            height: 40px;
+            background: transparent;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-muted);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            font-size: 16px;
+        }
+        .dashboard-navbar .theme-toggle:hover {
+            background: rgba(124, 58, 237, 0.1);
+            border-color: var(--primary);
+            color: var(--text);
+        }
+        .dashboard-navbar .mobile-menu-toggle {
+            display: none;
+            width: 40px;
+            height: 40px;
+            background: transparent;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            cursor: pointer;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+        }
+        .dashboard-navbar .mobile-menu-toggle span {
+            width: 20px;
+            height: 2px;
+            background: var(--text);
+            transition: all 0.2s;
+        }
+        .dashboard-navbar .user-menu {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 16px;
+            background: transparent;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: #fff;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        .dashboard-navbar .user-menu:hover {
+            background: rgba(124, 58, 237, 0.1);
+            border-color: var(--primary);
+        }
+        .dashboard-navbar .user-avatar {
+            width: 28px;
+            height: 28px;
+            background: linear-gradient(135deg, var(--primary), #06b6d4);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 600;
+            overflow: hidden;
+        }
+        .dashboard-navbar .user-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .dashboard-navbar .btn-ghost {
+            padding: 10px 20px;
+            background: transparent;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: #fff;
+            text-decoration: none;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        .dashboard-navbar .btn-ghost:hover {
+            background: rgba(124, 58, 237, 0.1);
+            border-color: var(--primary);
+        }
+        .dashboard-navbar .btn-primary {
+            padding: 10px 20px;
+            background: linear-gradient(135deg, var(--primary), #6d28d9);
+            border: none;
+            border-radius: 8px;
+            color: #fff;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        .dashboard-navbar .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(124, 58, 237, 0.4);
+        }
+        .dashboard-navbar .divider {
+            height: 1px;
+            background: var(--border);
+            margin: 8px 0;
+        }
+        
+        /* iPad / Tablet Responsive */
+        @media (max-width: 1024px) {
+            .dashboard-navbar .navbar-nav {
+                display: none;
+            }
+            .dashboard-navbar .navbar-actions {
+                flex: 1;
+                justify-content: flex-end;
+            }
+        }
+        
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .dashboard-navbar {
+                padding: 0 15px;
+            }
+            .dashboard-navbar .navbar-actions {
+                gap: 10px;
+            }
+            .dashboard-navbar .navbar-actions .nav-dropdown {
+                display: none;
+            }
+            .dashboard-navbar .navbar-actions .btn-ghost,
+            .dashboard-navbar .navbar-actions .btn-primary {
+                display: none;
+            }
+            .dashboard-navbar .theme-toggle {
+                display: flex;
+                order: 1;
+            }
+            .dashboard-navbar .mobile-menu-toggle {
+                display: flex;
+                order: 2;
+            }
+            .sidebar {
+                top: 70px;
+                height: calc(100vh - 70px);
+            }
+        }
     </style>
 </head>
 <body>
-    <!-- Mobile Menu Button -->
-    <button class="mobile-menu-btn" id="mobileMenuBtn" onclick="toggleSidebar()">
+    <!-- Dashboard Navbar -->
+    <nav class="dashboard-navbar">
+        <a href="/" class="navbar-logo">
+            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Harmonix" style="height: 32px; width: auto;">
+            <span class="navbar-logo-text">Harmonix</span>
+        </a>
+        
+        <div class="navbar-nav">
+            <!-- Product Dropdown -->
+            <div class="nav-dropdown">
+                <a class="nav-link nav-dropdown-trigger">
+                    Product <i class="fas fa-chevron-down"></i>
+                </a>
+                <div class="nav-dropdown-menu">
+                    <a href="/features" class="nav-dropdown-item">
+                        <i class="fas fa-magic"></i> Features
+                    </a>
+                    <a href="/pricing" class="nav-dropdown-item">
+                        <i class="fas fa-tag"></i> Pricing
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Resources Dropdown -->
+            <div class="nav-dropdown">
+                <a class="nav-link nav-dropdown-trigger">
+                    Resources <i class="fas fa-chevron-down"></i>
+                </a>
+                <div class="nav-dropdown-menu">
+                    <a href="/docs" class="nav-dropdown-item">
+                        <i class="fas fa-book"></i> Documentation
+                    </a>
+                    <a href="/tutorials" class="nav-dropdown-item">
+                        <i class="fas fa-graduation-cap"></i> Tutorials
+                    </a>
+                    <a href="/community" class="nav-dropdown-item">
+                        <i class="fas fa-users"></i> Community
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Musician Corner -->
+            <div class="nav-dropdown">
+                <a class="nav-link nav-dropdown-trigger">
+                    <i class="fas fa-guitar"></i> Tools <i class="fas fa-chevron-down"></i>
+                </a>
+                <div class="nav-dropdown-menu">
+                    <a href="/tuner" class="nav-dropdown-item">
+                        <i class="fas fa-sliders-h"></i> Instrument Tuner
+                    </a>
+                    <a href="/transposer" class="nav-dropdown-item">
+                        <i class="fas fa-exchange-alt"></i> Chord Transposer
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="navbar-actions">
+            <!-- Theme Toggle -->
+            <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">
+                <i class="fas fa-sun"></i>
+            </button>
+            
+            {% if current_user %}
+            <!-- User Menu -->
+            <div class="nav-dropdown">
+                <button class="user-menu nav-dropdown-trigger">
+                    <div class="user-avatar">
+                        {% if current_user.avatar %}
+                        <img src="{{ current_user.avatar }}" alt="{{ current_user.name }}">
+                        {% else %}
+                        {{ current_user.name[0]|upper if current_user.name else 'U' }}
+                        {% endif %}
+                    </div>
+                    <span>{{ current_user.name or 'User' }}</span>
+                    <i class="fas fa-chevron-down" style="font-size: 10px;"></i>
+                </button>
+                <div class="nav-dropdown-menu" style="right: 0; left: auto;">
+                    <a href="/account" class="nav-dropdown-item">
+                        <i class="fas fa-user"></i> Account
+                    </a>
+                    {% if current_user.role == 'admin' %}
+                    <a href="/admin" class="nav-dropdown-item">
+                        <i class="fas fa-cog"></i> Admin Panel
+                    </a>
+                    {% endif %}
+                    <div class="divider"></div>
+                    <a href="/logout" class="nav-dropdown-item">
+                        <i class="fas fa-sign-out-alt"></i> Sign Out
+                    </a>
+                </div>
+            </div>
+            {% else %}
+            <a href="/login" class="btn-ghost">Sign In</a>
+            <a href="/register" class="btn-primary">Get Started</a>
+            {% endif %}
+            
+            <!-- Mobile Menu Toggle -->
+            <button class="mobile-menu-toggle" onclick="toggleSidebar()" aria-label="Open menu">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Mobile Menu Button (legacy - hidden on navbar update) -->
+    <button class="mobile-menu-btn" id="mobileMenuBtn" onclick="toggleSidebar()" style="display: none !important;">
         <i class="fas fa-bars"></i>
     </button>
     
@@ -1787,49 +2306,44 @@
 
     <!-- Sidebar -->
     <div class="sidebar">
-        <div class="logo">
-            <i class="fas fa-music"></i>
-            Harmonix Pro
-        </div>
-
         <div class="nav-section">
-            <div class="nav-title">Main</div>
-            <div class="nav-item active" data-section="library">
-                <i class="fas fa-folder-open"></i>
-                <span>Library</span>
+            <div class="nav-title">Studio</div>
+            <div class="nav-item active" data-section="stems">
+                <i class="fas fa-layer-group"></i>
+                <span>Audio to Stems</span>
             </div>
-            <div class="nav-item" data-section="upload">
-                <i class="fas fa-cloud-upload-alt"></i>
-                <span>Upload & Process</span>
-            </div>
-            <div class="nav-item" data-section="player">
-                <i class="fas fa-play-circle"></i>
-                <span>Player</span>
+            <div class="nav-item" data-section="midi-converter">
+                <i class="fas fa-music"></i>
+                <span>Audio to MIDI</span>
             </div>
         </div>
-
+        
         <div class="nav-section">
-            <div class="nav-title">Info</div>
-            <div class="nav-item" data-section="stats">
-                <i class="fas fa-chart-bar"></i>
-                <span>Statistics</span>
+            <div class="nav-title">Tools</div>
+            <div class="nav-item" data-section="tuner">
+                <i class="fas fa-sliders-h"></i>
+                <span>Instrument Tuner</span>
+            </div>
+            <div class="nav-item" data-section="transposer">
+                <i class="fas fa-exchange-alt"></i>
+                <span>Chord Transposer</span>
             </div>
         </div>
         
         <div class="nav-section">
             <div class="nav-title">Pages</div>
-            <a href="/account" class="nav-item" style="text-decoration: none;">
+            <div class="nav-item" data-section="account">
                 <i class="fas fa-user-circle"></i>
                 <span>Account</span>
-            </a>
-            <a href="/docs" class="nav-item" style="text-decoration: none;">
+            </div>
+            <div class="nav-item" data-section="docs">
                 <i class="fas fa-book"></i>
                 <span>Documentation</span>
-            </a>
-            <a href="/tutorials" class="nav-item" style="text-decoration: none;">
+            </div>
+            <div class="nav-item" data-section="tutorials">
                 <i class="fas fa-graduation-cap"></i>
                 <span>Tutorials</span>
-            </a>
+            </div>
         </div>
         
         <!-- Plan Usage Info -->
@@ -1863,28 +2377,31 @@
     <!-- Main Content -->
     <div class="main-content">
         
-        <!-- Library Section -->
-        <div id="section-library" class="content-section active">
+        <!-- Audio to Stems Section (with tabs) -->
+        <div id="section-stems" class="content-section active">
             <div class="page-header">
-                <h1 class="page-title"><i class="fas fa-folder-open"></i> Your Library</h1>
-                <div class="header-controls">
-                    <div class="search-box">
-                        <i class="fas fa-search"></i>
-                        <input type="text" id="librarySearch" placeholder="Search tracks...">
-                    </div>
-                    <button class="btn btn-secondary" id="refreshLibraryBtn">
-                        <i class="fas fa-sync-alt"></i> Refresh
-                    </button>
-                </div>
+                <h1 class="page-title"><i class="fas fa-layer-group"></i> Audio to Stems</h1>
+                <p style="color: var(--text-muted); margin-top: 8px;">Separate audio into individual instrument tracks using AI</p>
             </div>
-            <div id="libraryContent" class="track-list"></div>
-        </div>
-
-        <!-- Upload Section -->
-        <div id="section-upload" class="content-section">
-            <div class="page-header">
-                <h1 class="page-title"><i class="fas fa-cloud-upload-alt"></i> Upload & Process</h1>
+            
+            <!-- Tabs for Stems sections -->
+            <div class="stems-tabs" style="display: flex; gap: 10px; margin-top: 25px; border-bottom: 1px solid var(--border); padding-bottom: 0;">
+                <button class="stems-tab active" data-tab="upload" onclick="switchStemsTab('upload')" style="padding: 12px 24px; background: none; border: none; color: var(--text); font-weight: 500; cursor: pointer; border-bottom: 2px solid var(--primary); margin-bottom: -1px; transition: all 0.3s;">
+                    <i class="fas fa-cloud-upload-alt"></i> Upload & Process
+                </button>
+                <button class="stems-tab" data-tab="library" onclick="switchStemsTab('library')" style="padding: 12px 24px; background: none; border: none; color: var(--text-muted); font-weight: 500; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all 0.3s;">
+                    <i class="fas fa-folder-open"></i> Library
+                </button>
+                <button class="stems-tab" data-tab="player" onclick="switchStemsTab('player')" style="padding: 12px 24px; background: none; border: none; color: var(--text-muted); font-weight: 500; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all 0.3s;">
+                    <i class="fas fa-play-circle"></i> Player
+                </button>
+                <button class="stems-tab" data-tab="stats" onclick="switchStemsTab('stats')" style="padding: 12px 24px; background: none; border: none; color: var(--text-muted); font-weight: 500; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all 0.3s;">
+                    <i class="fas fa-chart-bar"></i> Statistics
+                </button>
             </div>
+            
+            <!-- Upload Tab Content -->
+            <div id="stems-tab-upload" class="stems-tab-content" style="margin-top: 30px;">
 
             <!-- Upload Method Tabs -->
             <div class="upload-tabs">
@@ -1999,28 +2516,495 @@
                     <span id="progressPercent">0%</span>
                 </div>
             </div>
-        </div>
-
-        <!-- Player Section -->
-        <div id="section-player" class="content-section">
+            </div><!-- End Upload Tab -->
+            
+            <!-- Library Tab Content -->
+            <div id="stems-tab-library" class="stems-tab-content" style="display: none; margin-top: 30px;">
+                <div class="header-controls" style="display: flex; gap: 15px; align-items: center; margin-bottom: 25px;">
+                    <div class="search-box" style="flex: 1;">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="librarySearch" placeholder="Search tracks...">
+                    </div>
+                    <button class="btn btn-secondary" id="refreshLibraryBtn">
+                        <i class="fas fa-sync-alt"></i> Refresh
+                    </button>
+                </div>
+                <div id="libraryContent" class="track-list"></div>
+            </div><!-- End Library Tab -->
+            
+            <!-- Player Tab Content -->
+            <div id="stems-tab-player" class="stems-tab-content" style="display: none; margin-top: 30px;">
+                <div id="playerContent">
+                    <div class="empty-state">
+                        <i class="fas fa-play-circle"></i>
+                        <h3>No track loaded</h3>
+                        <p>Select a track from your library to start playing</p>
+                    </div>
+                </div>
+            </div><!-- End Player Tab -->
+            
+            <!-- Stats Tab Content -->
+            <div id="stems-tab-stats" class="stems-tab-content" style="display: none; margin-top: 30px;">
+                <div id="statsContent" class="stats-grid"></div>
+            </div><!-- End Stats Tab -->
+            
+        </div><!-- End section-stems -->
+        
+        <!-- MIDI Converter Section -->
+        <div id="section-midi-converter" class="content-section">
             <div class="page-header">
-                <h1 class="page-title"><i class="fas fa-play-circle"></i> Stem Player</h1>
+                <h1 class="page-title"><i class="fas fa-music"></i> Audio to MIDI Converter</h1>
+                <p style="color: var(--text-muted); margin-top: 8px;">Convert audio files to MIDI using AI-powered transcription</p>
             </div>
-            <div id="playerContent">
-                <div class="empty-state">
-                    <i class="fas fa-play-circle"></i>
-                    <h3>No track loaded</h3>
-                    <p>Select a track from your library to start playing</p>
+            
+            <!-- Tabs for Convert / Library -->
+            <div class="midi-tabs" style="display: flex; gap: 10px; margin-top: 25px; border-bottom: 1px solid var(--border); padding-bottom: 0;">
+                <button class="midi-tab active" data-tab="convert" onclick="switchMidiTab('convert')" style="padding: 12px 24px; background: none; border: none; color: var(--text); font-weight: 500; cursor: pointer; border-bottom: 2px solid var(--primary); margin-bottom: -1px; transition: all 0.3s;">
+                    <i class="fas fa-magic"></i> Convert
+                </button>
+                <button class="midi-tab" data-tab="library" onclick="switchMidiTab('library')" style="padding: 12px 24px; background: none; border: none; color: var(--text-muted); font-weight: 500; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all 0.3s;">
+                    <i class="fas fa-folder-open"></i> MIDI Library
+                </button>
+                <button class="midi-tab" data-tab="player" onclick="switchMidiTab('player')" style="padding: 12px 24px; background: none; border: none; color: var(--text-muted); font-weight: 500; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all 0.3s;">
+                    <i class="fas fa-play-circle"></i> MIDI Player
+                </button>
+            </div>
+            
+            <!-- Convert Tab Content -->
+            <div id="midi-tab-convert" class="midi-tab-content" style="margin-top: 30px;">
+            <div class="midi-converter-container" style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
+                <!-- Upload Section -->
+                <div class="card" style="padding: 30px;">
+                    <h3 style="margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
+                        <i class="fas fa-upload" style="color: var(--primary);"></i>
+                        Upload Audio
+                    </h3>
+                    
+                    <!-- Source Selection Tabs -->
+                    <div class="midi-source-tabs" style="display: flex; gap: 10px; margin-bottom: 20px;">
+                        <button class="midi-source-tab active" data-tab="file" onclick="switchMidiSource('file')" style="flex: 1; padding: 10px 15px; background: var(--primary); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 500; transition: all 0.3s;">
+                            <i class="fas fa-file-audio"></i> File
+                        </button>
+                        <button class="midi-source-tab" data-tab="url" onclick="switchMidiSource('url')" style="flex: 1; padding: 10px 15px; background: var(--bg-darker); color: var(--text-muted); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; font-weight: 500; transition: all 0.3s;">
+                            <i class="fab fa-youtube"></i> URL
+                        </button>
+                        <button class="midi-source-tab" data-tab="stem" onclick="switchMidiSource('stem')" style="flex: 1; padding: 10px 15px; background: var(--bg-darker); color: var(--text-muted); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; font-weight: 500; transition: all 0.3s;">
+                            <i class="fas fa-layer-group"></i> Stem
+                        </button>
+                    </div>
+                    
+                    <!-- File Upload Content -->
+                    <div id="midiSourceFile" class="midi-source-content">
+                        <div id="midiUploadArea" class="upload-area" style="border: 2px dashed var(--border); border-radius: 16px; padding: 40px; text-align: center; cursor: pointer; transition: all 0.3s;">
+                            <div class="upload-icon" style="font-size: 48px; color: var(--primary); margin-bottom: 15px;">
+                                <i class="fas fa-file-audio"></i>
+                            </div>
+                            <h4 style="margin-bottom: 10px;">Drop audio file here</h4>
+                            <p style="color: var(--text-muted); font-size: 14px;">or click to browse</p>
+                            <p style="color: var(--text-dim); font-size: 12px; margin-top: 10px;">Supports MP3, WAV, FLAC, M4A</p>
+                            <input type="file" id="midiFileInput" accept=".mp3,.wav,.flac,.m4a,.ogg" hidden>
+                        </div>
+                        
+                        <div id="midiSelectedFile" style="display: none; margin-top: 20px; padding: 15px; background: var(--bg-darker); border-radius: 12px;">
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <i class="fas fa-file-audio" style="font-size: 24px; color: var(--primary);"></i>
+                                <div style="flex: 1; min-width: 0;">
+                                    <div id="midiFileName" style="font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">filename.mp3</div>
+                                    <div id="midiFileSize" style="font-size: 12px; color: var(--text-muted);">0 MB</div>
+                                </div>
+                                <button onclick="clearMidiFile()" style="background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 5px;">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- URL Input Content -->
+                    <div id="midiSourceUrl" class="midi-source-content" style="display: none;">
+                        <div style="padding: 20px; background: var(--bg-darker); border-radius: 16px;">
+                            <div style="display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin-bottom: 20px;">
+                                <span class="platform-badge" style="display: flex; align-items: center; gap: 5px; padding: 5px 12px; background: rgba(255,0,0,0.1); color: #ff0000; border-radius: 20px; font-size: 12px;">
+                                    <i class="fab fa-youtube"></i> YouTube
+                                </span>
+                                <span class="platform-badge" style="display: flex; align-items: center; gap: 5px; padding: 5px 12px; background: rgba(255,85,0,0.1); color: #ff5500; border-radius: 20px; font-size: 12px;">
+                                    <i class="fab fa-soundcloud"></i> SoundCloud
+                                </span>
+                                <span class="platform-badge" style="display: flex; align-items: center; gap: 5px; padding: 5px 12px; background: rgba(26,183,234,0.1); color: #1ab7ea; border-radius: 20px; font-size: 12px;">
+                                    <i class="fab fa-vimeo"></i> Vimeo
+                                </span>
+                            </div>
+                            
+                            <div style="position: relative;">
+                                <input type="text" id="midiUrlInput" placeholder="Paste YouTube, SoundCloud, or Vimeo link..." style="width: 100%; padding: 15px 50px 15px 15px; background: var(--bg); border: 2px solid var(--border); border-radius: 12px; color: var(--text); font-size: 14px;">
+                                <button id="midiUrlFetchBtn" onclick="fetchMidiUrlInfo()" style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); padding: 8px 15px; background: var(--primary); color: white; border: none; border-radius: 8px; cursor: pointer;">
+                                    <i class="fas fa-search"></i>
+                                </button>
+                            </div>
+                            
+                            <!-- URL Preview -->
+                            <div id="midiUrlPreview" style="display: none; margin-top: 20px; padding: 15px; background: var(--bg); border-radius: 12px; border: 1px solid var(--border);">
+                                <div style="display: flex; align-items: center; gap: 15px;">
+                                    <div id="midiUrlPlatformIcon" style="width: 50px; height: 50px; background: linear-gradient(135deg, var(--primary), var(--secondary)); border-radius: 10px; display: flex; align-items: center; justify-content: center;">
+                                        <i class="fab fa-youtube" style="font-size: 24px; color: white;"></i>
+                                    </div>
+                                    <div style="flex: 1; min-width: 0;">
+                                        <div id="midiUrlTitle" style="font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Video Title</div>
+                                        <div id="midiUrlInfo" style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">
+                                            <span id="midiUrlDuration">0:00</span> • <span id="midiUrlUploader">Unknown</span>
+                                        </div>
+                                    </div>
+                                    <button onclick="clearMidiUrl()" style="background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 5px;">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Stem Selection Content -->
+                    <div id="midiSourceStem" class="midi-source-content" style="display: none;">
+                        <div style="padding: 20px; background: var(--bg-darker); border-radius: 16px;">
+                            <p style="text-align: center; color: var(--text-muted); margin-bottom: 15px;">
+                                <i class="fas fa-info-circle"></i> Convert a stem from your separated tracks
+                            </p>
+                            <select id="midiStemSelect" style="width: 100%; padding: 12px 15px; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; color: var(--text); font-size: 14px;">
+                                <option value="">Select a stem from your library...</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <button id="convertToMidiBtn" onclick="convertToMidi()" class="btn btn-primary" style="width: 100%; margin-top: 25px; padding: 15px;" disabled>
+                        <i class="fas fa-magic"></i> Convert to MIDI
+                    </button>
+                </div>
+                
+                <!-- Results Section -->
+                <div class="card" style="padding: 30px;">
+                    <h3 style="margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
+                        <i class="fas fa-file-download" style="color: var(--secondary);"></i>
+                        MIDI Output
+                    </h3>
+                    
+                    <div id="midiResult" style="display: none;">
+                        <div style="background: linear-gradient(135deg, rgba(124, 58, 237, 0.1), rgba(6, 182, 212, 0.1)); border-radius: 16px; padding: 30px; text-align: center;">
+                            <div style="width: 80px; height: 80px; background: linear-gradient(135deg, var(--primary), var(--secondary)); border-radius: 50%; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center;">
+                                <i class="fas fa-check" style="font-size: 36px; color: white;"></i>
+                            </div>
+                            <h4 style="margin-bottom: 10px;">Conversion Complete!</h4>
+                            <p id="midiResultName" style="color: var(--text-muted); font-size: 14px; margin-bottom: 20px;">output.mid</p>
+                            
+                            <div style="display: flex; gap: 10px; justify-content: center;">
+                                <button id="downloadMidiBtn" class="btn btn-primary">
+                                    <i class="fas fa-download"></i> Download MIDI
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div style="margin-top: 25px; padding: 20px; background: var(--bg-darker); border-radius: 12px;">
+                            <h5 style="margin-bottom: 15px; color: var(--text-muted); font-size: 12px; text-transform: uppercase;">Conversion Details</h5>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                                <div>
+                                    <div style="font-size: 12px; color: var(--text-dim);">Notes Detected</div>
+                                    <div id="midiNotesCount" style="font-size: 20px; font-weight: 600; color: var(--primary);">0</div>
+                                </div>
+                                <div>
+                                    <div style="font-size: 12px; color: var(--text-dim);">Duration</div>
+                                    <div id="midiDuration" style="font-size: 20px; font-weight: 600; color: var(--secondary);">0:00</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="midiProcessing" style="display: none; text-align: center; padding: 50px 20px;">
+                        <div class="processing-animation" style="margin-bottom: 20px;">
+                            <i class="fas fa-spinner fa-spin" style="font-size: 48px; color: var(--primary);"></i>
+                        </div>
+                        <h4>Converting to MIDI...</h4>
+                        <p style="color: var(--text-muted); margin-top: 10px;">This may take a moment</p>
+                        <div style="margin-top: 20px; height: 4px; background: var(--bg-darker); border-radius: 2px; overflow: hidden;">
+                            <div id="midiProgressBar" style="height: 100%; background: linear-gradient(90deg, var(--primary), var(--secondary)); width: 0%; transition: width 0.3s;"></div>
+                        </div>
+                    </div>
+                    
+                    <div id="midiEmpty" style="text-align: center; padding: 60px 20px; color: var(--text-muted);">
+                        <i class="fas fa-file-audio" style="font-size: 64px; opacity: 0.3; margin-bottom: 20px;"></i>
+                        <h4 style="color: var(--text-dim);">No MIDI Generated Yet</h4>
+                        <p style="font-size: 14px; margin-top: 10px;">Upload an audio file or select a stem to convert</p>
+                    </div>
                 </div>
             </div>
-        </div>
-
-        <!-- Stats Section -->
-        <div id="section-stats" class="content-section">
-            <div class="page-header">
-                <h1 class="page-title"><i class="fas fa-chart-bar"></i> Statistics</h1>
+            
+            <!-- Tips Section -->
+            <div class="card" style="padding: 25px; margin-top: 30px;">
+                <h4 style="margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
+                    <i class="fas fa-lightbulb" style="color: #f59e0b;"></i>
+                    Tips for Best Results
+                </h4>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
+                    <div style="display: flex; gap: 12px;">
+                        <i class="fas fa-check-circle" style="color: var(--success); margin-top: 2px;"></i>
+                        <div>
+                            <strong>Use isolated stems</strong>
+                            <p style="font-size: 13px; color: var(--text-muted); margin-top: 4px;">Vocals, bass, or piano stems convert better than mixed audio</p>
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 12px;">
+                        <i class="fas fa-check-circle" style="color: var(--success); margin-top: 2px;"></i>
+                        <div>
+                            <strong>Monophonic works best</strong>
+                            <p style="font-size: 13px; color: var(--text-muted); margin-top: 4px;">Single melodies are easier to transcribe than complex chords</p>
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 12px;">
+                        <i class="fas fa-check-circle" style="color: var(--success); margin-top: 2px;"></i>
+                        <div>
+                            <strong>Clear recordings</strong>
+                            <p style="font-size: 13px; color: var(--text-muted); margin-top: 4px;">High-quality audio without distortion yields better MIDI</p>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div id="statsContent" class="stats-grid"></div>
+            </div><!-- End Convert Tab -->
+            
+            <!-- Library Tab Content -->
+            <div id="midi-tab-library" class="midi-tab-content" style="display: none; margin-top: 30px;">
+                <div class="card" style="padding: 30px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+                        <h3 style="display: flex; align-items: center; gap: 10px;">
+                            <i class="fas fa-folder-open" style="color: var(--primary);"></i>
+                            Your MIDI Files
+                        </h3>
+                        <button onclick="refreshMidiLibrary()" class="btn btn-secondary" style="padding: 8px 16px;">
+                            <i class="fas fa-sync-alt"></i> Refresh
+                        </button>
+                    </div>
+                    
+                    <div id="midiLibraryLoading" style="text-align: center; padding: 40px;">
+                        <i class="fas fa-spinner fa-spin" style="font-size: 32px; color: var(--primary);"></i>
+                        <p style="color: var(--text-muted); margin-top: 15px;">Loading your MIDI files...</p>
+                    </div>
+                    
+                    <div id="midiLibraryEmpty" style="display: none; text-align: center; padding: 60px 20px; color: var(--text-muted);">
+                        <i class="fas fa-music" style="font-size: 64px; opacity: 0.3; margin-bottom: 20px;"></i>
+                        <h4 style="color: var(--text-dim);">No MIDI Files Yet</h4>
+                        <p style="font-size: 14px; margin-top: 10px;">Convert some audio to MIDI to see them here</p>
+                        <button onclick="switchMidiTab('convert')" class="btn btn-primary" style="margin-top: 20px;">
+                            <i class="fas fa-magic"></i> Convert Audio
+                        </button>
+                    </div>
+                    
+                    <div id="midiLibraryGrid" style="display: none; display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px;">
+                        <!-- MIDI files will be populated here -->
+                    </div>
+                </div>
+            </div><!-- End Library Tab -->
+            
+            <!-- Player Tab Content -->
+            <div id="midi-tab-player" class="midi-tab-content" style="display: none; margin-top: 30px;">
+                <div class="card" style="padding: 30px;">
+                    <h3 style="margin-bottom: 25px; display: flex; align-items: center; gap: 10px;">
+                        <i class="fas fa-play-circle" style="color: var(--secondary);"></i>
+                        MIDI Player
+                    </h3>
+                    
+                    <!-- File Selection -->
+                    <div style="margin-bottom: 30px;">
+                        <label style="display: block; margin-bottom: 10px; font-weight: 500;">Select MIDI File</label>
+                        <select id="midiPlayerSelect" onchange="loadMidiForPlayer(this.value)" style="width: 100%; padding: 12px 15px; background: var(--bg-darker); border: 1px solid var(--border); border-radius: 10px; color: var(--text); font-size: 14px;">
+                            <option value="">Choose a MIDI file from your library...</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Player Interface -->
+                    <div id="midiPlayerInterface" style="display: none;">
+                        <div style="background: linear-gradient(135deg, rgba(124, 58, 237, 0.1), rgba(6, 182, 212, 0.1)); border-radius: 16px; padding: 30px;">
+                            <!-- Now Playing Info -->
+                            <div style="text-align: center; margin-bottom: 30px;">
+                                <div style="width: 100px; height: 100px; background: linear-gradient(135deg, var(--primary), var(--secondary)); border-radius: 20px; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 30px rgba(124, 58, 237, 0.3);">
+                                    <i id="midiPlayerIcon" class="fas fa-music" style="font-size: 40px; color: white;"></i>
+                                </div>
+                                <h4 id="midiPlayerTitle" style="margin-bottom: 5px;">No file loaded</h4>
+                                <p id="midiPlayerInfo" style="color: var(--text-muted); font-size: 14px;">Select a MIDI file to play</p>
+                            </div>
+                            
+                            <!-- Progress Bar -->
+                            <div style="margin-bottom: 20px;">
+                                <div id="midiPlayerProgress" style="height: 6px; background: var(--bg-darker); border-radius: 3px; cursor: pointer; overflow: hidden;" onclick="seekMidiPlayer(event)">
+                                    <div id="midiPlayerProgressFill" style="height: 100%; background: linear-gradient(90deg, var(--primary), var(--secondary)); width: 0%; transition: width 0.1s;"></div>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; margin-top: 8px; font-size: 12px; color: var(--text-muted);">
+                                    <span id="midiPlayerCurrentTime">0:00</span>
+                                    <span id="midiPlayerTotalTime">0:00</span>
+                                </div>
+                            </div>
+                            
+                            <!-- Controls -->
+                            <div style="display: flex; justify-content: center; align-items: center; gap: 20px;">
+                                <button onclick="restartMidiPlayer()" style="width: 45px; height: 45px; border-radius: 50%; background: var(--bg-darker); border: none; color: var(--text); cursor: pointer; transition: all 0.3s;" title="Restart">
+                                    <i class="fas fa-redo-alt"></i>
+                                </button>
+                                <button id="midiPlayBtn" onclick="toggleMidiPlayer()" style="width: 65px; height: 65px; border-radius: 50%; background: linear-gradient(135deg, var(--primary), var(--secondary)); border: none; color: white; cursor: pointer; font-size: 24px; box-shadow: 0 5px 20px rgba(124, 58, 237, 0.4); transition: all 0.3s;">
+                                    <i class="fas fa-play"></i>
+                                </button>
+                                <button onclick="stopMidiPlayer()" style="width: 45px; height: 45px; border-radius: 50%; background: var(--bg-darker); border: none; color: var(--text); cursor: pointer; transition: all 0.3s;" title="Stop">
+                                    <i class="fas fa-stop"></i>
+                                </button>
+                                <button onclick="testMidiSound()" style="width: 35px; height: 35px; border-radius: 50%; background: var(--success); border: none; color: white; cursor: pointer; transition: all 0.3s; font-size: 12px;" title="Test Sound">
+                                    <i class="fas fa-bell"></i>
+                                </button>
+                            </div>
+                            
+                            <!-- Volume & Tempo -->
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-top: 30px;">
+                                <div>
+                                    <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-muted); margin-bottom: 8px;">
+                                        <i class="fas fa-volume-up"></i> Volume
+                                    </label>
+                                    <input type="range" id="midiPlayerVolume" min="0" max="100" value="80" onchange="setMidiVolume(this.value)" style="width: 100%;">
+                                </div>
+                                <div>
+                                    <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-muted); margin-bottom: 8px;">
+                                        <i class="fas fa-tachometer-alt"></i> Tempo: <span id="midiTempoValue">100%</span>
+                                    </label>
+                                    <input type="range" id="midiPlayerTempo" min="50" max="150" value="100" onchange="setMidiTempo(this.value)" style="width: 100%;">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- MIDI Info Panel -->
+                        <div style="margin-top: 25px; padding: 20px; background: var(--bg-darker); border-radius: 12px;">
+                            <h5 style="margin-bottom: 15px; color: var(--text-muted); font-size: 12px; text-transform: uppercase;">Track Information</h5>
+                            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; text-align: center;">
+                                <div>
+                                    <div style="font-size: 12px; color: var(--text-dim);">Tracks</div>
+                                    <div id="midiPlayerTracks" style="font-size: 20px; font-weight: 600; color: var(--primary);">-</div>
+                                </div>
+                                <div>
+                                    <div style="font-size: 12px; color: var(--text-dim);">Notes</div>
+                                    <div id="midiPlayerNotes" style="font-size: 20px; font-weight: 600; color: var(--secondary);">-</div>
+                                </div>
+                                <div>
+                                    <div style="font-size: 12px; color: var(--text-dim);">Duration</div>
+                                    <div id="midiPlayerDuration" style="font-size: 20px; font-weight: 600; color: var(--primary);">-</div>
+                                </div>
+                                <div>
+                                    <div style="font-size: 12px; color: var(--text-dim);">Instrument</div>
+                                    <div id="midiPlayerInstrument" style="font-size: 16px; font-weight: 600; color: var(--secondary);">Piano</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Instrument Selection -->
+                        <div style="margin-top: 20px; padding: 20px; background: var(--bg-darker); border-radius: 12px;">
+                            <label style="display: block; margin-bottom: 15px; font-weight: 500;">
+                                <i class="fas fa-guitar" style="color: var(--primary); margin-right: 8px;"></i>
+                                Playback Instrument 
+                                <span style="font-size: 12px; color: var(--text-muted); font-weight: normal; margin-left: 8px;">Synthesizer Sounds</span>
+                            </label>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px;">
+                                <button class="instrument-btn active" data-instrument="piano" onclick="setMidiInstrument('piano')" style="padding: 12px 16px; border-radius: 10px; border: 1px solid var(--border); background: var(--primary); color: white; cursor: pointer; transition: all 0.3s; display: flex; flex-direction: column; align-items: center; gap: 6px;">
+                                    <i class="fas fa-music" style="font-size: 20px;"></i>
+                                    <span style="font-size: 12px;">Piano</span>
+                                </button>
+                                <button class="instrument-btn" data-instrument="electric_piano" onclick="setMidiInstrument('electric_piano')" style="padding: 12px 16px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg); color: var(--text); cursor: pointer; transition: all 0.3s; display: flex; flex-direction: column; align-items: center; gap: 6px;">
+                                    <i class="fas fa-keyboard" style="font-size: 20px;"></i>
+                                    <span style="font-size: 12px;">Electric Piano</span>
+                                </button>
+                                <button class="instrument-btn" data-instrument="organ" onclick="setMidiInstrument('organ')" style="padding: 12px 16px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg); color: var(--text); cursor: pointer; transition: all 0.3s; display: flex; flex-direction: column; align-items: center; gap: 6px;">
+                                    <i class="fas fa-church" style="font-size: 20px;"></i>
+                                    <span style="font-size: 12px;">Organ</span>
+                                </button>
+                                <button class="instrument-btn" data-instrument="strings" onclick="setMidiInstrument('strings')" style="padding: 12px 16px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg); color: var(--text); cursor: pointer; transition: all 0.3s; display: flex; flex-direction: column; align-items: center; gap: 6px;">
+                                    <i class="fas fa-scroll" style="font-size: 20px;"></i>
+                                    <span style="font-size: 12px;">Strings</span>
+                                </button>
+                                <button class="instrument-btn" data-instrument="synth_lead" onclick="setMidiInstrument('synth_lead')" style="padding: 12px 16px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg); color: var(--text); cursor: pointer; transition: all 0.3s; display: flex; flex-direction: column; align-items: center; gap: 6px;">
+                                    <i class="fas fa-wave-square" style="font-size: 20px;"></i>
+                                    <span style="font-size: 12px;">Synth Lead</span>
+                                </button>
+                                <button class="instrument-btn" data-instrument="bass" onclick="setMidiInstrument('bass')" style="padding: 12px 16px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg); color: var(--text); cursor: pointer; transition: all 0.3s; display: flex; flex-direction: column; align-items: center; gap: 6px;">
+                                    <i class="fas fa-drum" style="font-size: 20px;"></i>
+                                    <span style="font-size: 12px;">Bass</span>
+                                </button>
+                                <button class="instrument-btn" data-instrument="pluck" onclick="setMidiInstrument('pluck')" style="padding: 12px 16px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg); color: var(--text); cursor: pointer; transition: all 0.3s; display: flex; flex-direction: column; align-items: center; gap: 6px;">
+                                    <i class="fas fa-guitar" style="font-size: 20px;"></i>
+                                    <span style="font-size: 12px;">Pluck</span>
+                                </button>
+                                <button class="instrument-btn" data-instrument="bells" onclick="setMidiInstrument('bells')" style="padding: 12px 16px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg); color: var(--text); cursor: pointer; transition: all 0.3s; display: flex; flex-direction: column; align-items: center; gap: 6px;">
+                                    <i class="fas fa-bell" style="font-size: 20px;"></i>
+                                    <span style="font-size: 12px;">Bells</span>
+                                </button>
+                            </div>
+                            <div id="instrumentLoadingStatus" style="margin-top: 12px; font-size: 12px; color: var(--text-muted); display: none;">
+                                <i class="fas fa-spinner fa-spin"></i> Loading instrument...
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Empty State -->
+                    <div id="midiPlayerEmpty" style="text-align: center; padding: 60px 20px; color: var(--text-muted);">
+                        <i class="fas fa-play-circle" style="font-size: 64px; opacity: 0.3; margin-bottom: 20px;"></i>
+                        <h4 style="color: var(--text-dim);">Select a MIDI File</h4>
+                        <p style="font-size: 14px; margin-top: 10px;">Choose a file from your library to start playing</p>
+                    </div>
+                </div>
+            </div><!-- End Player Tab -->
+            
+        </div>
+        
+        <!-- Tuner Section (Embedded) -->
+        <div id="section-tuner" class="content-section">
+            <div class="page-header">
+                <h1 class="page-title"><i class="fas fa-sliders-h"></i> Instrument Tuner</h1>
+                <p style="color: var(--text-muted); margin-top: 8px;">Tune your instrument using your microphone</p>
+            </div>
+            <div class="embedded-page-container" style="margin-top: 20px;">
+                <iframe id="tunerFrame" src="/tuner?embed=1" style="width: 100%; height: calc(100vh - 180px); border: none; border-radius: 16px; background: var(--bg-darker);"></iframe>
+            </div>
+        </div>
+        
+        <!-- Transposer Section (Embedded) -->
+        <div id="section-transposer" class="content-section">
+            <div class="page-header">
+                <h1 class="page-title"><i class="fas fa-exchange-alt"></i> Chord Transposer</h1>
+                <p style="color: var(--text-muted); margin-top: 8px;">Transpose chords to any key</p>
+            </div>
+            <div class="embedded-page-container" style="margin-top: 20px;">
+                <iframe id="transposerFrame" src="/transposer?embed=1" style="width: 100%; height: calc(100vh - 180px); border: none; border-radius: 16px; background: var(--bg-darker);"></iframe>
+            </div>
+        </div>
+        
+        <!-- Account Section (Embedded) -->
+        <div id="section-account" class="content-section">
+            <div class="page-header">
+                <h1 class="page-title"><i class="fas fa-user-circle"></i> Account Settings</h1>
+                <p style="color: var(--text-muted); margin-top: 8px;">Manage your profile, subscription, and preferences</p>
+            </div>
+            <div class="embedded-page-container" style="margin-top: 20px;">
+                <iframe id="accountFrame" src="/account?embed=1" style="width: 100%; height: calc(100vh - 180px); border: none; border-radius: 16px; background: var(--bg-darker);"></iframe>
+            </div>
+        </div>
+        
+        <!-- Documentation Section (Embedded) -->
+        <div id="section-docs" class="content-section">
+            <div class="page-header">
+                <h1 class="page-title"><i class="fas fa-book"></i> Documentation</h1>
+                <p style="color: var(--text-muted); margin-top: 8px;">Learn how to use all Harmonix features</p>
+            </div>
+            <div class="embedded-page-container" style="margin-top: 20px;">
+                <iframe id="docsFrame" src="/docs?embed=1" style="width: 100%; height: calc(100vh - 180px); border: none; border-radius: 16px; background: var(--bg-darker);"></iframe>
+            </div>
+        </div>
+        
+        <!-- Tutorials Section (Embedded) -->
+        <div id="section-tutorials" class="content-section">
+            <div class="page-header">
+                <h1 class="page-title"><i class="fas fa-graduation-cap"></i> Tutorials</h1>
+                <p style="color: var(--text-muted); margin-top: 8px;">Step-by-step guides and video tutorials</p>
+            </div>
+            <div class="embedded-page-container" style="margin-top: 20px;">
+                <iframe id="tutorialsFrame" src="/tutorials?embed=1" style="width: 100%; height: calc(100vh - 180px); border: none; border-radius: 16px; background: var(--bg-darker);"></iframe>
+            </div>
         </div>
     </div>
 
@@ -2232,7 +3216,14 @@
             }
 
             // Load data for section
-            if (sectionId === 'library') {
+            if (sectionId === 'stems') {
+                loadLibrary();
+                loadStats();
+            } else if (sectionId === 'library') {
+                // Legacy - redirect to stems library tab
+                document.getElementById('section-stems').classList.add('active');
+                document.querySelector('.nav-item[data-section="stems"]').classList.add('active');
+                switchStemsTab('library');
                 loadLibrary();
             } else if (sectionId === 'stats') {
                 loadStats();
@@ -3002,6 +3993,7 @@
                     '<i class="fas fa-volume-down" style="color: #666; font-size: 12px;"></i>' +
                     '<input type="range" class="volume-slider" data-stem="' + stemName + '" min="0" max="100" value="100">' +
                     '<i class="fas fa-volume-up" style="color: #666; font-size: 12px;"></i>' +
+                    '<button class="icon-btn convert-midi-btn" data-stem="' + stemName + '" title="Convert to MIDI" style="background: linear-gradient(135deg, var(--primary), var(--secondary));"><i class="fas fa-file-audio"></i></button>' +
                     '<button class="icon-btn download-stem-btn" data-stem="' + stemName + '" title="Download"><i class="fas fa-download"></i></button>' +
                     '</div>' +
                     '</div>' +
@@ -3095,7 +4087,9 @@
                 attachPlayerControls(jobId, stemKeys);
             }, 200);
 
-            navigateTo('player');
+            // Navigate to stems section and switch to player tab
+            navigateTo('stems');
+            switchStemsTab('player');
             showToast('Loading track...');
         }
 
@@ -3271,6 +4265,15 @@
                 btn.addEventListener('click', function() {
                     var stemName = btn.getAttribute('data-stem');
                     downloadStem(jobId, stemName);
+                });
+            });
+            
+            // Convert to MIDI buttons
+            document.querySelectorAll('.convert-midi-btn').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    var stemName = btn.getAttribute('data-stem');
+                    var stemUrl = '/download/' + jobId + '/' + stemName;
+                    convertStemToMidi(stemUrl, stemName);
                 });
             });
 
@@ -4292,6 +5295,906 @@
             });
         }
 
+        // ==================== MIDI CONVERTER ====================
+        let midiSelectedFile = null;
+        let midiSelectedStem = null;
+        
+        // Initialize MIDI converter
+        function initMidiConverter() {
+            const uploadArea = document.getElementById('midiUploadArea');
+            const fileInput = document.getElementById('midiFileInput');
+            const stemSelect = document.getElementById('midiStemSelect');
+            
+            // Click to upload
+            uploadArea.addEventListener('click', function() {
+                fileInput.click();
+            });
+            
+            // Drag and drop
+            uploadArea.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                uploadArea.style.borderColor = 'var(--primary)';
+                uploadArea.style.background = 'rgba(124, 58, 237, 0.05)';
+            });
+            
+            uploadArea.addEventListener('dragleave', function(e) {
+                e.preventDefault();
+                uploadArea.style.borderColor = 'var(--border)';
+                uploadArea.style.background = '';
+            });
+            
+            uploadArea.addEventListener('drop', function(e) {
+                e.preventDefault();
+                uploadArea.style.borderColor = 'var(--border)';
+                uploadArea.style.background = '';
+                
+                if (e.dataTransfer.files.length > 0) {
+                    handleMidiFileSelect(e.dataTransfer.files[0]);
+                }
+            });
+            
+            // File input change
+            fileInput.addEventListener('change', function(e) {
+                if (e.target.files.length > 0) {
+                    handleMidiFileSelect(e.target.files[0]);
+                }
+            });
+            
+            // Stem select change
+            stemSelect.addEventListener('change', function(e) {
+                midiSelectedStem = e.target.value;
+                midiSelectedFile = null;
+                document.getElementById('midiSelectedFile').style.display = 'none';
+                updateMidiConvertButton();
+            });
+            
+            // Populate stems dropdown
+            populateMidiStems();
+        }
+        
+        function handleMidiFileSelect(file) {
+            const allowedTypes = ['audio/mpeg', 'audio/wav', 'audio/flac', 'audio/mp4', 'audio/ogg', 'audio/x-m4a'];
+            const allowedExts = ['.mp3', '.wav', '.flac', '.m4a', '.ogg'];
+            
+            const ext = '.' + file.name.split('.').pop().toLowerCase();
+            if (!allowedExts.includes(ext)) {
+                showToast('Invalid file type. Please use MP3, WAV, FLAC, or M4A', 'error');
+                return;
+            }
+            
+            midiSelectedFile = file;
+            midiSelectedStem = null;
+            document.getElementById('midiStemSelect').value = '';
+            
+            document.getElementById('midiFileName').textContent = file.name;
+            document.getElementById('midiFileSize').textContent = (file.size / (1024 * 1024)).toFixed(2) + ' MB';
+            document.getElementById('midiSelectedFile').style.display = 'block';
+            
+            updateMidiConvertButton();
+        }
+        
+        function clearMidiFile() {
+            midiSelectedFile = null;
+            document.getElementById('midiSelectedFile').style.display = 'none';
+            document.getElementById('midiFileInput').value = '';
+            updateMidiConvertButton();
+        }
+        
+        // MIDI URL handling
+        let midiSelectedUrl = null;
+        let midiUrlInfo = null;
+        let currentMidiSource = 'file';
+        
+        function switchMidiSource(source) {
+            currentMidiSource = source;
+            
+            // Update tab styles
+            document.querySelectorAll('.midi-source-tab').forEach(tab => {
+                if (tab.dataset.tab === source) {
+                    tab.style.background = 'var(--primary)';
+                    tab.style.color = 'white';
+                    tab.style.border = 'none';
+                    tab.classList.add('active');
+                } else {
+                    tab.style.background = 'var(--bg-darker)';
+                    tab.style.color = 'var(--text-muted)';
+                    tab.style.border = '1px solid var(--border)';
+                    tab.classList.remove('active');
+                }
+            });
+            
+            // Show/hide content
+            document.querySelectorAll('.midi-source-content').forEach(content => {
+                content.style.display = 'none';
+            });
+            
+            if (source === 'file') {
+                document.getElementById('midiSourceFile').style.display = 'block';
+            } else if (source === 'url') {
+                document.getElementById('midiSourceUrl').style.display = 'block';
+            } else if (source === 'stem') {
+                document.getElementById('midiSourceStem').style.display = 'block';
+            }
+            
+            updateMidiConvertButton();
+        }
+        
+        async function fetchMidiUrlInfo() {
+            const urlInput = document.getElementById('midiUrlInput');
+            const url = urlInput.value.trim();
+            
+            if (!url) {
+                showToast('Please enter a URL', 'warning');
+                return;
+            }
+            
+            const fetchBtn = document.getElementById('midiUrlFetchBtn');
+            fetchBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            fetchBtn.disabled = true;
+            
+            try {
+                const response = await fetch('/validate-url', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url: url })
+                });
+                
+                const data = await response.json();
+                
+                if (data.valid) {
+                    midiSelectedUrl = url;
+                    midiUrlInfo = data;
+                    
+                    // Show preview
+                    document.getElementById('midiUrlTitle').textContent = data.title || 'Unknown Title';
+                    document.getElementById('midiUrlDuration').textContent = formatTime(data.duration || 0);
+                    document.getElementById('midiUrlUploader').textContent = data.uploader || 'Unknown';
+                    
+                    // Update platform icon
+                    const iconContainer = document.getElementById('midiUrlPlatformIcon');
+                    let iconClass = 'fas fa-music';
+                    let bgColor = 'linear-gradient(135deg, var(--primary), var(--secondary))';
+                    
+                    if (data.source === 'youtube') {
+                        iconClass = 'fab fa-youtube';
+                        bgColor = '#ff0000';
+                    } else if (data.source === 'soundcloud') {
+                        iconClass = 'fab fa-soundcloud';
+                        bgColor = '#ff5500';
+                    } else if (data.source === 'vimeo') {
+                        iconClass = 'fab fa-vimeo';
+                        bgColor = '#1ab7ea';
+                    }
+                    
+                    iconContainer.style.background = bgColor;
+                    iconContainer.innerHTML = '<i class="' + iconClass + '" style="font-size: 24px; color: white;"></i>';
+                    
+                    document.getElementById('midiUrlPreview').style.display = 'block';
+                    updateMidiConvertButton();
+                    showToast('URL validated successfully!', 'success');
+                } else {
+                    showToast(data.error || 'Invalid URL', 'error');
+                }
+            } catch (error) {
+                showToast('Failed to validate URL: ' + error.message, 'error');
+            }
+            
+            fetchBtn.innerHTML = '<i class="fas fa-search"></i>';
+            fetchBtn.disabled = false;
+        }
+        
+        function clearMidiUrl() {
+            midiSelectedUrl = null;
+            midiUrlInfo = null;
+            document.getElementById('midiUrlInput').value = '';
+            document.getElementById('midiUrlPreview').style.display = 'none';
+            updateMidiConvertButton();
+        }
+        
+        // Convert stem to MIDI directly from player
+        async function convertStemToMidi(stemUrl, stemName) {
+            // Show a modal or toast for progress
+            showToast('Converting ' + stemName + ' to MIDI...', 'info');
+            
+            // Find and disable the button
+            const btns = document.querySelectorAll('.convert-midi-btn[data-stem="' + stemName + '"]');
+            btns.forEach(btn => {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            });
+            
+            try {
+                const formData = new FormData();
+                formData.append('stem_url', stemUrl);
+                
+                const response = await fetch('/api/convert-to-midi', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showToast('MIDI created: ' + data.filename + ' (' + data.notes_count + ' notes)', 'success');
+                    
+                    // Offer to download
+                    if (confirm('MIDI conversion complete! Download now?')) {
+                        window.location.href = data.download_url;
+                    }
+                    
+                    // Refresh MIDI library if visible
+                    if (typeof refreshMidiLibrary === 'function') {
+                        refreshMidiLibrary();
+                    }
+                } else {
+                    throw new Error(data.error || 'Conversion failed');
+                }
+            } catch (error) {
+                showToast('MIDI conversion failed: ' + error.message, 'error');
+            }
+            
+            // Re-enable buttons
+            btns.forEach(btn => {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-file-audio"></i>';
+            });
+        }
+        
+        function updateMidiConvertButton() {
+            const btn = document.getElementById('convertToMidiBtn');
+            if (currentMidiSource === 'file') {
+                btn.disabled = !midiSelectedFile;
+            } else if (currentMidiSource === 'url') {
+                btn.disabled = !midiSelectedUrl;
+            } else if (currentMidiSource === 'stem') {
+                btn.disabled = !midiSelectedStem;
+            }
+        }
+        
+        function populateMidiStems() {
+            const select = document.getElementById('midiStemSelect');
+            select.innerHTML = '<option value="">Select a stem from your library...</option>';
+            
+            // Add stems from tracks
+            allTracks.forEach(function(track) {
+                if (track.stems && track.stems.length > 0) {
+                    const optgroup = document.createElement('optgroup');
+                    optgroup.label = track.name;
+                    
+                    track.stems.forEach(function(stem) {
+                        const option = document.createElement('option');
+                        option.value = stem.url;
+                        option.textContent = stem.name.charAt(0).toUpperCase() + stem.name.slice(1);
+                        optgroup.appendChild(option);
+                    });
+                    
+                    select.appendChild(optgroup);
+                }
+            });
+        }
+        
+        async function convertToMidi() {
+            const btn = document.getElementById('convertToMidiBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Converting...';
+            
+            document.getElementById('midiEmpty').style.display = 'none';
+            document.getElementById('midiResult').style.display = 'none';
+            document.getElementById('midiProcessing').style.display = 'block';
+            
+            // Simulate progress
+            let progress = 0;
+            const progressBar = document.getElementById('midiProgressBar');
+            const progressInterval = setInterval(function() {
+                progress += Math.random() * 15;
+                if (progress > 90) progress = 90;
+                progressBar.style.width = progress + '%';
+            }, 500);
+            
+            try {
+                const formData = new FormData();
+                
+                if (currentMidiSource === 'file' && midiSelectedFile) {
+                    formData.append('audio', midiSelectedFile);
+                } else if (currentMidiSource === 'url' && midiSelectedUrl) {
+                    formData.append('youtube_url', midiSelectedUrl);
+                } else if (currentMidiSource === 'stem' && midiSelectedStem) {
+                    formData.append('stem_url', midiSelectedStem);
+                } else {
+                    throw new Error('No source selected');
+                }
+                
+                const response = await fetch('/api/convert-to-midi', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                clearInterval(progressInterval);
+                progressBar.style.width = '100%';
+                
+                if (data.success) {
+                    setTimeout(function() {
+                        document.getElementById('midiProcessing').style.display = 'none';
+                        document.getElementById('midiResult').style.display = 'block';
+                        
+                        document.getElementById('midiResultName').textContent = data.filename;
+                        document.getElementById('midiNotesCount').textContent = data.notes_count || '0';
+                        document.getElementById('midiDuration').textContent = formatTime(data.duration || 0);
+                        
+                        // Set up download button
+                        document.getElementById('downloadMidiBtn').onclick = function() {
+                            window.location.href = data.download_url;
+                        };
+                        
+                        // Refresh library after conversion
+                        refreshMidiLibrary();
+                        
+                        // Clear inputs after success
+                        if (currentMidiSource === 'url') {
+                            clearMidiUrl();
+                        }
+                        
+                        showToast('MIDI conversion complete!', 'success');
+                    }, 500);
+                } else {
+                    throw new Error(data.error || 'Conversion failed');
+                }
+            } catch (error) {
+                clearInterval(progressInterval);
+                document.getElementById('midiProcessing').style.display = 'none';
+                document.getElementById('midiEmpty').style.display = 'block';
+                showToast('Error: ' + error.message, 'error');
+            }
+            
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-magic"></i> Convert to MIDI';
+            updateMidiConvertButton();
+        }
+        
+        // Initialize on section switch
+        document.addEventListener('DOMContentLoaded', function() {
+            // Delay init to ensure allTracks is loaded
+            setTimeout(initMidiConverter, 1000);
+            // Load MIDI library
+            setTimeout(refreshMidiLibrary, 1500);
+        });
+        
+        // ==================== STEMS TAB SWITCHING ====================
+        function switchStemsTab(tabName) {
+            // Update tab buttons
+            document.querySelectorAll('.stems-tab').forEach(tab => {
+                if (tab.dataset.tab === tabName) {
+                    tab.classList.add('active');
+                    tab.style.borderBottomColor = 'var(--primary)';
+                    tab.style.color = 'var(--text)';
+                } else {
+                    tab.classList.remove('active');
+                    tab.style.borderBottomColor = 'transparent';
+                    tab.style.color = 'var(--text-muted)';
+                }
+            });
+            
+            // Show/hide tab content
+            document.querySelectorAll('.stems-tab-content').forEach(content => {
+                content.style.display = 'none';
+            });
+            document.getElementById('stems-tab-' + tabName).style.display = 'block';
+            
+            // Refresh content based on tab
+            if (tabName === 'library') {
+                loadLibrary();
+            } else if (tabName === 'stats') {
+                loadStats();
+            }
+        }
+        
+        // ==================== MIDI TAB SWITCHING ====================
+        function switchMidiTab(tabName) {
+            // Update tab buttons
+            document.querySelectorAll('.midi-tab').forEach(tab => {
+                if (tab.dataset.tab === tabName) {
+                    tab.classList.add('active');
+                    tab.style.borderBottomColor = 'var(--primary)';
+                    tab.style.color = 'var(--text)';
+                } else {
+                    tab.classList.remove('active');
+                    tab.style.borderBottomColor = 'transparent';
+                    tab.style.color = 'var(--text-muted)';
+                }
+            });
+            
+            // Show/hide tab content
+            document.querySelectorAll('.midi-tab-content').forEach(content => {
+                content.style.display = 'none';
+            });
+            document.getElementById('midi-tab-' + tabName).style.display = 'block';
+            
+            // Refresh library when switching to it
+            if (tabName === 'library') {
+                refreshMidiLibrary();
+            } else if (tabName === 'player') {
+                populateMidiPlayerSelect();
+            }
+        }
+        
+        // ==================== MIDI LIBRARY ====================
+        let midiLibraryFiles = [];
+        
+        async function refreshMidiLibrary() {
+            const loading = document.getElementById('midiLibraryLoading');
+            const empty = document.getElementById('midiLibraryEmpty');
+            const grid = document.getElementById('midiLibraryGrid');
+            
+            loading.style.display = 'block';
+            empty.style.display = 'none';
+            grid.style.display = 'none';
+            
+            try {
+                const response = await fetch('/api/midi-library');
+                const data = await response.json();
+                
+                loading.style.display = 'none';
+                
+                if (data.success && data.files && data.files.length > 0) {
+                    midiLibraryFiles = data.files;
+                    renderMidiLibrary(data.files);
+                    grid.style.display = 'grid';
+                } else {
+                    empty.style.display = 'block';
+                }
+            } catch (error) {
+                loading.style.display = 'none';
+                empty.style.display = 'block';
+                console.error('Failed to load MIDI library:', error);
+            }
+        }
+        
+        function renderMidiLibrary(files) {
+            const grid = document.getElementById('midiLibraryGrid');
+            grid.innerHTML = '';
+            
+            files.forEach(file => {
+                const card = document.createElement('div');
+                card.className = 'midi-file-card';
+                card.style.cssText = 'background: var(--bg-darker); border-radius: 16px; padding: 20px; transition: all 0.3s; border: 1px solid var(--border);';
+                
+                card.innerHTML = `
+                    <div style="display: flex; align-items: flex-start; gap: 15px;">
+                        <div style="width: 50px; height: 50px; background: linear-gradient(135deg, var(--primary), var(--secondary)); border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                            <i class="fas fa-music" style="color: white; font-size: 20px;"></i>
+                        </div>
+                        <div style="flex: 1; min-width: 0;">
+                            <h5 style="margin-bottom: 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${file.filename}">${file.filename}</h5>
+                            <p style="font-size: 12px; color: var(--text-muted);">${file.date}</p>
+                            <div style="display: flex; gap: 15px; margin-top: 8px; font-size: 12px; color: var(--text-dim);">
+                                <span><i class="fas fa-music"></i> ${file.notes || 0} notes</span>
+                                <span><i class="fas fa-clock"></i> ${formatTime(file.duration || 0)}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 10px; margin-top: 15px;">
+                        <button onclick="playMidiFromLibrary('${file.download_url}', '${file.filename}')" class="btn btn-primary" style="flex: 1; padding: 10px;">
+                            <i class="fas fa-play"></i> Play
+                        </button>
+                        <button onclick="window.location.href='${file.download_url}'" class="btn btn-secondary" style="padding: 10px 15px;">
+                            <i class="fas fa-download"></i>
+                        </button>
+                        <button onclick="deleteMidiFile('${file.filename}')" class="btn btn-secondary" style="padding: 10px 15px; color: var(--error);">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                `;
+                
+                grid.appendChild(card);
+            });
+        }
+        
+        function playMidiFromLibrary(url, filename) {
+            // Switch to player tab and load the file
+            switchMidiTab('player');
+            loadMidiForPlayer(url, filename);
+        }
+        
+        async function deleteMidiFile(filename) {
+            if (!confirm('Delete this MIDI file?')) return;
+            
+            try {
+                const response = await fetch('/api/midi-library/delete', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ filename: filename })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showToast('MIDI file deleted', 'success');
+                    refreshMidiLibrary();
+                } else {
+                    showToast('Failed to delete file', 'error');
+                }
+            } catch (error) {
+                showToast('Error deleting file', 'error');
+            }
+        }
+        
+        // ==================== MIDI PLAYER WITH TONE.JS ====================
+        // Using Tone.js for reliable MIDI playback with synthesizers
+        let midiPlaying = false;
+        let midiCurrentTime = 0;
+        let midiTotalDuration = 0;
+        let midiNotes = [];
+        let midiPlaybackInterval = null;
+        let currentMidiUrl = null;
+        let midiVolume = 0.8;
+        let midiTempo = 1.0;
+        let currentInstrument = 'piano';
+        let toneSynth = null;
+        let toneLoaded = false;
+        let scheduledEvents = [];
+        
+        // Simple instrument presets using Tone.js synths
+        const instrumentPresets = {
+            'piano': { name: 'Piano', type: 'poly' },
+            'electric_piano': { name: 'Electric Piano', type: 'fm' },
+            'organ': { name: 'Organ', type: 'am' },
+            'strings': { name: 'Strings', type: 'poly' },
+            'synth_lead': { name: 'Synth Lead', type: 'mono' },
+            'bass': { name: 'Bass', type: 'mono' },
+            'pluck': { name: 'Pluck', type: 'pluck' },
+            'bells': { name: 'Bells', type: 'metal' }
+        };
+        
+        // Load Tone.js dynamically
+        async function loadToneJS() {
+            if (window.Tone) {
+                toneLoaded = true;
+                return;
+            }
+            
+            return new Promise((resolve, reject) => {
+                const script = document.createElement('script');
+                script.src = 'https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js';
+                script.onload = () => {
+                    console.log('Tone.js loaded');
+                    toneLoaded = true;
+                    resolve();
+                };
+                script.onerror = reject;
+                document.head.appendChild(script);
+            });
+        }
+        
+        // Create synth based on instrument type
+        function createSynth(type) {
+            if (toneSynth) {
+                toneSynth.dispose();
+            }
+            
+            switch(type) {
+                case 'fm':
+                    toneSynth = new Tone.PolySynth(Tone.FMSynth).toDestination();
+                    break;
+                case 'am':
+                    toneSynth = new Tone.PolySynth(Tone.AMSynth).toDestination();
+                    break;
+                case 'mono':
+                    toneSynth = new Tone.MonoSynth().toDestination();
+                    break;
+                case 'pluck':
+                    toneSynth = new Tone.PluckSynth().toDestination();
+                    break;
+                case 'metal':
+                    toneSynth = new Tone.PolySynth(Tone.MetalSynth).toDestination();
+                    break;
+                default:
+                    toneSynth = new Tone.PolySynth(Tone.Synth, {
+                        oscillator: { type: 'triangle' },
+                        envelope: { attack: 0.02, decay: 0.1, sustain: 0.3, release: 0.8 }
+                    }).toDestination();
+            }
+            
+            toneSynth.volume.value = Tone.gainToDb(midiVolume);
+            return toneSynth;
+        }
+        
+        // Test sound function
+        async function testMidiSound() {
+            console.log('Testing MIDI sound...');
+            
+            try {
+                await loadToneJS();
+                await Tone.start();
+                console.log('Tone.js started, state:', Tone.context.state);
+                
+                if (!toneSynth) {
+                    createSynth('poly');
+                }
+                
+                // Play a simple chord
+                const now = Tone.now();
+                toneSynth.triggerAttackRelease('C4', '8n', now);
+                toneSynth.triggerAttackRelease('E4', '8n', now);
+                toneSynth.triggerAttackRelease('G4', '8n', now);
+                
+                showToast('Test sound played! 🎵', 'success');
+            } catch (error) {
+                console.error('Test sound error:', error);
+                showToast('Audio error: ' + error.message, 'error');
+            }
+        }
+        
+        function populateMidiPlayerSelect() {
+            const select = document.getElementById('midiPlayerSelect');
+            select.innerHTML = '<option value="">Choose a MIDI file from your library...</option>';
+            
+            midiLibraryFiles.forEach(file => {
+                const option = document.createElement('option');
+                option.value = file.download_url;
+                option.textContent = file.filename;
+                option.dataset.notes = file.notes || 0;
+                option.dataset.duration = file.duration || 0;
+                select.appendChild(option);
+            });
+        }
+        
+        async function loadMidiForPlayer(url, filename) {
+            console.log('loadMidiForPlayer called with:', url, filename);
+            
+            if (!url) {
+                document.getElementById('midiPlayerInterface').style.display = 'none';
+                document.getElementById('midiPlayerEmpty').style.display = 'block';
+                return;
+            }
+            
+            // Reset state
+            midiCurrentTime = 0;
+            midiPlaying = false;
+            
+            currentMidiUrl = url;
+            document.getElementById('midiPlayerInterface').style.display = 'block';
+            document.getElementById('midiPlayerEmpty').style.display = 'none';
+            
+            // Update UI
+            const name = filename || url.split('/').pop();
+            document.getElementById('midiPlayerTitle').textContent = name;
+            document.getElementById('midiPlayerInfo').textContent = 'Loading MIDI data...';
+            document.getElementById('midiPlayBtn').innerHTML = '<i class="fas fa-play"></i>';
+            
+            // Update select if called from library
+            const select = document.getElementById('midiPlayerSelect');
+            if (select) select.value = url;
+            
+            try {
+                // Load Tone.js first
+                await loadToneJS();
+                
+                // Fetch MIDI data from backend
+                console.log('Fetching MIDI from:', '/api/midi-parse?url=' + encodeURIComponent(url));
+                const response = await fetch('/api/midi-parse?url=' + encodeURIComponent(url));
+                const data = await response.json();
+                console.log('MIDI parse response:', data);
+                
+                if (data.success) {
+                    midiNotes = data.notes;
+                    midiTotalDuration = data.duration;
+                    console.log('Loaded', midiNotes.length, 'notes, duration:', midiTotalDuration);
+                    
+                    // Update info
+                    document.getElementById('midiPlayerInfo').textContent = `${data.tracks} track(s) • ${data.notes.length} notes`;
+                    document.getElementById('midiPlayerTracks').textContent = data.tracks;
+                    document.getElementById('midiPlayerNotes').textContent = data.notes.length;
+                    document.getElementById('midiPlayerDuration').textContent = formatTime(data.duration);
+                    document.getElementById('midiPlayerTotalTime').textContent = formatTime(data.duration);
+                    document.getElementById('midiPlayerCurrentTime').textContent = '0:00';
+                    document.getElementById('midiPlayerProgressFill').style.width = '0%';
+                    
+                    // Create synth
+                    const preset = instrumentPresets[currentInstrument];
+                    createSynth(preset?.type || 'poly');
+                    
+                    showToast('MIDI loaded successfully', 'success');
+                } else {
+                    throw new Error(data.error || 'Failed to parse MIDI');
+                }
+            } catch (error) {
+                console.error('MIDI load error:', error);
+                document.getElementById('midiPlayerInfo').textContent = 'Failed to load MIDI';
+                showToast('Error loading MIDI: ' + error.message, 'error');
+            }
+        }
+        
+        async function setMidiInstrument(type) {
+            currentInstrument = type;
+            
+            // Update button styles
+            document.querySelectorAll('.instrument-btn').forEach(btn => {
+                if (btn.dataset.instrument === type) {
+                    btn.style.background = 'var(--primary)';
+                    btn.style.color = 'white';
+                    btn.classList.add('active');
+                } else {
+                    btn.style.background = 'var(--bg)';
+                    btn.style.color = 'var(--text)';
+                    btn.classList.remove('active');
+                }
+            });
+            
+            // Update display name
+            const preset = instrumentPresets[type];
+            if (preset) {
+                document.getElementById('midiPlayerInstrument').textContent = preset.name;
+                
+                // Stop current playback and recreate synth
+                if (midiPlaying) {
+                    pauseMidiPlayer();
+                }
+                
+                if (toneLoaded) {
+                    createSynth(preset.type);
+                    showToast(preset.name + ' selected', 'success');
+                }
+            }
+        }
+        
+        // Convert MIDI pitch number to note name
+        function midiToNoteName(midi) {
+            const notes = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+            const octave = Math.floor(midi / 12) - 1;
+            const note = notes[midi % 12];
+            return note + octave;
+        }
+        
+        async function toggleMidiPlayer() {
+            console.log('toggleMidiPlayer called, notes:', midiNotes?.length, 'playing:', midiPlaying);
+            
+            if (!midiNotes || midiNotes.length === 0) {
+                showToast('No MIDI loaded', 'error');
+                return;
+            }
+            
+            // Start audio context (required for browser autoplay policy)
+            await Tone.start();
+            console.log('Tone.js state:', Tone.context.state);
+            
+            if (midiPlaying) {
+                pauseMidiPlayer();
+            } else {
+                playMidiPlayer();
+            }
+        }
+        
+        function playMidiPlayer() {
+            console.log('playMidiPlayer called');
+            console.log('  midiNotes:', midiNotes?.length);
+            console.log('  toneSynth:', !!toneSynth);
+            console.log('  Tone state:', Tone.context.state);
+            
+            if (!midiNotes || midiNotes.length === 0) {
+                showToast('No MIDI notes loaded', 'warning');
+                return;
+            }
+            
+            if (!toneSynth) {
+                const preset = instrumentPresets[currentInstrument];
+                createSynth(preset?.type || 'poly');
+            }
+            
+            midiPlaying = true;
+            document.getElementById('midiPlayBtn').innerHTML = '<i class="fas fa-pause"></i>';
+            document.getElementById('midiPlayerIcon').className = 'fas fa-music fa-beat';
+            
+            // Clear any previous scheduled events
+            Tone.Transport.cancel();
+            scheduledEvents = [];
+            
+            const startOffset = midiCurrentTime;
+            console.log('Scheduling', midiNotes.length, 'notes from time', startOffset);
+            
+            // Schedule all notes
+            let notesScheduled = 0;
+            midiNotes.forEach(note => {
+                const noteTime = (note.start - startOffset) / midiTempo;
+                if (noteTime >= 0) {
+                    const duration = Math.max(note.duration / midiTempo, 0.05);
+                    const noteName = midiToNoteName(note.pitch);
+                    const velocity = (note.velocity / 127) * midiVolume;
+                    
+                    const eventId = Tone.Transport.schedule((time) => {
+                        try {
+                            toneSynth.triggerAttackRelease(noteName, duration, time, velocity);
+                        } catch (e) {
+                            // Some synths don't support polyphony well
+                        }
+                    }, noteTime);
+                    
+                    scheduledEvents.push(eventId);
+                    notesScheduled++;
+                }
+            });
+            
+            console.log('Scheduled', notesScheduled, 'notes');
+            
+            // Start transport
+            Tone.Transport.start();
+            
+            // Update progress
+            midiPlaybackInterval = setInterval(() => {
+                midiCurrentTime += 0.1 * midiTempo;
+                updateMidiProgress();
+                
+                if (midiCurrentTime >= midiTotalDuration) {
+                    stopMidiPlayer();
+                }
+            }, 100);
+        }
+        
+        function pauseMidiPlayer() {
+            midiPlaying = false;
+            document.getElementById('midiPlayBtn').innerHTML = '<i class="fas fa-play"></i>';
+            document.getElementById('midiPlayerIcon').className = 'fas fa-music';
+            
+            if (midiPlaybackInterval) {
+                clearInterval(midiPlaybackInterval);
+            }
+            
+            // Stop transport
+            Tone.Transport.stop();
+            Tone.Transport.cancel();
+            scheduledEvents = [];
+        }
+        
+        function stopMidiPlayer() {
+            pauseMidiPlayer();
+            midiCurrentTime = 0;
+            updateMidiProgress();
+        }
+        
+        function restartMidiPlayer() {
+            stopMidiPlayer();
+            playMidiPlayer();
+        }
+        
+        function updateMidiProgress() {
+            const progress = (midiCurrentTime / midiTotalDuration) * 100;
+            document.getElementById('midiPlayerProgressFill').style.width = Math.min(progress, 100) + '%';
+            document.getElementById('midiPlayerCurrentTime').textContent = formatTime(midiCurrentTime);
+        }
+        
+        function seekMidiPlayer(event) {
+            const progressBar = document.getElementById('midiPlayerProgress');
+            const rect = progressBar.getBoundingClientRect();
+            const percent = (event.clientX - rect.left) / rect.width;
+            midiCurrentTime = percent * midiTotalDuration;
+            updateMidiProgress();
+            
+            if (midiPlaying) {
+                pauseMidiPlayer();
+                playMidiPlayer();
+            }
+        }
+        
+        function setMidiVolume(value) {
+            midiVolume = value / 100;
+            // Update Tone.js synth volume
+            if (toneSynth) {
+                toneSynth.volume.value = Tone.gainToDb(midiVolume);
+            }
+        }
+        
+        function setMidiTempo(value) {
+            midiTempo = value / 100;
+            document.getElementById('midiTempoValue').textContent = value + '%';
+            
+            // If playing, restart to apply new tempo
+            if (midiPlaying) {
+                pauseMidiPlayer();
+                playMidiPlayer();
+            }
+        }
+
         // ==================== TOAST ====================
         function showToast(message, type) {
             type = type || 'info';
@@ -4305,6 +6208,32 @@
                 toast.className = 'toast';
             }, 3000);
         }
+        
+        // Theme toggle functionality
+        function toggleTheme() {
+            const html = document.documentElement;
+            const currentTheme = html.getAttribute('data-theme') || 'dark';
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            
+            html.setAttribute('data-theme', newTheme);
+            localStorage.setItem('harmonix-theme', newTheme);
+            
+            // Update toggle icon
+            updateThemeIcon(newTheme);
+        }
+        
+        function updateThemeIcon(theme) {
+            const toggleBtn = document.querySelector('.theme-toggle i');
+            if (toggleBtn) {
+                toggleBtn.className = theme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+            }
+        }
+        
+        // Initialize theme icon on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+            updateThemeIcon(currentTheme);
+        });
     </script>
 </body>
 </html>

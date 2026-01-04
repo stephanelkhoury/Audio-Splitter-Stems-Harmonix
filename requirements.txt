@@ -16,6 +16,12 @@ scipy>=1.11.0
 # Speech-to-text / Lyrics extraction
 openai-whisper>=20231117
 
+# Audio to MIDI
+basic-pitch>=0.3.0
+pretty-midi>=0.2.9
+mir-eval>=0.6
+onnxruntime>=1.16.0
+
 # Instrument detection
 tensorflow>=2.14.0  # For instrument detection models
 pandas>=2.0.0
@@ -32,6 +38,7 @@ flask-cors>=4.0.0
 # Storage & File handling
 boto3>=1.28.0  # For S3 compatibility
 python-magic>=0.4.27
+Pillow>=10.0.0  # For image processing (avatar cropping)
 
 # CLI
 click>=8.1.0

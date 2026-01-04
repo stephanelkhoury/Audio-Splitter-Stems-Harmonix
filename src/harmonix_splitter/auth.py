@@ -349,7 +349,7 @@ def update_user(username: str, updates: dict) -> dict | None:
         return None
     
     # Don't allow updating sensitive fields directly
-    safe_fields = ["name", "email", "plan", "is_active", "role"]
+    safe_fields = ["name", "email", "plan", "is_active", "role", "avatar", "bio"]
     for key, value in updates.items():
         if key in safe_fields:
             users[username][key] = value

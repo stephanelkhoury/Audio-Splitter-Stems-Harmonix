@@ -4,8 +4,216 @@
 {% block description %}Manage your Harmonix account settings, subscription, and preferences.{% endblock %}
 
 {% block extra_styles %}
+<!-- Cropper.js CSS -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css">
 <style>
     .text-muted { color: var(--text-muted); }
+    
+    /* Image Cropper Modal */
+    .cropper-modal-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.9);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        z-index: 10000;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        box-sizing: border-box;
+    }
+    .cropper-modal-overlay.active {
+        display: flex;
+    }
+    .cropper-modal {
+        background: var(--bg-card);
+        border-radius: 20px;
+        padding: 0;
+        max-width: 480px;
+        width: 100%;
+        max-height: calc(100vh - 40px);
+        overflow: hidden;
+        border: 1px solid rgba(124, 58, 237, 0.3);
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05);
+        animation: modalSlideIn 0.3s ease-out;
+    }
+    @keyframes modalSlideIn {
+        from {
+            opacity: 0;
+            transform: scale(0.95) translateY(-10px);
+        }
+        to {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+        }
+    }
+    .cropper-modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 20px 24px;
+        background: linear-gradient(135deg, rgba(124, 58, 237, 0.1), rgba(236, 72, 153, 0.1));
+        border-bottom: 1px solid var(--border);
+    }
+    .cropper-modal-header h3 {
+        font-size: 18px;
+        font-weight: 600;
+        color: var(--text);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin: 0;
+    }
+    .cropper-modal-close {
+        background: rgba(255, 255, 255, 0.1);
+        border: none;
+        color: var(--text-muted);
+        font-size: 20px;
+        cursor: pointer;
+        transition: all 0.2s;
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .cropper-modal-close:hover {
+        background: rgba(239, 68, 68, 0.2);
+        color: #ef4444;
+    }
+    .cropper-modal-body {
+        padding: 24px;
+    }
+    .cropper-tip {
+        text-align: center;
+        font-size: 13px;
+        color: var(--text-muted);
+        margin-bottom: 16px;
+        padding: 10px 16px;
+        background: rgba(124, 58, 237, 0.1);
+        border-radius: 8px;
+        border: 1px solid rgba(124, 58, 237, 0.2);
+    }
+    .cropper-tip i {
+        color: var(--primary);
+        margin-right: 6px;
+    }
+    .cropper-container-wrapper {
+        width: 100%;
+        height: 300px;
+        margin-bottom: 20px;
+        background: linear-gradient(135deg, #1a1a2e 0%, #16162a 100%);
+        border-radius: 12px;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 2px dashed rgba(124, 58, 237, 0.3);
+    }
+    .cropper-container-wrapper img {
+        max-width: 100%;
+        max-height: 100%;
+        display: block;
+    }
+    /* Cropper.js custom styling */
+    .cropper-view-box,
+    .cropper-face {
+        border-radius: 50%;
+    }
+    .cropper-view-box {
+        box-shadow: 0 0 0 1px #7c3aed, 0 0 0 3px rgba(124, 58, 237, 0.3);
+        outline: none;
+    }
+    .cropper-line {
+        background-color: #7c3aed;
+    }
+    .cropper-point {
+        background-color: #7c3aed;
+        width: 10px !important;
+        height: 10px !important;
+        border-radius: 50%;
+    }
+    .cropper-modal-actions {
+        display: flex;
+        gap: 12px;
+        justify-content: center;
+        padding: 0 24px 24px;
+    }
+    .cropper-modal-actions .btn {
+        padding: 12px 32px;
+        border-radius: 10px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .cropper-modal-actions .btn-cancel {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid var(--border);
+        color: var(--text);
+        flex: 1;
+    }
+    .cropper-modal-actions .btn-cancel:hover {
+        background: rgba(255, 255, 255, 0.1);
+        border-color: var(--text-muted);
+    }
+    .cropper-modal-actions .btn-save {
+        background: linear-gradient(135deg, var(--primary), #6d28d9);
+        border: none;
+        color: white;
+        flex: 1;
+    }
+    .cropper-modal-actions .btn-save:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(124, 58, 237, 0.4);
+    }
+    .cropper-modal-actions .btn-save:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+    }
+    .cropper-tip {
+        text-align: center;
+        font-size: 13px;
+        color: var(--text-muted);
+        margin-bottom: 16px;
+    }
+    
+    /* Page Hero Section */
+    .page-hero {
+        text-align: center;
+        padding: 80px 20px 60px;
+        margin-top: 70px;
+    }
+    .page-hero h1 {
+        font-size: 48px;
+        font-weight: 700;
+        margin-bottom: 15px;
+        background: linear-gradient(135deg, #fff 0%, #a78bfa 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+    .page-hero p {
+        font-size: 18px;
+        color: var(--text-muted);
+        max-width: 600px;
+        margin: 0 auto;
+    }
+    [data-theme="light"] .page-hero h1 {
+        background: linear-gradient(135deg, #1e293b 0%, #7c3aed 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
     
     /* Form Controls for Account Page */
     .form-group {
@@ -341,11 +549,15 @@
             <div class="account-section" id="profile">
                 <h2><i class="fas fa-user"></i> Profile Information</h2>
                 <div class="profile-header">
-                    <div class="profile-avatar">
-                        <i class="fas fa-user"></i>
+                    <div class="profile-avatar" id="profileAvatar">
+                        {% if current_user and current_user.avatar %}
+                        <img src="{{ current_user.avatar }}" alt="Profile" id="avatarImage" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">
+                        {% else %}
+                        <i class="fas fa-user" id="avatarIcon"></i>
+                        {% endif %}
                         <label class="avatar-upload">
                             <i class="fas fa-camera"></i>
-                            <input type="file" hidden>
+                            <input type="file" id="avatarInput" accept="image/png,image/jpeg,image/jpg,image/gif,image/webp" hidden>
                         </label>
                     </div>
                     <div class="profile-info">
@@ -353,26 +565,28 @@
                         <p>{{ current_user.email if current_user else 'Not logged in' }}</p>
                     </div>
                 </div>
-                <form>
+                <div id="avatarMessage" style="display: none; padding: 10px; border-radius: 8px; margin-bottom: 15px;"></div>
+                <form id="profileForm">
                     <div class="form-row">
                         <div class="form-group">
                             <label>First Name</label>
-                            <input type="text" class="form-control" value="{{ current_user.name.split()[0] if current_user and current_user.name else '' }}">
+                            <input type="text" class="form-control" id="firstName" name="firstName" value="{{ current_user.name.split()[0] if current_user and current_user.name else '' }}">
                         </div>
                         <div class="form-group">
                             <label>Last Name</label>
-                            <input type="text" class="form-control" value="{{ current_user.name.split()[-1] if current_user and current_user.name and ' ' in current_user.name else '' }}">
+                            <input type="text" class="form-control" id="lastName" name="lastName" value="{{ current_user.name.split()[-1] if current_user and current_user.name and ' ' in current_user.name else '' }}">
                         </div>
                     </div>
                     <div class="form-group">
                         <label>Email Address</label>
-                        <input type="email" class="form-control" value="{{ current_user.email if current_user else '' }}">
+                        <input type="email" class="form-control" id="email" name="email" value="{{ current_user.email if current_user else '' }}">
                     </div>
                     <div class="form-group">
                         <label>Bio</label>
-                        <textarea class="form-control" placeholder="Tell us about yourself..."></textarea>
+                        <textarea class="form-control" id="bio" name="bio" rows="4" placeholder="Tell us about yourself...">{{ current_user.bio if current_user and current_user.bio else '' }}</textarea>
                     </div>
-                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                    <div id="profileMessage" style="display: none; padding: 10px; border-radius: 8px; margin-bottom: 15px;"></div>
+                    <button type="submit" class="btn btn-primary" id="saveProfileBtn">Save Changes</button>
                 </form>
             </div>
             
@@ -529,21 +743,21 @@
                         <h4>Change Password</h4>
                         <p>Update your account password</p>
                     </div>
-                    <a href="#" class="btn btn-outline btn-sm">Change</a>
+                    <button type="button" class="btn btn-outline btn-sm" onclick="openPasswordModal()">Change</button>
                 </div>
                 <div class="settings-item">
                     <div class="settings-item-info">
                         <h4>Two-Factor Authentication</h4>
                         <p>Add an extra layer of security</p>
                     </div>
-                    <a href="#" class="btn btn-outline btn-sm">Enable</a>
+                    <button type="button" class="btn btn-outline btn-sm" onclick="open2FAModal()">Enable</button>
                 </div>
                 <div class="settings-item">
                     <div class="settings-item-info">
                         <h4>Active Sessions</h4>
                         <p>Manage devices logged into your account</p>
                     </div>
-                    <a href="#" class="btn btn-outline btn-sm">View</a>
+                    <button type="button" class="btn btn-outline btn-sm" onclick="openSessionsModal()">View</button>
                 </div>
             </div>
             
@@ -618,10 +832,636 @@
                         <h4>Delete Account</h4>
                         <p>Permanently delete your account and all data</p>
                     </div>
-                    <button class="btn btn-danger btn-sm">Delete Account</button>
+                    <button type="button" class="btn btn-danger btn-sm" onclick="openDeleteModal()">Delete Account</button>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+<!-- Password Change Modal -->
+<div id="passwordModal" class="modal-overlay" style="display: none;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><i class="fas fa-key"></i> Change Password</h3>
+            <button type="button" class="modal-close" onclick="closePasswordModal()">&times;</button>
+        </div>
+        <form id="passwordForm">
+            <div class="form-group">
+                <label>Current Password</label>
+                <input type="password" class="form-control" id="currentPassword" name="currentPassword" required>
+            </div>
+            <div class="form-group">
+                <label>New Password</label>
+                <input type="password" class="form-control" id="newPassword" name="newPassword" required minlength="6">
+            </div>
+            <div class="form-group">
+                <label>Confirm New Password</label>
+                <input type="password" class="form-control" id="confirmPassword" name="confirmPassword" required>
+            </div>
+            <div id="passwordMessage" style="display: none; padding: 10px; border-radius: 8px; margin-bottom: 15px;"></div>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-outline" onclick="closePasswordModal()">Cancel</button>
+                <button type="submit" class="btn btn-primary" id="changePasswordBtn">Change Password</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Two-Factor Authentication Modal -->
+<div id="twoFactorModal" class="modal-overlay" style="display: none;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><i class="fas fa-shield-alt"></i> Two-Factor Authentication</h3>
+            <button type="button" class="modal-close" onclick="close2FAModal()">&times;</button>
+        </div>
+        <div class="modal-body" style="text-align: center; padding: 30px 20px;">
+            <div style="width: 80px; height: 80px; background: rgba(124, 58, 237, 0.15); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;">
+                <i class="fas fa-mobile-alt" style="font-size: 32px; color: var(--primary-light);"></i>
+            </div>
+            <h4 style="margin-bottom: 10px;">Coming Soon</h4>
+            <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 20px;">Two-factor authentication will be available in a future update. This feature will allow you to add an extra layer of security to your account using an authenticator app.</p>
+            <button type="button" class="btn btn-outline" onclick="close2FAModal()">Got it</button>
+        </div>
+    </div>
+</div>
+
+<!-- Active Sessions Modal -->
+<div id="sessionsModal" class="modal-overlay" style="display: none;">
+    <div class="modal-content" style="max-width: 550px;">
+        <div class="modal-header">
+            <h3><i class="fas fa-laptop"></i> Active Sessions</h3>
+            <button type="button" class="modal-close" onclick="closeSessionsModal()">&times;</button>
+        </div>
+        <div class="modal-body" style="padding: 20px;">
+            <div class="session-item" style="display: flex; justify-content: space-between; align-items: center; padding: 15px; background: var(--bg-darker); border-radius: 8px; margin-bottom: 10px;">
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <div style="width: 40px; height: 40px; background: rgba(34, 197, 94, 0.15); border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-desktop" style="color: var(--success);"></i>
+                    </div>
+                    <div>
+                        <h4 style="font-size: 14px; margin-bottom: 2px;">Current Session</h4>
+                        <p style="color: var(--text-muted); font-size: 12px;">This device · Active now</p>
+                    </div>
+                </div>
+                <span class="plan-badge" style="background: var(--success);">Current</span>
+            </div>
+            <p style="color: var(--text-muted); font-size: 13px; margin-top: 15px;"><i class="fas fa-info-circle"></i> Session management for multiple devices coming soon.</p>
+        </div>
+        <div class="modal-actions" style="padding: 15px 20px; border-top: 1px solid var(--border);">
+            <button type="button" class="btn btn-outline" onclick="closeSessionsModal()">Close</button>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Account Modal -->
+<div id="deleteModal" class="modal-overlay" style="display: none;">
+    <div class="modal-content">
+        <div class="modal-header" style="background: rgba(239, 68, 68, 0.1);">
+            <h3 style="color: #ef4444;"><i class="fas fa-exclamation-triangle"></i> Delete Account</h3>
+            <button type="button" class="modal-close" onclick="closeDeleteModal()">&times;</button>
+        </div>
+        <div class="modal-body" style="padding: 20px;">
+            <p style="margin-bottom: 15px;"><strong>Warning:</strong> This action cannot be undone. All your data, including:</p>
+            <ul style="color: var(--text-muted); font-size: 14px; margin-left: 20px; margin-bottom: 20px;">
+                <li>Your profile information</li>
+                <li>Processing history</li>
+                <li>Downloaded stems</li>
+                <li>API keys</li>
+            </ul>
+            <p style="margin-bottom: 20px;">will be permanently deleted.</p>
+            <form id="deleteForm">
+                <div class="form-group">
+                    <label>Enter your password to confirm</label>
+                    <input type="password" class="form-control" id="deletePassword" name="deletePassword" required placeholder="Your password">
+                </div>
+                <div id="deleteMessage" style="display: none; padding: 10px; border-radius: 8px; margin-bottom: 15px;"></div>
+            </form>
+        </div>
+        <div class="modal-actions" style="padding: 15px 20px; border-top: 1px solid var(--border);">
+            <button type="button" class="btn btn-outline" onclick="closeDeleteModal()">Cancel</button>
+            <button type="button" class="btn btn-danger" id="confirmDeleteBtn" onclick="deleteAccount()">Delete My Account</button>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Modal Styles */
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.7);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10000;
+        backdrop-filter: blur(4px);
+    }
+    .modal-content {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        width: 90%;
+        max-width: 450px;
+        max-height: 90vh;
+        overflow-y: auto;
+    }
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 20px;
+        border-bottom: 1px solid var(--border);
+    }
+    .modal-header h3 {
+        font-size: 18px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .modal-close {
+        background: none;
+        border: none;
+        font-size: 24px;
+        color: var(--text-muted);
+        cursor: pointer;
+        padding: 0;
+        line-height: 1;
+    }
+    .modal-close:hover {
+        color: var(--text);
+    }
+    .modal-content form {
+        padding: 20px;
+    }
+    .modal-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        padding: 0 20px 20px;
+    }
+    .message-success {
+        background: rgba(34, 197, 94, 0.15);
+        color: var(--success);
+        border: 1px solid rgba(34, 197, 94, 0.3);
+    }
+    .message-error {
+        background: rgba(239, 68, 68, 0.15);
+        color: #ef4444;
+        border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+    .message-info {
+        background: rgba(124, 58, 237, 0.15);
+        color: var(--primary);
+        border: 1px solid rgba(124, 58, 237, 0.3);
+    }
+</style>
+
+<!-- Image Cropper Modal -->
+<div id="cropperModal" class="cropper-modal-overlay">
+    <div class="cropper-modal">
+        <div class="cropper-modal-header">
+            <h3><i class="fas fa-crop-alt"></i> Crop Your Avatar</h3>
+            <button type="button" class="cropper-modal-close" onclick="closeCropperModal()">&times;</button>
+        </div>
+        <div class="cropper-modal-body">
+            <p class="cropper-tip">
+                <i class="fas fa-info-circle"></i> Drag to reposition, scroll to zoom. Your avatar will be cropped as a circle.
+            </p>
+            <div class="cropper-container-wrapper">
+                <img id="cropperImage" src="" alt="Crop preview">
+            </div>
+        </div>
+        <div class="cropper-modal-actions">
+            <button type="button" class="btn btn-cancel" onclick="closeCropperModal()">
+                <i class="fas fa-times"></i> Cancel
+            </button>
+            <button type="button" class="btn btn-save" id="saveCroppedAvatar" onclick="saveCroppedAvatar()">
+                <i class="fas fa-check"></i> Save Avatar
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Cropper.js Library -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
+
+<script>
+    // Cropper instance
+    let cropper = null;
+    let selectedFile = null;
+    
+    // Avatar Upload - Open Cropper Modal
+    document.getElementById('avatarInput').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        
+        const messageEl = document.getElementById('avatarMessage');
+        
+        // Validate file size (max 5MB)
+        if (file.size > 5 * 1024 * 1024) {
+            messageEl.style.display = 'block';
+            messageEl.className = 'message-error';
+            messageEl.innerHTML = '<i class="fas fa-exclamation-circle"></i> File size must be less than 5MB';
+            setTimeout(() => { messageEl.style.display = 'none'; }, 5000);
+            e.target.value = '';
+            return;
+        }
+        
+        // Validate file type
+        const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/gif', 'image/webp'];
+        if (!allowedTypes.includes(file.type)) {
+            messageEl.style.display = 'block';
+            messageEl.className = 'message-error';
+            messageEl.innerHTML = '<i class="fas fa-exclamation-circle"></i> Invalid file type. Allowed: PNG, JPG, GIF, WEBP';
+            setTimeout(() => { messageEl.style.display = 'none'; }, 5000);
+            e.target.value = '';
+            return;
+        }
+        
+        selectedFile = file;
+        
+        // Load image into cropper modal
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            const cropperImage = document.getElementById('cropperImage');
+            cropperImage.src = event.target.result;
+            
+            // Open modal
+            document.getElementById('cropperModal').classList.add('active');
+            
+            // Initialize cropper after image loads
+            cropperImage.onload = function() {
+                if (cropper) {
+                    cropper.destroy();
+                }
+                cropper = new Cropper(cropperImage, {
+                    aspectRatio: 1, // Force 1:1 square
+                    viewMode: 1,
+                    dragMode: 'move',
+                    autoCropArea: 1,
+                    cropBoxResizable: true,
+                    cropBoxMovable: true,
+                    guides: true,
+                    center: true,
+                    highlight: true,
+                    background: true,
+                    responsive: true,
+                    restore: false,
+                    checkCrossOrigin: false,
+                    minContainerWidth: 200,
+                    minContainerHeight: 200,
+                });
+            };
+        };
+        reader.readAsDataURL(file);
+    });
+    
+    // Close cropper modal
+    function closeCropperModal() {
+        document.getElementById('cropperModal').classList.remove('active');
+        document.getElementById('avatarInput').value = '';
+        if (cropper) {
+            cropper.destroy();
+            cropper = null;
+        }
+        selectedFile = null;
+    }
+    
+    // Save cropped avatar
+    async function saveCroppedAvatar() {
+        if (!cropper) return;
+        
+        const saveBtn = document.getElementById('saveCroppedAvatar');
+        const messageEl = document.getElementById('avatarMessage');
+        const avatarEl = document.getElementById('profileAvatar');
+        
+        saveBtn.disabled = true;
+        saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+        
+        try {
+            // Get cropped canvas at 256x256 for optimal avatar size
+            const canvas = cropper.getCroppedCanvas({
+                width: 256,
+                height: 256,
+                imageSmoothingEnabled: true,
+                imageSmoothingQuality: 'high',
+            });
+            
+            // Convert canvas to blob
+            const blob = await new Promise(resolve => {
+                canvas.toBlob(resolve, 'image/jpeg', 0.9);
+            });
+            
+            // Create form data with cropped image
+            const formData = new FormData();
+            formData.append('avatar', blob, 'avatar.jpg');
+            
+            const response = await fetch('/account/upload-avatar', {
+                method: 'POST',
+                body: formData
+            });
+            
+            const data = await response.json();
+            
+            // Close modal
+            closeCropperModal();
+            
+            messageEl.style.display = 'block';
+            if (data.success) {
+                messageEl.className = 'message-success';
+                messageEl.innerHTML = '<i class="fas fa-check-circle"></i> ' + data.message;
+                
+                // Update avatar display
+                const existingImg = avatarEl.querySelector('#avatarImage');
+                const existingIcon = avatarEl.querySelector('#avatarIcon');
+                
+                if (existingImg) {
+                    existingImg.src = data.avatar_url + '?t=' + Date.now();
+                } else {
+                    if (existingIcon) existingIcon.remove();
+                    const img = document.createElement('img');
+                    img.id = 'avatarImage';
+                    img.src = data.avatar_url + '?t=' + Date.now();
+                    img.alt = 'Profile';
+                    img.style.cssText = 'width: 100%; height: 100%; object-fit: cover; border-radius: 50%;';
+                    avatarEl.insertBefore(img, avatarEl.firstChild);
+                }
+                
+                // Also update navbar avatars if present
+                document.querySelectorAll('.user-avatar').forEach(avatar => {
+                    const existingNavImg = avatar.querySelector('img');
+                    if (existingNavImg) {
+                        existingNavImg.src = data.avatar_url + '?t=' + Date.now();
+                    }
+                });
+            } else {
+                messageEl.className = 'message-error';
+                messageEl.innerHTML = '<i class="fas fa-exclamation-circle"></i> ' + data.error;
+            }
+        } catch (err) {
+            closeCropperModal();
+            messageEl.style.display = 'block';
+            messageEl.className = 'message-error';
+            messageEl.innerHTML = '<i class="fas fa-exclamation-circle"></i> Failed to upload avatar. Please try again.';
+        }
+        
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = '<i class="fas fa-check"></i> Save Avatar';
+        setTimeout(() => { messageEl.style.display = 'none'; }, 5000);
+    }
+    
+    // Close modal on escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && document.getElementById('cropperModal').classList.contains('active')) {
+            closeCropperModal();
+        }
+    });
+    
+    // Close modal on overlay click
+    document.getElementById('cropperModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeCropperModal();
+        }
+    });
+    
+    // Profile Form Handling
+    document.getElementById('profileForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const firstName = document.getElementById('firstName').value.trim();
+        const lastName = document.getElementById('lastName').value.trim();
+        const email = document.getElementById('email').value.trim();
+        const bio = document.getElementById('bio').value.trim();
+        const messageEl = document.getElementById('profileMessage');
+        const btn = document.getElementById('saveProfileBtn');
+        
+        const name = [firstName, lastName].filter(Boolean).join(' ');
+        
+        btn.disabled = true;
+        btn.textContent = 'Saving...';
+        
+        try {
+            const response = await fetch('/account/update', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, email, bio })
+            });
+            
+            const data = await response.json();
+            
+            messageEl.style.display = 'block';
+            if (data.success) {
+                messageEl.className = 'message-success';
+                messageEl.innerHTML = '<i class="fas fa-check-circle"></i> ' + data.message;
+                // Update profile header
+                document.querySelector('.profile-info h3').textContent = name || 'Guest User';
+                document.querySelector('.profile-info p').textContent = email || 'Not logged in';
+            } else {
+                messageEl.className = 'message-error';
+                messageEl.innerHTML = '<i class="fas fa-exclamation-circle"></i> ' + data.error;
+            }
+        } catch (err) {
+            messageEl.style.display = 'block';
+            messageEl.className = 'message-error';
+            messageEl.innerHTML = '<i class="fas fa-exclamation-circle"></i> Failed to save changes. Please try again.';
+        }
+        
+        btn.disabled = false;
+        btn.textContent = 'Save Changes';
+        
+        setTimeout(() => { messageEl.style.display = 'none'; }, 5000);
+    });
+    
+    // Password Modal Functions
+    function openPasswordModal() {
+        document.getElementById('passwordModal').style.display = 'flex';
+        document.getElementById('passwordForm').reset();
+        document.getElementById('passwordMessage').style.display = 'none';
+    }
+    
+    function closePasswordModal() {
+        document.getElementById('passwordModal').style.display = 'none';
+    }
+    
+    document.getElementById('passwordForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const currentPassword = document.getElementById('currentPassword').value;
+        const newPassword = document.getElementById('newPassword').value;
+        const confirmPassword = document.getElementById('confirmPassword').value;
+        const messageEl = document.getElementById('passwordMessage');
+        const btn = document.getElementById('changePasswordBtn');
+        
+        if (newPassword !== confirmPassword) {
+            messageEl.style.display = 'block';
+            messageEl.className = 'message-error';
+            messageEl.innerHTML = '<i class="fas fa-exclamation-circle"></i> New passwords do not match';
+            return;
+        }
+        
+        btn.disabled = true;
+        btn.textContent = 'Changing...';
+        
+        try {
+            const response = await fetch('/account/change-password', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    current_password: currentPassword,
+                    new_password: newPassword,
+                    confirm_password: confirmPassword
+                })
+            });
+            
+            const data = await response.json();
+            
+            messageEl.style.display = 'block';
+            if (data.success) {
+                messageEl.className = 'message-success';
+                messageEl.innerHTML = '<i class="fas fa-check-circle"></i> ' + data.message;
+                setTimeout(() => closePasswordModal(), 2000);
+            } else {
+                messageEl.className = 'message-error';
+                messageEl.innerHTML = '<i class="fas fa-exclamation-circle"></i> ' + data.error;
+            }
+        } catch (err) {
+            messageEl.style.display = 'block';
+            messageEl.className = 'message-error';
+            messageEl.innerHTML = '<i class="fas fa-exclamation-circle"></i> Failed to change password. Please try again.';
+        }
+        
+        btn.disabled = false;
+        btn.textContent = 'Change Password';
+    });
+    
+    // 2FA Modal Functions
+    function open2FAModal() {
+        document.getElementById('twoFactorModal').style.display = 'flex';
+    }
+    
+    function close2FAModal() {
+        document.getElementById('twoFactorModal').style.display = 'none';
+    }
+    
+    // Sessions Modal Functions
+    function openSessionsModal() {
+        document.getElementById('sessionsModal').style.display = 'flex';
+    }
+    
+    function closeSessionsModal() {
+        document.getElementById('sessionsModal').style.display = 'none';
+    }
+    
+    // Delete Account Modal Functions
+    function openDeleteModal() {
+        document.getElementById('deleteModal').style.display = 'flex';
+        document.getElementById('deleteForm').reset();
+        document.getElementById('deleteMessage').style.display = 'none';
+    }
+    
+    function closeDeleteModal() {
+        document.getElementById('deleteModal').style.display = 'none';
+    }
+    
+    async function deleteAccount() {
+        const password = document.getElementById('deletePassword').value;
+        const messageEl = document.getElementById('deleteMessage');
+        const btn = document.getElementById('confirmDeleteBtn');
+        
+        if (!password) {
+            messageEl.style.display = 'block';
+            messageEl.className = 'message-error';
+            messageEl.innerHTML = '<i class="fas fa-exclamation-circle"></i> Please enter your password';
+            return;
+        }
+        
+        btn.disabled = true;
+        btn.textContent = 'Deleting...';
+        
+        try {
+            const response = await fetch('/account/delete', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ password })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                messageEl.style.display = 'block';
+                messageEl.className = 'message-success';
+                messageEl.innerHTML = '<i class="fas fa-check-circle"></i> Account deleted. Redirecting...';
+                setTimeout(() => { window.location.href = '/'; }, 2000);
+            } else {
+                messageEl.style.display = 'block';
+                messageEl.className = 'message-error';
+                messageEl.innerHTML = '<i class="fas fa-exclamation-circle"></i> ' + data.error;
+            }
+        } catch (err) {
+            messageEl.style.display = 'block';
+            messageEl.className = 'message-error';
+            messageEl.innerHTML = '<i class="fas fa-exclamation-circle"></i> Failed to delete account. Please try again.';
+        }
+        
+        btn.disabled = false;
+        btn.textContent = 'Delete My Account';
+    }
+    
+    // Close modals on overlay click
+    document.querySelectorAll('.modal-overlay').forEach(modal => {
+        modal.addEventListener('click', function(e) {
+            if (e.target === this) {
+                this.style.display = 'none';
+            }
+        });
+    });
+    
+    // Close modals on Escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            document.querySelectorAll('.modal-overlay').forEach(modal => {
+                modal.style.display = 'none';
+            });
+        }
+    });
+    
+    // API Key functions
+    function copyApiKey() {
+        const apiKeyInput = document.getElementById('apiKey');
+        const originalType = apiKeyInput.type;
+        apiKeyInput.type = 'text';
+        apiKeyInput.select();
+        document.execCommand('copy');
+        apiKeyInput.type = originalType;
+        
+        // Show feedback
+        const btn = event.target;
+        const originalText = btn.textContent;
+        btn.textContent = 'Copied!';
+        setTimeout(() => { btn.textContent = originalText; }, 2000);
+    }
+    
+    function toggleApiKey() {
+        const apiKeyInput = document.getElementById('apiKey');
+        const icon = event.target.querySelector('i') || event.target;
+        
+        if (apiKeyInput.type === 'password') {
+            apiKeyInput.type = 'text';
+            if (icon.classList) {
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            }
+        } else {
+            apiKeyInput.type = 'password';
+            if (icon.classList) {
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        }
+    }
+</script>
 {% endblock %}

@@ -4,10 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Harmonix Audio Splitter - Professional Dashboard</title>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎵</text></svg>">
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/logo.png') }}">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <script src="https://unpkg.com/wavesurfer.js@7"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.min.js"></script>
+    <!-- Prevent theme flash -->
+    <script>
+        (function() {
+            const theme = localStorage.getItem('harmonix-theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', theme);
+        })();
+    </script>
     <style>
         * {
             margin: 0;
@@ -32,6 +39,139 @@
             --text-dim: #71717a;
         }
 
+        /* Light Theme Override */
+        [data-theme="light"] {
+            --dark: #ffffff;
+            --darker: #f1f5f9;
+            --card: #ffffff;
+            --border: rgba(0, 0, 0, 0.1);
+            --text-muted: #475569;
+            --text-dim: #64748b;
+        }
+        
+        [data-theme="light"] body {
+            background: #f1f5f9;
+            color: #0f172a;
+        }
+        
+        [data-theme="light"] .sidebar {
+            background: #ffffff;
+            border-right-color: rgba(0, 0, 0, 0.1);
+        }
+        
+        [data-theme="light"] .nav-item {
+            color: #475569;
+        }
+        
+        [data-theme="light"] .nav-item:hover,
+        [data-theme="light"] .nav-item.active {
+            background: rgba(124, 58, 237, 0.1);
+            color: #7c3aed;
+        }
+        
+        [data-theme="light"] .main-content {
+            background: #f1f5f9;
+        }
+        
+        [data-theme="light"] .card,
+        [data-theme="light"] .upload-area,
+        [data-theme="light"] .stems-section,
+        [data-theme="light"] .player-card,
+        [data-theme="light"] .stats-card,
+        [data-theme="light"] .section {
+            background: #ffffff;
+            border-color: rgba(0, 0, 0, 0.1);
+        }
+        
+        [data-theme="light"] .page-title,
+        [data-theme="light"] h1, [data-theme="light"] h2, [data-theme="light"] h3, [data-theme="light"] h4 {
+            color: #0f172a;
+        }
+        
+        [data-theme="light"] .track-name,
+        [data-theme="light"] .stem-name,
+        [data-theme="light"] .stat-value {
+            color: #0f172a;
+        }
+        
+        [data-theme="light"] .track-card {
+            background: #ffffff;
+            border-color: rgba(0, 0, 0, 0.1);
+        }
+        
+        [data-theme="light"] .track-card:hover {
+            border-color: rgba(124, 58, 237, 0.3);
+        }
+        
+        [data-theme="light"] .btn-secondary {
+            background: #f1f5f9;
+            color: #0f172a;
+            border-color: rgba(0, 0, 0, 0.1);
+        }
+        
+        [data-theme="light"] .dashboard-navbar {
+            background: rgba(255, 255, 255, 0.95);
+            border-bottom-color: rgba(0, 0, 0, 0.1);
+        }
+        
+        [data-theme="light"] .dashboard-navbar .nav-link,
+        [data-theme="light"] .dashboard-navbar .nav-dropdown-item {
+            color: #475569;
+        }
+        
+        [data-theme="light"] .dashboard-navbar .nav-link:hover,
+        [data-theme="light"] .dashboard-navbar .nav-dropdown-item:hover {
+            color: #0f172a;
+        }
+        
+        [data-theme="light"] .dashboard-navbar .nav-dropdown-menu {
+            background: #ffffff;
+            border-color: rgba(0, 0, 0, 0.1);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+        }
+        
+        [data-theme="light"] .dashboard-navbar .user-menu {
+            color: #0f172a;
+            border-color: rgba(0, 0, 0, 0.1);
+        }
+        
+        [data-theme="light"] .dashboard-navbar .btn-ghost {
+            color: #0f172a;
+            border-color: rgba(0, 0, 0, 0.1);
+        }
+        
+        [data-theme="light"] .theme-toggle {
+            color: #475569;
+            border-color: rgba(0, 0, 0, 0.1);
+        }
+        
+        [data-theme="light"] .theme-toggle:hover {
+            color: #0f172a;
+            background: rgba(124, 58, 237, 0.1);
+        }
+        
+        [data-theme="light"] .modal-content {
+            background: #ffffff;
+            border-color: rgba(0, 0, 0, 0.1);
+        }
+        
+        [data-theme="light"] input,
+        [data-theme="light"] select,
+        [data-theme="light"] textarea {
+            background: #f8fafc;
+            color: #0f172a;
+            border-color: rgba(0, 0, 0, 0.1);
+        }
+        
+        [data-theme="light"] .waveform-container {
+            background: #f8fafc;
+        }
+        
+        [data-theme="light"] .empty-state,
+        [data-theme="light"] .lyrics-panel {
+            background: #f8fafc;
+        }
+
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: var(--dark);
@@ -43,9 +183,9 @@
         .sidebar {
             position: fixed;
             left: 0;
-            top: 0;
+            top: 70px;
             width: 260px;
-            height: 100vh;
+            height: calc(100vh - 70px);
             background: var(--darker);
             padding: 20px;
             overflow-y: auto;
@@ -108,6 +248,7 @@
         .main-content {
             margin-left: 260px;
             padding: 25px;
+            padding-top: 95px;
             min-height: 100vh;
         }
 
@@ -1756,9 +1897,284 @@
                 padding: 6px 8px;
             }
         }
+
+        /* Dashboard Navbar */
+        .dashboard-navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 70px;
+            background: rgba(5, 5, 8, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+            z-index: 1001;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 25px;
+        }
+        .dashboard-navbar .navbar-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+            font-size: 20px;
+            font-weight: bold;
+        }
+        .dashboard-navbar .navbar-logo-text {
+            background: linear-gradient(135deg, var(--primary), #06b6d4);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .dashboard-navbar .navbar-nav {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .dashboard-navbar .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 10px 16px;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+        .dashboard-navbar .nav-link:hover {
+            color: #fff;
+            background: rgba(124, 58, 237, 0.1);
+        }
+        .dashboard-navbar .nav-dropdown {
+            position: relative;
+        }
+        .dashboard-navbar .nav-dropdown-trigger {
+            cursor: pointer;
+        }
+        .dashboard-navbar .nav-dropdown-trigger i.fa-chevron-down {
+            font-size: 10px;
+            transition: transform 0.2s;
+        }
+        .dashboard-navbar .nav-dropdown:hover .nav-dropdown-trigger i.fa-chevron-down {
+            transform: rotate(180deg);
+        }
+        .dashboard-navbar .nav-dropdown-menu {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            min-width: 200px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 8px;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(10px);
+            transition: all 0.2s;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+        }
+        .dashboard-navbar .nav-dropdown:hover .nav-dropdown-menu {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+        .dashboard-navbar .nav-dropdown-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 14px;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 14px;
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+        .dashboard-navbar .nav-dropdown-item:hover {
+            color: #fff;
+            background: rgba(124, 58, 237, 0.1);
+        }
+        .dashboard-navbar .nav-dropdown-item i {
+            width: 20px;
+            text-align: center;
+            color: var(--primary-light);
+        }
+        .dashboard-navbar .navbar-actions {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .dashboard-navbar .user-menu {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 16px;
+            background: transparent;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: #fff;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        .dashboard-navbar .user-menu:hover {
+            background: rgba(124, 58, 237, 0.1);
+            border-color: var(--primary);
+        }
+        .dashboard-navbar .user-avatar {
+            width: 28px;
+            height: 28px;
+            background: linear-gradient(135deg, var(--primary), #06b6d4);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .dashboard-navbar .btn-ghost {
+            padding: 10px 20px;
+            background: transparent;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: #fff;
+            text-decoration: none;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        .dashboard-navbar .btn-ghost:hover {
+            background: rgba(124, 58, 237, 0.1);
+            border-color: var(--primary);
+        }
+        .dashboard-navbar .btn-primary {
+            padding: 10px 20px;
+            background: linear-gradient(135deg, var(--primary), #6d28d9);
+            border: none;
+            border-radius: 8px;
+            color: #fff;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        .dashboard-navbar .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(124, 58, 237, 0.4);
+        }
+        .dashboard-navbar .divider {
+            height: 1px;
+            background: var(--border);
+            margin: 8px 0;
+        }
+        @media (max-width: 1024px) {
+            .dashboard-navbar .navbar-nav {
+                display: none;
+            }
+        }
+        @media (max-width: 768px) {
+            .dashboard-navbar {
+                padding: 0 15px;
+            }
+            .sidebar {
+                top: 70px;
+                height: calc(100vh - 70px);
+            }
+        }
     </style>
 </head>
 <body>
+    <!-- Dashboard Navbar -->
+    <nav class="dashboard-navbar">
+        <a href="/" class="navbar-logo">
+            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Harmonix" style="height: 32px; width: auto;">
+            <span class="navbar-logo-text">Harmonix</span>
+        </a>
+        
+        <div class="navbar-nav">
+            <!-- Product Dropdown -->
+            <div class="nav-dropdown">
+                <a class="nav-link nav-dropdown-trigger">
+                    Product <i class="fas fa-chevron-down"></i>
+                </a>
+                <div class="nav-dropdown-menu">
+                    <a href="/features" class="nav-dropdown-item">
+                        <i class="fas fa-magic"></i> Features
+                    </a>
+                    <a href="/pricing" class="nav-dropdown-item">
+                        <i class="fas fa-tag"></i> Pricing
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Resources Dropdown -->
+            <div class="nav-dropdown">
+                <a class="nav-link nav-dropdown-trigger">
+                    Resources <i class="fas fa-chevron-down"></i>
+                </a>
+                <div class="nav-dropdown-menu">
+                    <a href="/docs" class="nav-dropdown-item">
+                        <i class="fas fa-book"></i> Documentation
+                    </a>
+                    <a href="/tutorials" class="nav-dropdown-item">
+                        <i class="fas fa-graduation-cap"></i> Tutorials
+                    </a>
+                    <a href="/community" class="nav-dropdown-item">
+                        <i class="fas fa-users"></i> Community
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Musician Corner -->
+            <div class="nav-dropdown">
+                <a class="nav-link nav-dropdown-trigger">
+                    <i class="fas fa-guitar"></i> Tools <i class="fas fa-chevron-down"></i>
+                </a>
+                <div class="nav-dropdown-menu">
+                    <a href="/tuner" class="nav-dropdown-item">
+                        <i class="fas fa-sliders-h"></i> Instrument Tuner
+                    </a>
+                    <a href="/transposer" class="nav-dropdown-item">
+                        <i class="fas fa-exchange-alt"></i> Chord Transposer
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="navbar-actions">
+            {% if current_user %}
+            <!-- User Menu -->
+            <div class="nav-dropdown">
+                <button class="user-menu nav-dropdown-trigger">
+                    <div class="user-avatar">{{ current_user.name[0]|upper if current_user.name else 'U' }}</div>
+                    <span>{{ current_user.name or 'User' }}</span>
+                    <i class="fas fa-chevron-down" style="font-size: 10px;"></i>
+                </button>
+                <div class="nav-dropdown-menu" style="right: 0; left: auto;">
+                    <a href="/account" class="nav-dropdown-item">
+                        <i class="fas fa-user"></i> Account
+                    </a>
+                    {% if current_user.role == 'admin' %}
+                    <a href="/admin" class="nav-dropdown-item">
+                        <i class="fas fa-cog"></i> Admin Panel
+                    </a>
+                    {% endif %}
+                    <div class="divider"></div>
+                    <a href="/logout" class="nav-dropdown-item">
+                        <i class="fas fa-sign-out-alt"></i> Sign Out
+                    </a>
+                </div>
+            </div>
+            {% else %}
+            <a href="/login" class="btn-ghost">Sign In</a>
+            <a href="/register" class="btn-primary">Get Started</a>
+            {% endif %}
+        </div>
+    </nav>
+
     <!-- Mobile Menu Button -->
     <button class="mobile-menu-btn" id="mobileMenuBtn" onclick="toggleSidebar()">
         <i class="fas fa-bars"></i>
@@ -1787,11 +2203,6 @@
 
     <!-- Sidebar -->
     <div class="sidebar">
-        <div class="logo">
-            <i class="fas fa-music"></i>
-            Harmonix Pro
-        </div>
-
         <div class="nav-section">
             <div class="nav-title">Main</div>
             <div class="nav-item active" data-section="library">
@@ -4305,6 +4716,32 @@
                 toast.className = 'toast';
             }, 3000);
         }
+        
+        // Theme toggle functionality
+        function toggleTheme() {
+            const html = document.documentElement;
+            const currentTheme = html.getAttribute('data-theme') || 'dark';
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            
+            html.setAttribute('data-theme', newTheme);
+            localStorage.setItem('harmonix-theme', newTheme);
+            
+            // Update toggle icon
+            updateThemeIcon(newTheme);
+        }
+        
+        function updateThemeIcon(theme) {
+            const toggleBtn = document.querySelector('.theme-toggle i');
+            if (toggleBtn) {
+                toggleBtn.className = theme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+            }
+        }
+        
+        // Initialize theme icon on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+            updateThemeIcon(currentTheme);
+        });
     </script>
 </body>
 </html>

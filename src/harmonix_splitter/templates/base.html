@@ -5,14 +5,204 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Harmonix{% endblock %}</title>
     <meta name="description" content="{% block description %}AI-powered stem separation and lyrics extraction{% endblock %}">
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/logo.png') }}">
     
     <!-- Prevent theme flash -->
     <script>
         (function() {
             const theme = localStorage.getItem('harmonix-theme') || 'dark';
             document.documentElement.setAttribute('data-theme', theme);
+            
+            // Check if embedded mode
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('embed') === '1') {
+                document.documentElement.classList.add('embedded-mode');
+            }
         })();
     </script>
+    
+    <!-- Embed mode styles -->
+    <style>
+        html.embedded-mode .navbar,
+        html.embedded-mode .mobile-menu,
+        html.embedded-mode .mobile-menu-overlay,
+        html.embedded-mode footer,
+        html.embedded-mode .footer,
+        html.embedded-mode .particles-container {
+            display: none !important;
+        }
+        html.embedded-mode body {
+            padding-top: 0 !important;
+        }
+        html.embedded-mode .page-hero,
+        html.embedded-mode .tuner-page,
+        html.embedded-mode .transposer-page,
+        html.embedded-mode .account-page,
+        html.embedded-mode .docs-hero,
+        html.embedded-mode .tutorials-hero {
+            padding-top: 20px !important;
+            margin-top: 0 !important;
+        }
+        html.embedded-mode .container {
+            padding-top: 0 !important;
+        }
+    </style>
+    
+    <!-- Toast Notification Styles -->
+    <style>
+        .toast-container {
+            position: fixed;
+            top: 90px;
+            right: 20px;
+            z-index: 10000;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            pointer-events: none;
+        }
+        
+        .toast {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px 20px;
+            border-radius: 12px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(20px);
+            pointer-events: auto;
+            min-width: 280px;
+            max-width: 400px;
+            animation: toastSlideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            transform: translateX(120%);
+            opacity: 0;
+        }
+        
+        .toast.toast-hide {
+            animation: toastSlideOut 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        
+        @keyframes toastSlideIn {
+            0% {
+                transform: translateX(120%);
+                opacity: 0;
+            }
+            100% {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        @keyframes toastSlideOut {
+            0% {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            100% {
+                transform: translateX(120%);
+                opacity: 0;
+            }
+        }
+        
+        .toast-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            font-size: 12px;
+        }
+        
+        .toast-success .toast-icon {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(16, 185, 129, 0.1));
+            color: #10b981;
+        }
+        
+        .toast-error .toast-icon {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(239, 68, 68, 0.1));
+            color: #ef4444;
+        }
+        
+        .toast-warning .toast-icon,
+        .toast-info .toast-icon {
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(139, 92, 246, 0.1));
+            color: #8b5cf6;
+        }
+        
+        .toast-content {
+            flex: 1;
+        }
+        
+        .toast-message {
+            color: var(--text-primary);
+            font-size: 14px;
+            font-weight: 500;
+            line-height: 1.4;
+        }
+        
+        .toast-close {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .toast-close:hover {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+        
+        .toast-progress {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            height: 3px;
+            border-radius: 0 0 12px 12px;
+            animation: toastProgress 4s linear forwards;
+        }
+        
+        .toast-success .toast-progress {
+            background: linear-gradient(90deg, #10b981, #34d399);
+        }
+        
+        .toast-error .toast-progress {
+            background: linear-gradient(90deg, #ef4444, #f87171);
+        }
+        
+        .toast-warning .toast-progress,
+        .toast-info .toast-progress {
+            background: linear-gradient(90deg, #8b5cf6, #a78bfa);
+        }
+        
+        @keyframes toastProgress {
+            0% { width: 100%; }
+            100% { width: 0%; }
+        }
+        
+        @media (max-width: 480px) {
+            .toast-container {
+                top: auto;
+                bottom: 20px;
+                right: 10px;
+                left: 10px;
+            }
+            
+            .toast {
+                min-width: auto;
+                max-width: none;
+                width: 100%;
+            }
+        }
+    </style>
     
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -39,7 +229,7 @@
     <nav class="navbar">
         <div class="navbar-container">
             <a href="/" class="navbar-logo">
-                <div class="navbar-logo-icon"><i class="fas fa-wave-square"></i></div>
+                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Harmonix" style="height: 32px; width: auto;">
                 <span class="navbar-logo-text">Harmonix</span>
             </a>
             
@@ -130,8 +320,12 @@
                 <!-- User Menu -->
                 <div class="nav-dropdown">
                     <button class="btn btn-ghost nav-dropdown-trigger" style="padding: 8px 16px;">
-                        <div class="user-avatar" style="width: 28px; height: 28px; background: linear-gradient(135deg, var(--primary), var(--secondary)); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600;">
+                        <div class="user-avatar" style="width: 28px; height: 28px; background: linear-gradient(135deg, var(--primary), var(--secondary)); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; overflow: hidden;">
+                            {% if current_user.avatar %}
+                            <img src="{{ current_user.avatar }}" alt="{{ current_user.name }}" style="width: 100%; height: 100%; object-fit: cover;">
+                            {% else %}
                             {{ current_user.name[0]|upper }}
+                            {% endif %}
                         </div>
                         <span>{{ current_user.name }}</span>
                         <i class="fas fa-chevron-down" style="font-size: 10px;"></i>
@@ -176,7 +370,7 @@
     <div class="mobile-menu">
         <div class="mobile-menu-header">
             <a href="/" class="navbar-logo">
-                <div class="navbar-logo-icon"><i class="fas fa-wave-square"></i></div>
+                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Harmonix" style="height: 28px; width: auto;">
                 <span class="navbar-logo-text">Harmonix</span>
             </a>
             <button class="mobile-menu-close" aria-label="Close menu">
@@ -222,21 +416,28 @@
         {% endif %}
     </div>
 
+    <!-- Toast Notifications Container -->
+    <div class="toast-container" id="toastContainer">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for category, message in messages %}
+        <div class="toast toast-{{ category }}" data-auto-dismiss="true">
+            <div class="toast-icon">
+                <i class="fas fa-{% if category == 'success' %}check{% elif category == 'error' %}times{% else %}info{% endif %}"></i>
+            </div>
+            <div class="toast-content">
+                <div class="toast-message">{{ message }}</div>
+            </div>
+            <button class="toast-close" onclick="dismissToast(this.parentElement)">
+                <i class="fas fa-times"></i>
+            </button>
+            <div class="toast-progress"></div>
+        </div>
+        {% endfor %}
+        {% endwith %}
+    </div>
+
     <!-- Main Content -->
     <main class="main-content">
-        {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-        <div class="container" style="padding-top: 20px;">
-            {% for category, message in messages %}
-            <div class="alert alert-{{ category }}" style="background: rgba({% if category == 'success' %}16, 185, 129{% elif category == 'error' %}239, 68, 68{% else %}245, 158, 11{% endif %}, 0.1); border: 1px solid rgba({% if category == 'success' %}16, 185, 129{% elif category == 'error' %}239, 68, 68{% else %}245, 158, 11{% endif %}, 0.3); color: var(--{% if category == 'success' %}accent{% elif category == 'error' %}error{% else %}warning{% endif %}); padding: 15px 20px; border-radius: 12px; margin-bottom: 15px; display: flex; align-items: center; gap: 12px;">
-                <i class="fas fa-{% if category == 'success' %}check-circle{% elif category == 'error' %}exclamation-circle{% else %}info-circle{% endif %}"></i>
-                {{ message }}
-            </div>
-            {% endfor %}
-        </div>
-        {% endif %}
-        {% endwith %}
-        
         {% block content %}{% endblock %}
     </main>
 
@@ -246,7 +447,7 @@
             <div class="footer-grid">
                 <div class="footer-brand">
                     <a href="/" class="footer-logo">
-                        <div class="footer-logo-icon"><i class="fas fa-wave-square"></i></div>
+                        <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Harmonix" style="height: 32px; width: auto;">
                         <span class="footer-logo-text">Harmonix</span>
                     </a>
                     <p class="footer-description">
@@ -302,6 +503,64 @@
     <script src="{{ url_for('static', filename='js/navigation.js') }}"></script>
     <script src="{{ url_for('static', filename='js/animations.js') }}"></script>
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    
+    <!-- Toast Notification Script -->
+    <script>
+        // Dismiss a toast notification
+        function dismissToast(toast) {
+            toast.classList.add('toast-hide');
+            setTimeout(() => {
+                toast.remove();
+            }, 300);
+        }
+        
+        // Auto-dismiss toasts after 4 seconds
+        document.addEventListener('DOMContentLoaded', function() {
+            const toasts = document.querySelectorAll('.toast[data-auto-dismiss="true"]');
+            toasts.forEach((toast, index) => {
+                // Stagger the appearance slightly
+                toast.style.animationDelay = (index * 0.1) + 's';
+                
+                // Auto-dismiss after 4 seconds
+                setTimeout(() => {
+                    dismissToast(toast);
+                }, 4000 + (index * 100));
+            });
+        });
+        
+        // Global function to show a toast (for use in JavaScript)
+        function showToast(message, category = 'info') {
+            const container = document.getElementById('toastContainer');
+            const icons = {
+                'success': 'check',
+                'error': 'times',
+                'warning': 'exclamation',
+                'info': 'info'
+            };
+            
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${category}`;
+            toast.innerHTML = `
+                <div class="toast-icon">
+                    <i class="fas fa-${icons[category] || 'info'}"></i>
+                </div>
+                <div class="toast-content">
+                    <div class="toast-message">${message}</div>
+                </div>
+                <button class="toast-close" onclick="dismissToast(this.parentElement)">
+                    <i class="fas fa-times"></i>
+                </button>
+                <div class="toast-progress"></div>
+            `;
+            
+            container.appendChild(toast);
+            
+            // Auto-dismiss after 4 seconds
+            setTimeout(() => {
+                dismissToast(toast);
+            }, 4000);
+        }
+    </script>
     
     {% block scripts %}{% endblock %}
 </body>

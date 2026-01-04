@@ -543,20 +543,36 @@
 }
 
 @media (max-width: 768px) {
+    .navbar-container {
+        padding: 0 var(--space-md);
+    }
+    
     .navbar-nav {
         display: none !important;
+    }
+    
+    .navbar-actions {
+        flex: 1;
+        justify-content: flex-end;
     }
     
     .navbar-actions .btn {
         display: none;
     }
     
+    .navbar-actions .nav-dropdown {
+        display: none;
+    }
+    
     .navbar-actions .theme-toggle {
         display: flex;
+        order: 1;
     }
     
     .mobile-menu-toggle {
         display: flex !important;
+        order: 2;
+        margin-left: var(--space-sm);
     }
     
     .mobile-menu-overlay {
