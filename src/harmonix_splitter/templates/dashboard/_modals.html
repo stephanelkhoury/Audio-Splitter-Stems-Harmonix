@@ -1,0 +1,122 @@
+{# Modals Partial #}
+
+<!-- Edit Track Modal -->
+<div class="modal" id="editModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title"><i class="fas fa-edit"></i> Edit Track Name</h3>
+            <button class="modal-close" data-modal-close>&times;</button>
+        </div>
+        <div class="modal-body">
+            <input type="text" id="editTrackName" class="form-input" placeholder="Enter new name...">
+            <input type="hidden" id="editTrackJobId">
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" data-modal-close>Cancel</button>
+            <button class="btn btn-primary" onclick="saveTrackName()">Save</button>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal" id="deleteModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title"><i class="fas fa-trash"></i> Delete Track</h3>
+            <button class="modal-close" data-modal-close>&times;</button>
+        </div>
+        <div class="modal-body">
+            <p>Are you sure you want to delete this track? This action cannot be undone.</p>
+            <input type="hidden" id="deleteTrackJobId">
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" data-modal-close>Cancel</button>
+            <button class="btn btn-danger" onclick="confirmDeleteTrack()">Delete</button>
+        </div>
+    </div>
+</div>
+
+<!-- Download Options Modal -->
+<div class="modal" id="downloadModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title"><i class="fas fa-download"></i> Download Options</h3>
+            <button class="modal-close" data-modal-close>&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="download-options">
+                <label class="download-option">
+                    <input type="radio" name="downloadFormat" value="mp3" checked>
+                    <span class="option-label">
+                        <i class="fas fa-file-audio"></i>
+                        MP3 (320kbps) <small style="color: var(--success);">Recommended</small>
+                    </span>
+                </label>
+                <label class="download-option">
+                    <input type="radio" name="downloadFormat" value="wav">
+                    <span class="option-label">
+                        <i class="fas fa-file-audio"></i>
+                        WAV (Lossless)
+                    </span>
+                </label>
+                <label class="download-option">
+                    <input type="radio" name="downloadFormat" value="flac">
+                    <span class="option-label">
+                        <i class="fas fa-file-audio"></i>
+                        FLAC (Lossless Compressed)
+                    </span>
+                </label>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" data-modal-close>Cancel</button>
+            <button class="btn btn-primary" onclick="downloadWithFormat()">
+                <i class="fas fa-download"></i> Download
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Lyrics Modal -->
+<div class="modal" id="lyricsModal">
+    <div class="modal-content modal-large">
+        <div class="modal-header">
+            <h3 class="modal-title"><i class="fas fa-microphone"></i> Extracted Lyrics</h3>
+            <button class="modal-close" data-modal-close>&times;</button>
+        </div>
+        <div class="modal-body">
+            <div id="lyricsContent" class="lyrics-content">
+                <div class="empty-state">
+                    <i class="fas fa-music"></i>
+                    <p>No lyrics extracted yet</p>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="copyLyrics()">
+                <i class="fas fa-copy"></i> Copy
+            </button>
+            <button class="btn btn-primary" onclick="downloadLyrics()">
+                <i class="fas fa-download"></i> Download
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- MIDI Info Modal -->
+<div class="modal" id="midiInfoModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title"><i class="fas fa-info-circle"></i> MIDI Information</h3>
+            <button class="modal-close" data-modal-close>&times;</button>
+        </div>
+        <div class="modal-body">
+            <div id="midiInfoContent" class="midi-info-content">
+                <!-- Populated dynamically -->
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" data-modal-close>Close</button>
+        </div>
+    </div>
+</div>

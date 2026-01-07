@@ -1,0 +1,119 @@
+/* Dashboard Modal Styles */
+
+/* Modal Base (for .modal class) */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(5px);
+}
+
+.modal.active {
+    display: flex;
+}
+
+/* Modal Overlay (legacy support) */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-overlay.active {
+    display: flex;
+}
+
+.modal-content {
+    background: var(--card);
+    border-radius: 15px;
+    padding: 25px;
+    width: 400px;
+    max-width: 90%;
+    border: 1px solid var(--border);
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.modal-header h3 {
+    margin: 0;
+    font-size: 18px;
+    color: var(--text-primary);
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 20px;
+    cursor: pointer;
+}
+
+.modal-close:hover {
+    color: var(--text-primary);
+}
+
+.modal-body {
+    margin-bottom: 20px;
+    color: var(--text-muted);
+}
+
+.modal-body input {
+    width: 100%;
+    background: var(--darker);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 15px;
+    color: var(--text-primary);
+    font-size: 14px;
+}
+
+.modal-body input:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+
+.modal-body p {
+    color: var(--text-muted);
+}
+
+.modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+/* Modal Size Variants */
+.modal-large {
+    width: 600px;
+    max-width: 90%;
+}
+
+.modal-xlarge {
+    width: 800px;
+    max-width: 95%;
+}
+
+/* Scrollable Modal Body */
+.modal-body-scroll {
+    max-height: 60vh;
+    overflow-y: auto;
+}

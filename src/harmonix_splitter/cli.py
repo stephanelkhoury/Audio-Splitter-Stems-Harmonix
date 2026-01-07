@@ -243,8 +243,8 @@ def process_audio(
             logger.info(f"\n✓ Success! Processing time: {result.processing_time:.2f}s")
             logger.info(f"\nExtracted stems ({len(result.stems)}):")
             for stem_name in result.stems.keys():
-                stem_path = file_output_dir / f"{audio_path.stem}_{stem_name}.wav"
-                logger.info(f"  • {stem_name}.wav")
+                stem_path = file_output_dir / f"{audio_path.stem}_{stem_name}.mp3"
+                logger.info(f"  • {stem_name}.mp3")
             
             logger.info(f"\nOutput location: {file_output_dir}")
             logger.info(f"{'='*60}\n")

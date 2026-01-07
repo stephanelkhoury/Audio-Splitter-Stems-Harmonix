@@ -6,13 +6,65 @@
     <title>Harmonix Audio Splitter - Professional Dashboard</title>
     <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/logo.png') }}">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- External Dependencies -->
     <script src="https://unpkg.com/wavesurfer.js@7"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tonejs/midi"></script>
+    
+    <!-- Modular Dashboard CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard/variables.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard/base.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard/sidebar.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard/upload.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard/player.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard/midi.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard/modal.css') }}">
+    
     <!-- Prevent theme flash -->
     <script>
         (function() {
             const theme = localStorage.getItem('harmonix-theme') || 'dark';
             document.documentElement.setAttribute('data-theme', theme);
+        })();
+    </script>
+    
+    <!-- DevTools Deterrent (Note: Cannot fully prevent, only deter casual users) -->
+    <script>
+        (function() {
+            // Disable right-click context menu
+            document.addEventListener('contextmenu', function(e) { e.preventDefault(); });
+            
+            // Disable common keyboard shortcuts for DevTools
+            document.addEventListener('keydown', function(e) {
+                // F12
+                if (e.key === 'F12') { e.preventDefault(); return false; }
+                // Ctrl+Shift+I / Cmd+Option+I (DevTools)
+                if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'I') { e.preventDefault(); return false; }
+                // Ctrl+Shift+J / Cmd+Option+J (Console)
+                if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'J') { e.preventDefault(); return false; }
+                // Ctrl+Shift+C / Cmd+Option+C (Inspect Element)
+                if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'C') { e.preventDefault(); return false; }
+                // Ctrl+U / Cmd+U (View Source)
+                if ((e.ctrlKey || e.metaKey) && e.key === 'u') { e.preventDefault(); return false; }
+                // Ctrl+S / Cmd+S (Save Page)
+                if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); return false; }
+            });
+            
+            // Detect DevTools open (unreliable but adds friction)
+            var devtools = { open: false };
+            setInterval(function() {
+                var widthThreshold = window.outerWidth - window.innerWidth > 160;
+                var heightThreshold = window.outerHeight - window.innerHeight > 160;
+                if (widthThreshold || heightThreshold) {
+                    if (!devtools.open) {
+                        devtools.open = true;
+                        console.clear();
+                    }
+                } else {
+                    devtools.open = false;
+                }
+            }, 1000);
         })();
     </script>
     <style>
@@ -2043,23 +2095,34 @@
         }
         .dashboard-navbar .mobile-menu-toggle {
             display: none;
-            width: 40px;
-            height: 40px;
-            background: transparent;
+            width: 44px;
+            height: 44px;
+            background: var(--card);
             border: 1px solid var(--border);
-            border-radius: 8px;
-            color: var(--text);
+            border-radius: 10px;
+            color: var(--text-primary);
             cursor: pointer;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             gap: 5px;
+            padding: 0;
+            z-index: 1001;
+        }
+        .dashboard-navbar .mobile-menu-toggle:hover {
+            background: var(--primary);
+            border-color: var(--primary);
+        }
+        .dashboard-navbar .mobile-menu-toggle:hover span {
+            background: white;
         }
         .dashboard-navbar .mobile-menu-toggle span {
             width: 20px;
             height: 2px;
-            background: var(--text);
+            background: var(--text-primary);
             transition: all 0.2s;
+            display: block;
+            border-radius: 2px;
         }
         .dashboard-navbar .user-menu {
             display: flex;
@@ -2161,7 +2224,7 @@
                 order: 1;
             }
             .dashboard-navbar .mobile-menu-toggle {
-                display: flex;
+                display: flex !important;
                 order: 2;
             }
             .sidebar {
@@ -2286,23 +2349,8 @@
     <!-- Sidebar Overlay -->
     <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
 
-    <!-- Edit Modal -->
-    <div class="modal-overlay" id="editModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3><i class="fas fa-edit"></i> Edit Track Name</h3>
-                <button class="modal-close" onclick="closeEditModal()">&times;</button>
-            </div>
-            <div class="modal-body">
-                <input type="text" id="editTrackName" placeholder="Enter new name...">
-                <input type="hidden" id="editTrackJobId">
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-secondary" onclick="closeEditModal()">Cancel</button>
-                <button class="btn btn-primary" onclick="saveTrackName()">Save</button>
-            </div>
-        </div>
-    </div>
+    <!-- Modals (partial) -->
+    {% include 'dashboard/_modals.html' %}
 
     <!-- Sidebar -->
     <div class="sidebar">
@@ -2899,44 +2947,44 @@
                             <label style="display: block; margin-bottom: 15px; font-weight: 500;">
                                 <i class="fas fa-guitar" style="color: var(--primary); margin-right: 8px;"></i>
                                 Playback Instrument 
-                                <span style="font-size: 12px; color: var(--text-muted); font-weight: normal; margin-left: 8px;">Synthesizer Sounds</span>
+                                <span style="font-size: 12px; color: var(--text-muted); font-weight: normal; margin-left: 8px;">Real Sampled Sounds</span>
                             </label>
                             <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px;">
                                 <button class="instrument-btn active" data-instrument="piano" onclick="setMidiInstrument('piano')" style="padding: 12px 16px; border-radius: 10px; border: 1px solid var(--border); background: var(--primary); color: white; cursor: pointer; transition: all 0.3s; display: flex; flex-direction: column; align-items: center; gap: 6px;">
                                     <i class="fas fa-music" style="font-size: 20px;"></i>
-                                    <span style="font-size: 12px;">Piano</span>
+                                    <span style="font-size: 12px;">Grand Piano</span>
                                 </button>
-                                <button class="instrument-btn" data-instrument="electric_piano" onclick="setMidiInstrument('electric_piano')" style="padding: 12px 16px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg); color: var(--text); cursor: pointer; transition: all 0.3s; display: flex; flex-direction: column; align-items: center; gap: 6px;">
-                                    <i class="fas fa-keyboard" style="font-size: 20px;"></i>
-                                    <span style="font-size: 12px;">Electric Piano</span>
+                                <button class="instrument-btn" data-instrument="guitar" onclick="setMidiInstrument('guitar')" style="padding: 12px 16px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg); color: var(--text); cursor: pointer; transition: all 0.3s; display: flex; flex-direction: column; align-items: center; gap: 6px;">
+                                    <i class="fas fa-guitar" style="font-size: 20px;"></i>
+                                    <span style="font-size: 12px;">Acoustic Guitar</span>
                                 </button>
-                                <button class="instrument-btn" data-instrument="organ" onclick="setMidiInstrument('organ')" style="padding: 12px 16px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg); color: var(--text); cursor: pointer; transition: all 0.3s; display: flex; flex-direction: column; align-items: center; gap: 6px;">
-                                    <i class="fas fa-church" style="font-size: 20px;"></i>
-                                    <span style="font-size: 12px;">Organ</span>
-                                </button>
-                                <button class="instrument-btn" data-instrument="strings" onclick="setMidiInstrument('strings')" style="padding: 12px 16px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg); color: var(--text); cursor: pointer; transition: all 0.3s; display: flex; flex-direction: column; align-items: center; gap: 6px;">
+                                <button class="instrument-btn" data-instrument="violin" onclick="setMidiInstrument('violin')" style="padding: 12px 16px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg); color: var(--text); cursor: pointer; transition: all 0.3s; display: flex; flex-direction: column; align-items: center; gap: 6px;">
                                     <i class="fas fa-scroll" style="font-size: 20px;"></i>
-                                    <span style="font-size: 12px;">Strings</span>
+                                    <span style="font-size: 12px;">Violin</span>
                                 </button>
-                                <button class="instrument-btn" data-instrument="synth_lead" onclick="setMidiInstrument('synth_lead')" style="padding: 12px 16px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg); color: var(--text); cursor: pointer; transition: all 0.3s; display: flex; flex-direction: column; align-items: center; gap: 6px;">
-                                    <i class="fas fa-wave-square" style="font-size: 20px;"></i>
-                                    <span style="font-size: 12px;">Synth Lead</span>
+                                <button class="instrument-btn" data-instrument="cello" onclick="setMidiInstrument('cello')" style="padding: 12px 16px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg); color: var(--text); cursor: pointer; transition: all 0.3s; display: flex; flex-direction: column; align-items: center; gap: 6px;">
+                                    <i class="fas fa-scroll" style="font-size: 20px;"></i>
+                                    <span style="font-size: 12px;">Cello</span>
+                                </button>
+                                <button class="instrument-btn" data-instrument="flute" onclick="setMidiInstrument('flute')" style="padding: 12px 16px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg); color: var(--text); cursor: pointer; transition: all 0.3s; display: flex; flex-direction: column; align-items: center; gap: 6px;">
+                                    <i class="fas fa-wind" style="font-size: 20px;"></i>
+                                    <span style="font-size: 12px;">Flute</span>
+                                </button>
+                                <button class="instrument-btn" data-instrument="trumpet" onclick="setMidiInstrument('trumpet')" style="padding: 12px 16px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg); color: var(--text); cursor: pointer; transition: all 0.3s; display: flex; flex-direction: column; align-items: center; gap: 6px;">
+                                    <i class="fas fa-bullhorn" style="font-size: 20px;"></i>
+                                    <span style="font-size: 12px;">Trumpet</span>
                                 </button>
                                 <button class="instrument-btn" data-instrument="bass" onclick="setMidiInstrument('bass')" style="padding: 12px 16px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg); color: var(--text); cursor: pointer; transition: all 0.3s; display: flex; flex-direction: column; align-items: center; gap: 6px;">
                                     <i class="fas fa-drum" style="font-size: 20px;"></i>
-                                    <span style="font-size: 12px;">Bass</span>
+                                    <span style="font-size: 12px;">Electric Bass</span>
                                 </button>
-                                <button class="instrument-btn" data-instrument="pluck" onclick="setMidiInstrument('pluck')" style="padding: 12px 16px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg); color: var(--text); cursor: pointer; transition: all 0.3s; display: flex; flex-direction: column; align-items: center; gap: 6px;">
-                                    <i class="fas fa-guitar" style="font-size: 20px;"></i>
-                                    <span style="font-size: 12px;">Pluck</span>
-                                </button>
-                                <button class="instrument-btn" data-instrument="bells" onclick="setMidiInstrument('bells')" style="padding: 12px 16px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg); color: var(--text); cursor: pointer; transition: all 0.3s; display: flex; flex-direction: column; align-items: center; gap: 6px;">
-                                    <i class="fas fa-bell" style="font-size: 20px;"></i>
-                                    <span style="font-size: 12px;">Bells</span>
+                                <button class="instrument-btn" data-instrument="organ" onclick="setMidiInstrument('organ')" style="padding: 12px 16px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg); color: var(--text); cursor: pointer; transition: all 0.3s; display: flex; flex-direction: column; align-items: center; gap: 6px;">
+                                    <i class="fas fa-church" style="font-size: 20px;"></i>
+                                    <span style="font-size: 12px;">Church Organ</span>
                                 </button>
                             </div>
                             <div id="instrumentLoadingStatus" style="margin-top: 12px; font-size: 12px; color: var(--text-muted); display: none;">
-                                <i class="fas fa-spinner fa-spin"></i> Loading instrument...
+                                <i class="fas fa-spinner fa-spin"></i> Loading instrument samples...
                             </div>
                         </div>
                     </div>
@@ -3009,7 +3057,7 @@
     </div>
 
     <!-- Toast Notification -->
-    <div class="toast" id="toast"></div>
+    {% include 'dashboard/_toast.html' %}
 
     <script>
         // ==================== STATE ====================
@@ -3963,10 +4011,10 @@
                 '<div class="lyrics-header">' +
                 '<div class="lyrics-title"><i class="fas fa-music"></i> Lyrics</div>' +
                 '<div class="lyrics-controls">' +
-                '<span id="lyricsLanguageDisplay" style="font-size: 12px; color: #888;"></span>' +
+                '<span id="lyricsLanguageDisplay" class="lyrics-language-badge"></span>' +
                 '</div>' +
                 '</div>' +
-                '<div id="lyricsContent"></div>' +
+                '<div id="playerLyricsContent"></div>' +
                 '</div>' +
                 
                 '<div class="stems-container" id="stemsContainer"></div>' +
@@ -4545,7 +4593,7 @@
         }
         
         function displayLyrics(data) {
-            var content = document.getElementById('lyricsContent');
+            var content = document.getElementById('playerLyricsContent');
             var langDisplay = document.getElementById('lyricsLanguageDisplay');
             
             langDisplay.textContent = 'Language: ' + (data.language || 'Unknown').toUpperCase();
@@ -5237,7 +5285,7 @@
             
             var a = document.createElement('a');
             a.href = '/download/' + jobId + '/' + stemName;
-            a.download = displayName + '_' + stemName + '.wav';
+            a.download = displayName + '_' + stemName + '.mp3';
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
@@ -5835,17 +5883,103 @@
         let toneLoaded = false;
         let scheduledEvents = [];
         
-        // Simple instrument presets using Tone.js synths
+        // Realistic instrument presets using Tone.js Samplers with real samples
+        // Samples from nbrosowsky/tonejs-instruments (GitHub)
+        const SAMPLE_BASE_URL = 'https://nbrosowsky.github.io/tonejs-instruments/samples/';
+        
         const instrumentPresets = {
-            'piano': { name: 'Piano', type: 'poly' },
-            'electric_piano': { name: 'Electric Piano', type: 'fm' },
-            'organ': { name: 'Organ', type: 'am' },
-            'strings': { name: 'Strings', type: 'poly' },
-            'synth_lead': { name: 'Synth Lead', type: 'mono' },
-            'bass': { name: 'Bass', type: 'mono' },
-            'pluck': { name: 'Pluck', type: 'pluck' },
-            'bells': { name: 'Bells', type: 'metal' }
+            'piano': { 
+                name: 'Grand Piano', 
+                type: 'sampler',
+                samples: {
+                    'A0': 'A0.mp3', 'C1': 'C1.mp3', 'D#1': 'Ds1.mp3', 'F#1': 'Fs1.mp3',
+                    'A1': 'A1.mp3', 'C2': 'C2.mp3', 'D#2': 'Ds2.mp3', 'F#2': 'Fs2.mp3',
+                    'A2': 'A2.mp3', 'C3': 'C3.mp3', 'D#3': 'Ds3.mp3', 'F#3': 'Fs3.mp3',
+                    'A3': 'A3.mp3', 'C4': 'C4.mp3', 'D#4': 'Ds4.mp3', 'F#4': 'Fs4.mp3',
+                    'A4': 'A4.mp3', 'C5': 'C5.mp3', 'D#5': 'Ds5.mp3', 'F#5': 'Fs5.mp3',
+                    'A5': 'A5.mp3', 'C6': 'C6.mp3', 'D#6': 'Ds6.mp3', 'F#6': 'Fs6.mp3',
+                    'A6': 'A6.mp3', 'C7': 'C7.mp3', 'D#7': 'Ds7.mp3', 'F#7': 'Fs7.mp3',
+                    'A7': 'A7.mp3', 'C8': 'C8.mp3'
+                },
+                folder: 'piano/'
+            },
+            'guitar': { 
+                name: 'Acoustic Guitar', 
+                type: 'sampler',
+                samples: {
+                    'E2': 'E2.mp3', 'F#2': 'Fs2.mp3', 'A2': 'A2.mp3', 'C3': 'C3.mp3',
+                    'D#3': 'Ds3.mp3', 'F#3': 'Fs3.mp3', 'A3': 'A3.mp3', 'C4': 'C4.mp3',
+                    'D#4': 'Ds4.mp3', 'F#4': 'Fs4.mp3', 'A4': 'A4.mp3', 'C5': 'C5.mp3',
+                    'D#5': 'Ds5.mp3', 'F#5': 'Fs5.mp3', 'A5': 'A5.mp3'
+                },
+                folder: 'guitar-acoustic/'
+            },
+            'violin': { 
+                name: 'Violin', 
+                type: 'sampler',
+                samples: {
+                    'A3': 'A3.mp3', 'A4': 'A4.mp3', 'A5': 'A5.mp3', 'A6': 'A6.mp3',
+                    'C4': 'C4.mp3', 'C5': 'C5.mp3', 'C6': 'C6.mp3', 'C7': 'C7.mp3',
+                    'E4': 'E4.mp3', 'E5': 'E5.mp3', 'E6': 'E6.mp3',
+                    'G4': 'G4.mp3', 'G5': 'G5.mp3', 'G6': 'G6.mp3'
+                },
+                folder: 'violin/'
+            },
+            'cello': { 
+                name: 'Cello', 
+                type: 'sampler',
+                samples: {
+                    'C2': 'C2.mp3', 'D#2': 'Ds2.mp3', 'F#2': 'Fs2.mp3', 'A2': 'A2.mp3',
+                    'C3': 'C3.mp3', 'D#3': 'Ds3.mp3', 'F#3': 'Fs3.mp3', 'A3': 'A3.mp3',
+                    'C4': 'C4.mp3', 'D#4': 'Ds4.mp3', 'F#4': 'Fs4.mp3', 'A4': 'A4.mp3',
+                    'C5': 'C5.mp3', 'D#5': 'Ds5.mp3', 'F#5': 'Fs5.mp3'
+                },
+                folder: 'cello/'
+            },
+            'flute': { 
+                name: 'Flute', 
+                type: 'sampler',
+                samples: {
+                    'A4': 'A4.mp3', 'C4': 'C4.mp3', 'C5': 'C5.mp3', 'C6': 'C6.mp3',
+                    'E4': 'E4.mp3', 'E5': 'E5.mp3', 'A5': 'A5.mp3', 'A6': 'A6.mp3'
+                },
+                folder: 'flute/'
+            },
+            'trumpet': { 
+                name: 'Trumpet', 
+                type: 'sampler',
+                samples: {
+                    'C4': 'C4.mp3', 'D#4': 'Ds4.mp3', 'F#4': 'Fs4.mp3', 'A4': 'A4.mp3',
+                    'C5': 'C5.mp3', 'D#5': 'Ds5.mp3', 'F#5': 'Fs5.mp3', 'A5': 'A5.mp3',
+                    'C6': 'C6.mp3'
+                },
+                folder: 'trumpet/'
+            },
+            'bass': { 
+                name: 'Electric Bass', 
+                type: 'sampler',
+                samples: {
+                    'A#1': 'As1.mp3', 'A#2': 'As2.mp3', 'A#3': 'As3.mp3',
+                    'C#1': 'Cs1.mp3', 'C#2': 'Cs2.mp3', 'C#3': 'Cs3.mp3',
+                    'E1': 'E1.mp3', 'E2': 'E2.mp3', 'E3': 'E3.mp3',
+                    'G1': 'G1.mp3', 'G2': 'G2.mp3', 'G3': 'G3.mp3'
+                },
+                folder: 'bass-electric/'
+            },
+            'organ': { 
+                name: 'Church Organ', 
+                type: 'sampler',
+                samples: {
+                    'C3': 'C3.mp3', 'D#3': 'Ds3.mp3', 'F#3': 'Fs3.mp3', 'A3': 'A3.mp3',
+                    'C4': 'C4.mp3', 'D#4': 'Ds4.mp3', 'F#4': 'Fs4.mp3', 'A4': 'A4.mp3',
+                    'C5': 'C5.mp3', 'D#5': 'Ds5.mp3', 'F#5': 'Fs5.mp3', 'A5': 'A5.mp3'
+                },
+                folder: 'organ/'
+            }
         };
+        
+        let samplerLoaded = false;
+        let currentSampler = null;
         
         // Load Tone.js dynamically
         async function loadToneJS() {
@@ -5867,37 +6001,89 @@
             });
         }
         
-        // Create synth based on instrument type
-        function createSynth(type) {
+        // Create a sampler with real instrument samples
+        async function createSampler(instrumentKey) {
+            const preset = instrumentPresets[instrumentKey];
+            if (!preset) {
+                console.error('Unknown instrument:', instrumentKey);
+                return createFallbackSynth();
+            }
+            
+            // Show loading status
+            const statusEl = document.getElementById('instrumentLoadingStatus');
+            if (statusEl) {
+                statusEl.style.display = 'block';
+                statusEl.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading ' + preset.name + ' samples...';
+            }
+            
+            // Dispose old sampler
+            if (currentSampler) {
+                currentSampler.dispose();
+                currentSampler = null;
+            }
             if (toneSynth) {
                 toneSynth.dispose();
+                toneSynth = null;
             }
             
-            switch(type) {
-                case 'fm':
-                    toneSynth = new Tone.PolySynth(Tone.FMSynth).toDestination();
-                    break;
-                case 'am':
-                    toneSynth = new Tone.PolySynth(Tone.AMSynth).toDestination();
-                    break;
-                case 'mono':
-                    toneSynth = new Tone.MonoSynth().toDestination();
-                    break;
-                case 'pluck':
-                    toneSynth = new Tone.PluckSynth().toDestination();
-                    break;
-                case 'metal':
-                    toneSynth = new Tone.PolySynth(Tone.MetalSynth).toDestination();
-                    break;
-                default:
-                    toneSynth = new Tone.PolySynth(Tone.Synth, {
-                        oscillator: { type: 'triangle' },
-                        envelope: { attack: 0.02, decay: 0.1, sustain: 0.3, release: 0.8 }
+            samplerLoaded = false;
+            
+            // Build sample URLs
+            const sampleUrls = {};
+            for (const [note, file] of Object.entries(preset.samples)) {
+                sampleUrls[note] = SAMPLE_BASE_URL + preset.folder + file;
+            }
+            
+            return new Promise((resolve, reject) => {
+                try {
+                    currentSampler = new Tone.Sampler({
+                        urls: sampleUrls,
+                        release: 1,
+                        onload: () => {
+                            console.log(preset.name + ' samples loaded');
+                            samplerLoaded = true;
+                            if (statusEl) statusEl.style.display = 'none';
+                            currentSampler.volume.value = Tone.gainToDb(midiVolume);
+                            toneSynth = currentSampler; // Use sampler as the synth
+                            resolve(currentSampler);
+                        },
+                        onerror: (err) => {
+                            console.error('Failed to load samples:', err);
+                            if (statusEl) statusEl.style.display = 'none';
+                            // Fallback to synth
+                            toneSynth = createFallbackSynth();
+                            samplerLoaded = true;
+                            resolve(toneSynth);
+                        }
                     }).toDestination();
-            }
-            
-            toneSynth.volume.value = Tone.gainToDb(midiVolume);
-            return toneSynth;
+                    
+                    // Timeout fallback
+                    setTimeout(() => {
+                        if (!samplerLoaded) {
+                            console.warn('Sample loading timeout, using fallback synth');
+                            if (statusEl) statusEl.style.display = 'none';
+                            toneSynth = createFallbackSynth();
+                            samplerLoaded = true;
+                            resolve(toneSynth);
+                        }
+                    }, 10000);
+                    
+                } catch (err) {
+                    console.error('Sampler creation error:', err);
+                    if (statusEl) statusEl.style.display = 'none';
+                    toneSynth = createFallbackSynth();
+                    samplerLoaded = true;
+                    resolve(toneSynth);
+                }
+            });
+        }
+        
+        // Fallback synth when samples fail to load
+        function createFallbackSynth() {
+            return new Tone.PolySynth(Tone.Synth, {
+                oscillator: { type: 'triangle' },
+                envelope: { attack: 0.02, decay: 0.1, sustain: 0.3, release: 0.8 }
+            }).toDestination();
         }
         
         // Test sound function
@@ -5909,15 +6095,15 @@
                 await Tone.start();
                 console.log('Tone.js started, state:', Tone.context.state);
                 
-                if (!toneSynth) {
-                    createSynth('poly');
+                if (!toneSynth || !samplerLoaded) {
+                    await createSampler(currentInstrument);
                 }
                 
                 // Play a simple chord
                 const now = Tone.now();
                 toneSynth.triggerAttackRelease('C4', '8n', now);
-                toneSynth.triggerAttackRelease('E4', '8n', now);
-                toneSynth.triggerAttackRelease('G4', '8n', now);
+                toneSynth.triggerAttackRelease('E4', '8n', now + 0.05);
+                toneSynth.triggerAttackRelease('G4', '8n', now + 0.1);
                 
                 showToast('Test sound played! 🎵', 'success');
             } catch (error) {
@@ -5991,9 +6177,8 @@
                     document.getElementById('midiPlayerCurrentTime').textContent = '0:00';
                     document.getElementById('midiPlayerProgressFill').style.width = '0%';
                     
-                    // Create synth
-                    const preset = instrumentPresets[currentInstrument];
-                    createSynth(preset?.type || 'poly');
+                    // Create sampler with real instrument samples
+                    await createSampler(currentInstrument);
                     
                     showToast('MIDI loaded successfully', 'success');
                 } else {
@@ -6027,14 +6212,14 @@
             if (preset) {
                 document.getElementById('midiPlayerInstrument').textContent = preset.name;
                 
-                // Stop current playback and recreate synth
+                // Stop current playback and load new instrument samples
                 if (midiPlaying) {
                     pauseMidiPlayer();
                 }
                 
                 if (toneLoaded) {
-                    createSynth(preset.type);
-                    showToast(preset.name + ' selected', 'success');
+                    await createSampler(type);
+                    showToast(preset.name + ' loaded', 'success');
                 }
             }
         }
@@ -6070,6 +6255,7 @@
             console.log('playMidiPlayer called');
             console.log('  midiNotes:', midiNotes?.length);
             console.log('  toneSynth:', !!toneSynth);
+            console.log('  samplerLoaded:', samplerLoaded);
             console.log('  Tone state:', Tone.context.state);
             
             if (!midiNotes || midiNotes.length === 0) {
@@ -6077,9 +6263,9 @@
                 return;
             }
             
-            if (!toneSynth) {
-                const preset = instrumentPresets[currentInstrument];
-                createSynth(preset?.type || 'poly');
+            if (!toneSynth || !samplerLoaded) {
+                showToast('Instrument samples still loading...', 'info');
+                return;
             }
             
             midiPlaying = true;
@@ -6235,5 +6421,16 @@
             updateThemeIcon(currentTheme);
         });
     </script>
+    
+    <!-- Modular Dashboard JavaScript -->
+    <script src="{{ url_for('static', filename='js/dashboard/utils.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/dashboard/toast.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/dashboard/theme.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/dashboard/navigation.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/dashboard/modal.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/dashboard/upload.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/dashboard/player.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/dashboard/midi-player.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/dashboard/main.js') }}"></script>
 </body>
 </html>

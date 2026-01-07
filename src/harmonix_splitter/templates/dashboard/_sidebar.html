@@ -1,0 +1,65 @@
+{# Sidebar Navigation Partial #}
+<div class="sidebar" id="sidebar">
+    <div class="nav-section">
+        <div class="nav-title">Studio</div>
+        <div class="nav-item active" data-section="stems">
+            <i class="fas fa-layer-group"></i>
+            <span>Audio to Stems</span>
+        </div>
+        <div class="nav-item" data-section="midi-converter">
+            <i class="fas fa-music"></i>
+            <span>Audio to MIDI</span>
+        </div>
+    </div>
+    
+    <div class="nav-section">
+        <div class="nav-title">Tools</div>
+        <div class="nav-item" data-section="tuner">
+            <i class="fas fa-sliders-h"></i>
+            <span>Instrument Tuner</span>
+        </div>
+        <div class="nav-item" data-section="transposer">
+            <i class="fas fa-exchange-alt"></i>
+            <span>Chord Transposer</span>
+        </div>
+    </div>
+    
+    <div class="nav-section">
+        <div class="nav-title">Pages</div>
+        <div class="nav-item" data-section="account">
+            <i class="fas fa-user-circle"></i>
+            <span>Account</span>
+        </div>
+        <div class="nav-item" data-section="docs">
+            <i class="fas fa-book"></i>
+            <span>Documentation</span>
+        </div>
+        <div class="nav-item" data-section="tutorials">
+            <i class="fas fa-graduation-cap"></i>
+            <span>Tutorials</span>
+        </div>
+    </div>
+    
+    <!-- Plan Usage Info -->
+    <div class="nav-section plan-usage" style="margin-top: auto; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.1);">
+        <div class="plan-info">
+            <div class="plan-header">
+                <span class="plan-name">{{ current_user.plan|title if current_user and current_user.plan else 'Free' }} Plan</span>
+                {% if current_user and current_user.plan != 'pro' %}
+                <a href="/pricing" class="upgrade-link">Upgrade</a>
+                {% endif %}
+            </div>
+            <div class="usage-bar-container">
+                <div class="usage-bar">
+                    <div class="usage-fill" style="width: {{ (current_user.tracks_this_month / current_user.monthly_limit * 100) if current_user and current_user.monthly_limit else 0 }}%"></div>
+                </div>
+                <span class="usage-text">
+                    {{ current_user.tracks_this_month if current_user else 0 }}/{{ current_user.monthly_limit if current_user else 5 }} tracks
+                </span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Sidebar Overlay for Mobile -->
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>

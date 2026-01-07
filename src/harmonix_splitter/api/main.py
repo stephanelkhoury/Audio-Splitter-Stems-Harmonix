@@ -167,7 +167,7 @@ async def process_separation_job(
         for name, stem in stems.items():
             stem_info = {
                 "name": name,
-                "url": f"/api/stems/{job_id}/{name}.wav",
+                "url": f"/api/stems/{job_id}/{name}.mp3",
                 "duration": len(stem.audio[0]) / stem.sample_rate,
                 "confidence": stem.confidence,
                 "metadata": stem.metadata or {}
@@ -379,16 +379,24 @@ async def download_stem(job_id: str, stem_name: str):
     
     Args:
         job_id: Job identifier
-        stem_name: Stem filename (e.g., vocals.wav)
+        stem_name: Stem filename (e.g., vocals.mp3)
     """
     stem_path = Path(settings.output_dir) / job_id / stem_name
     
     if not stem_path.exists():
         raise HTTPException(status_code=404, detail="Stem file not found")
     
+    # Determine media type based on extension
+    if stem_name.endswith('.mp3'):
+        media_type = "audio/mpeg"
+    elif stem_name.endswith('.wav'):
+        media_type = "audio/wav"
+    else:
+        media_type = "audio/mpeg"
+    
     return FileResponse(
         stem_path,
-        media_type="audio/wav",
+        media_type=media_type,
         filename=stem_name
     )
 

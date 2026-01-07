@@ -259,7 +259,7 @@ class HarmonixOrchestrator:
             use_gpu=self.settings.use_gpu,
             # Quality preservation settings
             preserve_sample_rate=True,  # Keep native sample rate
-            output_format="wav",        # Lossless WAV output
+            output_format="mp3",        # MP3 output for storage efficiency
             bit_depth=24,               # 24-bit studio quality
         )
         

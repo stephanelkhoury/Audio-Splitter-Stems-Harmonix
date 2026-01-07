@@ -1,0 +1,13 @@
+/**
+ * Dashboard - Combined CSS Import File
+ * This file imports all dashboard CSS modules
+ */
+
+/* Import all dashboard CSS modules */
+@import url('variables.css');
+@import url('base.css');
+@import url('sidebar.css');
+@import url('upload.css');
+@import url('player.css');
+@import url('midi.css');
+@import url('modal.css');

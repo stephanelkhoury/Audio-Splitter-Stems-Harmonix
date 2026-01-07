@@ -21,6 +21,20 @@
         })();
     </script>
     
+    <!-- Security: DevTools Deterrent -->
+    <script>
+        (function() {
+            document.addEventListener('contextmenu', function(e) { e.preventDefault(); });
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'F12' || 
+                    ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'I' || e.key === 'J' || e.key === 'C')) ||
+                    ((e.ctrlKey || e.metaKey) && (e.key === 'u' || e.key === 's'))) {
+                    e.preventDefault(); return false;
+                }
+            });
+        })();
+    </script>
+    
     <!-- Embed mode styles -->
     <style>
         html.embedded-mode .navbar,

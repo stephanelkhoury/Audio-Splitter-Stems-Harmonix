@@ -647,7 +647,7 @@
             <div class="option-group">
                 <label for="outputName"><i class="fas fa-folder"></i> Output Folder & Track Name (Optional)</label>
                 <input type="text" id="outputName" placeholder="Leave empty to use original filename">
-                <p class="option-hint"><i class="fas fa-info-circle"></i> Example: "MySong" → MySong_vocals.wav, MySong_bass.wav, etc.</p>
+                <p class="option-hint"><i class="fas fa-info-circle"></i> Example: "MySong" → MySong_vocals.mp3, MySong_bass.mp3, etc.</p>
             </div>
 
             <div class="option-group" id="instrumentsSection" style="display: none;">
@@ -938,7 +938,7 @@
     function downloadStem(url, name) {
         const a = document.createElement('a');
         a.href = url;
-        a.download = name + '.wav';
+        a.download = name + '.mp3';
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);

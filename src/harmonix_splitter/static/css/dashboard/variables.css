@@ -1,0 +1,40 @@
+/* Dashboard CSS Variables */
+:root {
+    --primary: #7c3aed;
+    --primary-light: #a78bfa;
+    --primary-dark: #6d28d9;
+    --secondary: #06b6d4;
+    --dark: #0a0a0f;
+    --darker: #050508;
+    --bg: #0a0a0f;
+    --card: #12121a;
+    --light: #f8f9fa;
+    --success: #10b981;
+    --danger: #ef4444;
+    --warning: #f59e0b;
+    --border: rgba(255, 255, 255, 0.1);
+    --text-primary: #ffffff;
+    --text-muted: #a1a1aa;
+    --text-dim: #71717a;
+    
+    /* Sidebar */
+    --sidebar-width: 260px;
+    --navbar-height: 70px;
+}
+
+/* Light Theme Override */
+[data-theme="light"] {
+    --dark: #ffffff;
+    --darker: #f1f5f9;
+    --bg: #f1f5f9;
+    --card: #ffffff;
+    --border: rgba(0, 0, 0, 0.1);
+    --text-primary: #0f172a;
+    --text-muted: #475569;
+    --text-dim: #64748b;
+}
+
+[data-theme="light"] body {
+    background: var(--bg);
+    color: var(--text-primary);
+}

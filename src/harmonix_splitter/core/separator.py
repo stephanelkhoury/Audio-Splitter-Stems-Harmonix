@@ -539,7 +539,7 @@ class HarmonixSeparator:
         
         for name, stem in stems.items():
             # Determine output format based on config
-            output_format = getattr(self.config, 'output_format', 'wav')
+            output_format = getattr(self.config, 'output_format', 'mp3')
             bit_depth = getattr(self.config, 'bit_depth', 24)
             mp3_bitrate = getattr(self.config, 'mp3_bitrate', 320)
             

@@ -542,6 +542,10 @@
 .icon-btn {
     width: 38px;
     height: 38px;
+    min-width: 38px;
+    min-height: 38px;
+    max-width: 38px;
+    max-height: 38px;
     border-radius: 50%;
     background: rgba(255, 255, 255, 0.1);
     border: none;
@@ -551,6 +555,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    flex-shrink: 0;
+    aspect-ratio: 1 / 1;
 }
 
 .icon-btn:hover {
@@ -773,11 +779,23 @@
     gap: 10px;
 }
 
+.stem-controls .icon-btn {
+    width: 38px;
+    height: 38px;
+    min-width: 38px;
+    min-height: 38px;
+    max-width: 38px;
+    max-height: 38px;
+    flex-shrink: 0;
+}
+
 /* Mute/Solo Buttons */
 .mute-btn,
 .solo-btn {
     width: 32px;
     height: 32px;
+    min-width: 32px;
+    min-height: 32px;
     border-radius: 6px;
     background: rgba(255, 255, 255, 0.1);
     border: none;
@@ -786,6 +804,7 @@
     font-size: 11px;
     font-weight: bold;
     transition: all 0.2s;
+    flex-shrink: 0;
 }
 
 .mute-btn:hover,
@@ -1498,18 +1517,31 @@
     }
 
     .master-controls {
-        display: grid;
-        grid-template-columns: repeat(5, 1fr);
-        gap: 8px;
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        align-items: center;
+        gap: 10px;
         padding: 15px 10px;
+    }
+
+    .master-controls .icon-btn {
+        width: 40px;
+        height: 40px;
+        min-width: 40px;
+        min-height: 40px;
+        max-width: 40px;
+        max-height: 40px;
     }
 
     .play-btn {
         width: 50px;
         height: 50px;
+        min-width: 50px;
+        min-height: 50px;
+        max-width: 50px;
+        max-height: 50px;
         font-size: 18px;
-        grid-column: 3;
-        justify-self: center;
     }
 
     .stats-grid {
@@ -1537,10 +1569,21 @@
 
     .stem-controls {
         width: 100%;
+        justify-content: space-between;
+    }
+
+    .stem-controls .icon-btn {
+        width: 36px;
+        height: 36px;
+        min-width: 36px;
+        min-height: 36px;
+        max-width: 36px;
+        max-height: 36px;
     }
 
     .volume-slider {
         flex: 1;
+        min-width: 50px;
     }
 
     .waveform-container {
@@ -1650,18 +1693,47 @@
     .play-btn {
         width: 45px;
         height: 45px;
+        min-width: 45px;
+        min-height: 45px;
+        max-width: 45px;
+        max-height: 45px;
         font-size: 16px;
+    }
+
+    .master-controls .icon-btn {
+        width: 36px;
+        height: 36px;
+        min-width: 36px;
+        min-height: 36px;
+        max-width: 36px;
+        max-height: 36px;
     }
 
     .stem-name {
         font-size: 13px;
+        flex-wrap: wrap;
     }
 
     .mute-btn,
     .solo-btn {
         width: 28px;
         height: 28px;
+        min-width: 28px;
+        min-height: 28px;
         font-size: 10px;
+    }
+
+    .stem-controls .icon-btn {
+        width: 32px;
+        height: 32px;
+        min-width: 32px;
+        min-height: 32px;
+        max-width: 32px;
+        max-height: 32px;
+    }
+
+    .stem-controls .icon-btn i {
+        font-size: 11px;
     }
 
     .lyrics-line {

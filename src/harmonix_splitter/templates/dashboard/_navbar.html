@@ -1,0 +1,105 @@
+{# Navbar Partial #}
+<nav class="dashboard-navbar">
+    <a href="/" class="navbar-logo">
+        <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Harmonix" style="height: 32px; width: auto;">
+        <span class="navbar-logo-text">Harmonix</span>
+    </a>
+    
+    <div class="navbar-nav">
+        <!-- Product Dropdown -->
+        <div class="nav-dropdown">
+            <a class="nav-link nav-dropdown-trigger">
+                Product <i class="fas fa-chevron-down"></i>
+            </a>
+            <div class="nav-dropdown-menu">
+                <a href="/features" class="nav-dropdown-item">
+                    <i class="fas fa-magic"></i> Features
+                </a>
+                <a href="/pricing" class="nav-dropdown-item">
+                    <i class="fas fa-tag"></i> Pricing
+                </a>
+            </div>
+        </div>
+        
+        <!-- Resources Dropdown -->
+        <div class="nav-dropdown">
+            <a class="nav-link nav-dropdown-trigger">
+                Resources <i class="fas fa-chevron-down"></i>
+            </a>
+            <div class="nav-dropdown-menu">
+                <a href="/docs" class="nav-dropdown-item">
+                    <i class="fas fa-book"></i> Documentation
+                </a>
+                <a href="/tutorials" class="nav-dropdown-item">
+                    <i class="fas fa-graduation-cap"></i> Tutorials
+                </a>
+                <a href="/community" class="nav-dropdown-item">
+                    <i class="fas fa-users"></i> Community
+                </a>
+            </div>
+        </div>
+        
+        <!-- Musician Tools -->
+        <div class="nav-dropdown">
+            <a class="nav-link nav-dropdown-trigger">
+                <i class="fas fa-guitar"></i> Tools <i class="fas fa-chevron-down"></i>
+            </a>
+            <div class="nav-dropdown-menu">
+                <a href="/tuner" class="nav-dropdown-item">
+                    <i class="fas fa-sliders-h"></i> Instrument Tuner
+                </a>
+                <a href="/transposer" class="nav-dropdown-item">
+                    <i class="fas fa-exchange-alt"></i> Chord Transposer
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="navbar-actions">
+        <!-- Theme Toggle -->
+        <button class="theme-toggle" id="theme-toggle" onclick="DashboardTheme.toggle()" aria-label="Toggle theme">
+            <i class="fas fa-sun"></i>
+        </button>
+        
+        {% if current_user %}
+        <!-- User Menu -->
+        <div class="nav-dropdown">
+            <button class="user-menu nav-dropdown-trigger">
+                <div class="user-avatar">
+                    {% if current_user.avatar %}
+                    <img src="{{ current_user.avatar }}" alt="{{ current_user.name }}">
+                    {% else %}
+                    {{ current_user.name[0]|upper if current_user.name else 'U' }}
+                    {% endif %}
+                </div>
+                <span>{{ current_user.name or 'User' }}</span>
+                <i class="fas fa-chevron-down" style="font-size: 10px;"></i>
+            </button>
+            <div class="nav-dropdown-menu" style="right: 0; left: auto;">
+                <a href="/account" class="nav-dropdown-item">
+                    <i class="fas fa-user"></i> Account
+                </a>
+                {% if current_user.role == 'admin' %}
+                <a href="/admin" class="nav-dropdown-item">
+                    <i class="fas fa-cog"></i> Admin Panel
+                </a>
+                {% endif %}
+                <div class="divider"></div>
+                <a href="/logout" class="nav-dropdown-item">
+                    <i class="fas fa-sign-out-alt"></i> Sign Out
+                </a>
+            </div>
+        </div>
+        {% else %}
+        <a href="/login" class="btn btn-ghost">Sign In</a>
+        <a href="/register" class="btn btn-primary">Get Started</a>
+        {% endif %}
+        
+        <!-- Mobile Menu Toggle -->
+        <button class="mobile-menu-toggle" onclick="toggleSidebar()" aria-label="Open menu">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
+    </div>
+</nav>
