@@ -1,6 +1,5 @@
-# Harmonix Audio Splitter - Railway Lite Dockerfile
-# Dashboard + API only (~500MB instead of 4.5GB)
-# AI processing handled by external GPU service (RunPod/Modal/Replicate)
+# Harmonix Audio Splitter - Railway Dockerfile
+# Dashboard only deployment
 
 FROM python:3.11-slim-bookworm
 
@@ -9,7 +8,9 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PIP_NO_CACHE_DIR=1 \
     PORT=5001
 
-# Install minimal runtime dependencies
+WORKDIR /app
+
+# Install system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ffmpeg \
     libmagic1 \
@@ -18,13 +19,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/* \
     && apt-get clean
 
-WORKDIR /app
-
-# Install lite requirements (no ML libraries)
+# Install Python dependencies
 COPY requirements-lite.txt .
 RUN pip install --no-cache-dir -r requirements-lite.txt
 
-# Copy application code
+# Copy application
 COPY src/ ./src/
 COPY config/ ./config/
 COPY data/users.json ./data/users.json
@@ -34,7 +33,8 @@ COPY pyproject.toml .
 # Create directories
 RUN mkdir -p data/uploads data/outputs data/temp logs
 
-EXPOSE ${PORT}
+EXPOSE 5001
 
-# Use simple python startup with explicit port
-CMD ["sh", "-c", "python run_dashboard.py"]
+# Explicit entry point - this overrides everything
+ENTRYPOINT ["python"]
+CMD ["run_dashboard.py"]

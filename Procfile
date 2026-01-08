@@ -1,2 +1,2 @@
-# Procfile for Heroku/Railway/Render deployment
+# Procfile for deployment
 web: python run_dashboard.py
