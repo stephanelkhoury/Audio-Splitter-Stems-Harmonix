@@ -1,0 +1,34 @@
+# Slim Docker Compose - Optimized for smaller image size
+services:
+  harmonix:
+    build:
+      context: .
+      dockerfile: Dockerfile.slim
+    container_name: harmonix-app
+    ports:
+      - "5001:5001"
+      - "8000:8000"
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+      - ./models:/app/models
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - TORCH_DEVICE=cpu
+    depends_on:
+      - redis
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: harmonix-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes --maxmemory 128mb
+    restart: unless-stopped
+
+volumes:
+  redis-data:

@@ -2729,12 +2729,15 @@ if __name__ == '__main__':
     # Scan for existing outputs on startup
     scan_existing_outputs()
     
+    # Get port from environment (Railway uses PORT env var)
+    port = int(os.environ.get('PORT', 5001))
+    
     # Run the app
     print("=" * 60)
     print("  Harmonix Audio Splitter - Web Dashboard")
     print("=" * 60)
-    print(f"\n  🌐 Open your browser to: http://localhost:5001")
+    print(f"\n  🌐 Open your browser to: http://localhost:{port}")
     print(f"\n  Press Ctrl+C to stop the server\n")
     print("=" * 60)
     
-    app.run(debug=False, host='0.0.0.0', port=5001, threaded=True)
+    app.run(debug=False, host='0.0.0.0', port=port, threaded=True)

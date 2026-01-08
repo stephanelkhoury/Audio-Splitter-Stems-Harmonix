@@ -14,6 +14,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ffmpeg \
     libmagic1 \
     curl \
+    libsndfile1 \
     && rm -rf /var/lib/apt/lists/* \
     && apt-get clean
 
@@ -30,17 +31,10 @@ COPY data/users.json ./data/users.json
 COPY run_dashboard.py .
 COPY pyproject.toml .
 
-# Install app as package (no deps, already installed)
-RUN pip install --no-cache-dir -e . --no-deps 2>/dev/null || true
-
 # Create directories
 RUN mkdir -p data/uploads data/outputs data/temp logs
 
-# Health check endpoint
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:${PORT}/health || exit 1
-
 EXPOSE ${PORT}
 
-# Use gunicorn for production
-CMD ["sh", "-c", "gunicorn --bind 0.0.0.0:$PORT --workers 2 --threads 4 --timeout 120 'src.harmonix_splitter.dashboard:app'"]
+# Use simple python startup with explicit port
+CMD ["sh", "-c", "python run_dashboard.py"]

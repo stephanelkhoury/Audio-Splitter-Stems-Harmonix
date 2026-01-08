@@ -28,8 +28,11 @@ tqdm>=4.66.0
 click>=8.1.0
 rich>=13.0.0
 
-# Audio metadata only (no processing)
-mutagen>=1.47.0
+# Audio (required by dashboard for file handling)
+librosa>=0.10.0
+soundfile>=0.12.0
+numpy>=1.24.0
+scipy>=1.11.0
 
 # YAML config
 pyyaml>=6.0.0

@@ -442,49 +442,21 @@
 <!-- Team -->
 <section class="team-section">
     <div class="section-header">
-        <div class="section-badge"><i class="fas fa-user-friends"></i> Our Team</div>
-        <h2 style="font-size: 32px;">Meet the Team</h2>
-        <p>The people behind Harmonix</p>
+        <div class="section-badge"><i class="fas fa-user"></i> Creator</div>
+        <h2 style="font-size: 32px;">Meet the Founder</h2>
+        <p>The person behind Harmonix</p>
     </div>
-    <div class="team-grid">
-        <div class="team-card">
-            <div class="team-avatar"><i class="fas fa-user"></i></div>
-            <h3>Alex Chen</h3>
-            <div class="team-role">Founder & CEO</div>
-            <p>Former audio engineer turned AI enthusiast. Passionate about democratizing music production.</p>
-            <div class="team-social">
-                <a href="#"><i class="fab fa-twitter"></i></a>
-                <a href="#"><i class="fab fa-linkedin"></i></a>
+    <div class="team-grid" style="justify-content: center;">
+        <div class="team-card featured" style="max-width: 400px;">
+            <div class="team-avatar" style="width: 150px; height: 150px; overflow: hidden; border-radius: 50%; margin: 0 auto 20px;">
+                <img src="{{ url_for('static', filename='images/team-stephane.png') }}" alt="Stéphane El Khoury" style="width: 100%; height: 100%; object-fit: cover;">
             </div>
-        </div>
-        <div class="team-card">
-            <div class="team-avatar"><i class="fas fa-user"></i></div>
-            <h3>Sarah Martinez</h3>
-            <div class="team-role">CTO</div>
-            <p>ML researcher specializing in audio processing. PhD from Stanford in signal processing.</p>
-            <div class="team-social">
-                <a href="#"><i class="fab fa-twitter"></i></a>
-                <a href="#"><i class="fab fa-github"></i></a>
-            </div>
-        </div>
-        <div class="team-card">
-            <div class="team-avatar"><i class="fas fa-user"></i></div>
-            <h3>Marcus Johnson</h3>
-            <div class="team-role">Head of Product</div>
-            <p>10+ years in music tech. Former product lead at major streaming platforms.</p>
-            <div class="team-social">
-                <a href="#"><i class="fab fa-twitter"></i></a>
-                <a href="#"><i class="fab fa-linkedin"></i></a>
-            </div>
-        </div>
-        <div class="team-card">
-            <div class="team-avatar"><i class="fas fa-user"></i></div>
-            <h3>Emma Wilson</h3>
-            <div class="team-role">Lead Designer</div>
-            <p>UX designer with a background in music. Creates interfaces that musicians love.</p>
-            <div class="team-social">
-                <a href="#"><i class="fab fa-dribbble"></i></a>
-                <a href="#"><i class="fab fa-linkedin"></i></a>
+            <h3 style="font-size: 24px;">Stéphane El Khoury</h3>
+            <div class="team-role" style="font-size: 16px; color: var(--primary);">Founder, CEO & Developer</div>
+            <p style="margin-top: 15px;">Full-stack developer and audio enthusiast. Built Harmonix from the ground up to make professional-grade stem separation accessible to everyone—musicians, producers, and creators alike.</p>
+            <div class="team-social" style="margin-top: 20px;">
+                <a href="https://github.com/stephanelkhoury" target="_blank"><i class="fab fa-github"></i></a>
+                <a href="https://linkedin.com/in/stephanelkhoury" target="_blank"><i class="fab fa-linkedin"></i></a>
             </div>
         </div>
     </div>
