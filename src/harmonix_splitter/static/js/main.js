@@ -21,6 +21,9 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Initialize tooltips
     initializeTooltips();
+    
+    // Initialize FAQ accordions
+    initializeFAQ();
 });
 
 /**
@@ -110,6 +113,31 @@ function setupSmoothScroll() {
 function initializeTooltips() {
     // Tooltips are CSS-based using data-tooltip attribute
     // This function can be extended for more complex tooltip behavior
+}
+
+/**
+ * Initialize FAQ accordions
+ */
+function initializeFAQ() {
+    const faqItems = document.querySelectorAll('.faq-item');
+    
+    faqItems.forEach(item => {
+        const question = item.querySelector('.faq-question');
+        
+        if (question) {
+            question.addEventListener('click', () => {
+                // Close other items
+                faqItems.forEach(otherItem => {
+                    if (otherItem !== item && otherItem.classList.contains('active')) {
+                        otherItem.classList.remove('active');
+                    }
+                });
+                
+                // Toggle current item
+                item.classList.toggle('active');
+            });
+        }
+    });
 }
 
 /**

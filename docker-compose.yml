@@ -1,0 +1,87 @@
+services:
+  # Main Harmonix Application
+  harmonix:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: harmonix-app
+    ports:
+      - "5000:5000"   # Dashboard
+      - "8000:8000"   # API
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+      - ./models:/app/models
+      - harmonix-cache:/root/.cache
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - CUDA_VISIBLE_DEVICES=0
+      - TORCH_HOME=/app/models/weights
+    depends_on:
+      - redis
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Redis for job queue
+  redis:
+    image: redis:7-alpine
+    container_name: harmonix-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Celery Worker (for async processing)
+  celery-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: harmonix-worker
+    command: celery -A harmonix_splitter.core.orchestrator worker --loglevel=info --concurrency=2
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+      - ./models:/app/models
+      - harmonix-cache:/root/.cache
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - CUDA_VISIBLE_DEVICES=0
+      - C_FORCE_ROOT=1
+    depends_on:
+      - redis
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    restart: unless-stopped
+
+volumes:
+  redis-data:
+  harmonix-cache:
+
+networks:
+  default:
+    name: harmonix-network

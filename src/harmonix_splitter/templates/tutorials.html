@@ -1,7 +1,12 @@
 {% extends "base.html" %}
 
-{% block title %}Tutorials – Harmonix{% endblock %}
-{% block description %}Learn how to use Harmonix with step-by-step video tutorials and guides.{% endblock %}
+{% block title %}Tutorials – How to Remove Vocals & Separate Stems | Harmonix{% endblock %}
+{% block meta_title %}Tutorials – How to Remove Vocals & Separate Stems | Harmonix{% endblock %}
+{% block description %}Step-by-step tutorials: learn how to remove vocals from songs, extract drum stems, isolate bass, create karaoke tracks, and use AI for music production. Video guides and tips.{% endblock %}
+{% block keywords %}how to remove vocals, stem separation tutorial, extract drums, isolate bass, karaoke creation, audio separation guide, music production tutorials{% endblock %}
+
+{% block og_title %}Harmonix Tutorials – Learn Stem Separation{% endblock %}
+{% block og_description %}Step-by-step guides on vocal removal, stem separation, and AI-powered audio tools.{% endblock %}
 
 {% block extra_styles %}
 <style>
@@ -348,6 +353,27 @@
     .cta-btn:hover {
         transform: translateY(-2px);
         box-shadow: 0 6px 30px rgba(16, 185, 129, 0.5);
+    }
+
+    /* ===== Light Theme Overrides ===== */
+    [data-theme="light"] .tutorial-card {
+        background: #ffffff;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+    }
+    [data-theme="light"] .featured-tutorial {
+        background: linear-gradient(135deg, rgba(124, 58, 237, 0.08), rgba(236, 72, 153, 0.08));
+    }
+    [data-theme="light"] .featured-video {
+        background: #f1f5f9;
+    }
+    [data-theme="light"] .category-tab {
+        background: #ffffff;
+    }
+    [data-theme="light"] .cta-section {
+        background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
+    }
+    [data-theme="light"] .tutorial-badge {
+        background: rgba(124, 58, 237, 0.1);
     }
 
     @media (max-width: 900px) {

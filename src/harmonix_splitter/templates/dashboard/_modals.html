@@ -103,6 +103,38 @@
     </div>
 </div>
 
+<!-- Lyrics Editor Modal -->
+<div class="modal" id="lyricsEditorModal">
+    <div class="modal-content modal-xlarge">
+        <div class="modal-header">
+            <h3 class="modal-title"><i class="fas fa-edit"></i> Edit Lyrics</h3>
+            <button class="modal-close" data-modal-close>&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="lyrics-editor-toolbar">
+                <div class="editor-info">
+                    <span class="language-badge" id="editorLanguageBadge">EN</span>
+                    <span class="editor-hint">Click on any word to edit. Adjust timing if needed.</span>
+                </div>
+                <div class="editor-actions">
+                    <button class="btn btn-sm btn-secondary" onclick="openKaraokePage()">
+                        <i class="fas fa-external-link-alt"></i> Open Karaoke View
+                    </button>
+                </div>
+            </div>
+            <div class="lyrics-editor-container" id="lyricsEditorContainer">
+                <!-- Populated dynamically with editable lyrics -->
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" data-modal-close>Cancel</button>
+            <button class="btn btn-primary" onclick="saveLyricsEdits()">
+                <i class="fas fa-save"></i> Save Changes
+            </button>
+        </div>
+    </div>
+</div>
+
 <!-- MIDI Info Modal -->
 <div class="modal" id="midiInfoModal">
     <div class="modal-content">

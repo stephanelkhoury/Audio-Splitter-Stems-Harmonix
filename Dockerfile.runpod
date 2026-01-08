@@ -1,0 +1,32 @@
+# Harmonix Audio Splitter - RunPod Serverless Dockerfile
+FROM runpod/pytorch:2.1.0-py3.10-cuda11.8.0-devel-ubuntu22.04
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ffmpeg \
+    libsndfile1 \
+    libmagic1 \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Copy requirements
+COPY requirements.txt .
+
+# Install dependencies
+RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install runpod
+
+# Pre-download Demucs model
+RUN python -c "from demucs.pretrained import get_model; get_model('htdemucs')"
+
+# Copy application
+COPY . .
+RUN pip install -e .
+
+# Use serverless handler as entrypoint
+CMD ["python", "-u", "runpod_handler.py"]

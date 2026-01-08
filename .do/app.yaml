@@ -1,0 +1,35 @@
+name: harmonix-audio-splitter
+region: nyc
+
+services:
+  - name: web
+    dockerfile_path: Dockerfile.cpu
+    github:
+      repo: stephanelkhoury-dev/Audio-Splitter-Stems-Harmonix
+      branch: main
+      deploy_on_push: true
+    instance_size_slug: professional-m
+    instance_count: 1
+    http_port: 5000
+    routes:
+      - path: /
+    health_check:
+      http_path: /health
+      initial_delay_seconds: 60
+      period_seconds: 30
+    envs:
+      - key: REDIS_URL
+        scope: RUN_TIME
+        value: ${redis.DATABASE_URL}
+      - key: SECRET_KEY
+        scope: RUN_TIME
+        type: SECRET
+      - key: ENVIRONMENT
+        scope: RUN_TIME
+        value: production
+
+databases:
+  - name: redis
+    engine: REDIS
+    production: false
+    version: "7"

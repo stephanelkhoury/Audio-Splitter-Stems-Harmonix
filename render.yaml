@@ -1,0 +1,32 @@
+# Render.com deployment configuration
+services:
+  - type: web
+    name: harmonix-dashboard
+    runtime: docker
+    dockerfilePath: ./Dockerfile.cpu
+    dockerContext: .
+    healthCheckPath: /health
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: harmonix-redis
+          property: connectionString
+
+  - type: worker
+    name: harmonix-worker
+    runtime: docker
+    dockerfilePath: ./Dockerfile.cpu
+    dockerCommand: celery -A harmonix_splitter.core.orchestrator worker --loglevel=info
+    envVars:
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: harmonix-redis
+          property: connectionString
+
+databases:
+  - name: harmonix-redis
+    plan: free

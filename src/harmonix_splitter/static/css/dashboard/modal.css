@@ -15,7 +15,8 @@
     backdrop-filter: blur(5px);
 }
 
-.modal.active {
+.modal.active,
+.modal.show {
     display: flex;
 }
 
@@ -116,4 +117,78 @@
 .modal-body-scroll {
     max-height: 60vh;
     overflow-y: auto;
+}
+
+/* Mobile Responsive Modals */
+@media (max-width: 768px) {
+    .modal-content {
+        width: 95%;
+        max-width: none;
+        margin: 10px;
+        max-height: 90vh;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .modal-large,
+    .modal-xlarge {
+        width: 100%;
+        max-width: none;
+        margin: 0;
+        border-radius: 16px 16px 0 0;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        max-height: 95vh;
+    }
+    
+    .modal-header {
+        padding: 15px;
+        flex-shrink: 0;
+    }
+    
+    .modal-header h3 {
+        font-size: 16px;
+    }
+    
+    .modal-body {
+        padding: 15px;
+        flex: 1;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    .modal-footer {
+        padding: 12px 15px;
+        flex-shrink: 0;
+        border-top: 1px solid var(--border);
+    }
+    
+    .modal-footer .btn {
+        flex: 1;
+        padding: 12px;
+    }
+}
+
+@media (max-width: 480px) {
+    .modal-large,
+    .modal-xlarge {
+        max-height: 98vh;
+        border-radius: 12px 12px 0 0;
+    }
+    
+    .modal-header {
+        padding: 12px;
+    }
+    
+    .modal-body {
+        padding: 10px;
+    }
+    
+    .modal-footer {
+        padding: 10px;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
 }

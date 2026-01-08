@@ -3059,6 +3059,86 @@
     <!-- Toast Notification -->
     {% include 'dashboard/_toast.html' %}
 
+    <!-- Background Jobs Indicator -->
+    <div id="backgroundJobsIndicator" class="background-jobs-indicator" style="display: none;">
+        <div class="bg-jobs-content">
+            <div class="bg-jobs-spinner"></div>
+            <div class="bg-jobs-text">
+                <span id="bgJobsCount">1</span> job<span id="bgJobsPlural">s</span> processing...
+            </div>
+            <button class="bg-jobs-view" onclick="viewBackgroundJobs()">View</button>
+        </div>
+    </div>
+
+    <style>
+        .background-jobs-indicator {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-radius: 50px;
+            padding: 12px 20px;
+            box-shadow: 0 4px 20px rgba(124, 58, 237, 0.4);
+            z-index: 9999;
+            animation: slideInRight 0.3s ease;
+        }
+        
+        @keyframes slideInRight {
+            from { transform: translateX(100px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        .bg-jobs-content {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .bg-jobs-spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .bg-jobs-text {
+            color: #fff;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        .bg-jobs-view {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: #fff;
+            padding: 6px 14px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            transition: background 0.2s;
+        }
+        
+        .bg-jobs-view:hover {
+            background: rgba(255,255,255,0.3);
+        }
+        
+        @media (max-width: 768px) {
+            .background-jobs-indicator {
+                bottom: 70px;
+                right: 10px;
+                left: 10px;
+                border-radius: 12px;
+            }
+        }
+    </style>
+
     <script>
         // ==================== STATE ====================
         let allTracks = [];
@@ -3082,6 +3162,10 @@
         let currentPitch = 0;     // Current pitch shift in semitones (-4 to +4)
         let currentLyrics = null; // Current lyrics data
         let lyricsVisible = false;
+        
+        // Background jobs tracking
+        let backgroundJobs = {};   // Track all active background jobs
+        let bgJobsInterval = null; // Interval for checking background jobs
         
         // Debug mode - set to true for verbose logging
         let DEBUG = true;
@@ -3219,7 +3303,154 @@
             loadLibrary();
             loadStats();
             loadPlanInfo();
+            checkBackgroundJobs(); // Check for any running jobs on page load
         });
+
+        // ==================== BACKGROUND JOBS TRACKING ====================
+        function checkBackgroundJobs() {
+            fetch('/jobs')
+            .then(function(response) {
+                return response.json();
+            })
+            .then(function(data) {
+                var jobs = data.jobs || [];
+                var activeJobs = jobs.filter(function(job) {
+                    return job.status === 'queued' || job.status === 'processing' || job.status === 'downloading';
+                });
+                
+                // Track active jobs
+                activeJobs.forEach(function(job) {
+                    if (!backgroundJobs[job.job_id]) {
+                        backgroundJobs[job.job_id] = {
+                            name: job.display_name || job.filename || 'Processing...',
+                            status: job.status,
+                            progress: job.progress || 0
+                        };
+                    }
+                });
+                
+                // Remove completed jobs from tracking
+                Object.keys(backgroundJobs).forEach(function(jobId) {
+                    var found = activeJobs.find(function(j) { return j.job_id === jobId; });
+                    if (!found) {
+                        delete backgroundJobs[jobId];
+                    }
+                });
+                
+                updateBackgroundJobsIndicator();
+                
+                // If there are active jobs, start polling
+                if (activeJobs.length > 0 && !bgJobsInterval) {
+                    bgJobsInterval = setInterval(pollBackgroundJobs, 3000);
+                }
+            })
+            .catch(function(error) {
+                console.error('Failed to check background jobs:', error);
+            });
+        }
+        
+        function pollBackgroundJobs() {
+            fetch('/jobs')
+            .then(function(response) {
+                return response.json();
+            })
+            .then(function(data) {
+                var jobs = data.jobs || [];
+                var activeJobs = jobs.filter(function(job) {
+                    return job.status === 'queued' || job.status === 'processing' || job.status === 'downloading';
+                });
+                
+                // Check for newly completed jobs
+                Object.keys(backgroundJobs).forEach(function(jobId) {
+                    var job = jobs.find(function(j) { return j.job_id === jobId; });
+                    if (job && job.status === 'completed') {
+                        showToast('✓ ' + (backgroundJobs[jobId].name || 'Job') + ' completed!', 'success');
+                        delete backgroundJobs[jobId];
+                        loadLibrary(); // Refresh library
+                    } else if (job && job.status === 'failed') {
+                        showToast('✗ ' + (backgroundJobs[jobId].name || 'Job') + ' failed', 'error');
+                        delete backgroundJobs[jobId];
+                    } else if (job) {
+                        backgroundJobs[jobId].status = job.status;
+                        backgroundJobs[jobId].progress = job.progress || 0;
+                    }
+                });
+                
+                // Add any new active jobs
+                activeJobs.forEach(function(job) {
+                    if (!backgroundJobs[job.job_id]) {
+                        backgroundJobs[job.job_id] = {
+                            name: job.display_name || job.filename || 'Processing...',
+                            status: job.status,
+                            progress: job.progress || 0
+                        };
+                    }
+                });
+                
+                updateBackgroundJobsIndicator();
+                
+                // Stop polling if no more active jobs
+                if (Object.keys(backgroundJobs).length === 0 && bgJobsInterval) {
+                    clearInterval(bgJobsInterval);
+                    bgJobsInterval = null;
+                }
+            })
+            .catch(function(error) {
+                console.error('Background jobs poll failed:', error);
+            });
+        }
+        
+        function updateBackgroundJobsIndicator() {
+            var indicator = document.getElementById('backgroundJobsIndicator');
+            var count = Object.keys(backgroundJobs).length;
+            
+            if (count > 0) {
+                indicator.style.display = 'block';
+                document.getElementById('bgJobsCount').textContent = count;
+                document.getElementById('bgJobsPlural').textContent = count === 1 ? '' : 's';
+            } else {
+                indicator.style.display = 'none';
+            }
+        }
+        
+        function viewBackgroundJobs() {
+            // Navigate to upload section to see progress
+            navigateTo('stems');
+            switchStemsTab('upload');
+            
+            // If there's a current job being processed, show the progress
+            var jobIds = Object.keys(backgroundJobs);
+            if (jobIds.length > 0) {
+                // Show processing progress for first active job
+                currentJobId = jobIds[0];
+                document.getElementById('processingProgress').style.display = 'block';
+                
+                // Update progress display
+                var job = backgroundJobs[currentJobId];
+                if (job) {
+                    updateProgress(job.progress, job.status);
+                }
+                
+                // Start status polling for this job
+                if (!statusInterval) {
+                    startStatusPolling();
+                }
+            }
+        }
+        
+        function addBackgroundJob(jobId, name) {
+            backgroundJobs[jobId] = {
+                name: name || 'Processing...',
+                status: 'queued',
+                progress: 0
+            };
+            updateBackgroundJobsIndicator();
+            
+            // Start polling if not already
+            if (!bgJobsInterval) {
+                bgJobsInterval = setInterval(pollBackgroundJobs, 3000);
+            }
+        }
 
         // ==================== NAVIGATION ====================
         function initNavigation() {
@@ -3548,6 +3779,9 @@
             })
             .then(function(data) {
                 currentJobId = data.job_id;
+                // Register with background jobs tracker
+                var jobName = document.getElementById('outputName').value.trim() || selectedFile.name;
+                addBackgroundJob(data.job_id, jobName);
                 showToast('Processing started!', 'success');
                 startStatusPolling();
                 // Refresh plan info after successful upload
@@ -3615,6 +3849,9 @@
             })
             .then(function(data) {
                 currentJobId = data.job_id;
+                // Register with background jobs tracker
+                var jobName = document.getElementById('outputName').value.trim() || selectedUrlTitle || 'URL Audio';
+                addBackgroundJob(data.job_id, jobName);
                 showToast('Downloading and processing...', 'success');
                 startStatusPolling();
                 // Refresh plan info after successful upload
@@ -3645,15 +3882,33 @@
             })
             .then(function(job) {
                 updateProgress(job.progress || 0, job.status);
+                
+                // Update background job progress
+                if (currentJobId && backgroundJobs[currentJobId]) {
+                    backgroundJobs[currentJobId].progress = job.progress || 0;
+                    backgroundJobs[currentJobId].status = job.status;
+                }
 
                 if (job.status === 'completed') {
                     clearInterval(statusInterval);
+                    statusInterval = null;
+                    // Remove from background jobs
+                    if (currentJobId && backgroundJobs[currentJobId]) {
+                        delete backgroundJobs[currentJobId];
+                        updateBackgroundJobsIndicator();
+                    }
                     showToast('Processing completed!', 'success');
                     resetUploadForm();
                     loadLibrary();
                     navigateTo('library');
                 } else if (job.status === 'failed') {
                     clearInterval(statusInterval);
+                    statusInterval = null;
+                    // Remove from background jobs
+                    if (currentJobId && backgroundJobs[currentJobId]) {
+                        delete backgroundJobs[currentJobId];
+                        updateBackgroundJobsIndicator();
+                    }
                     showToast('Processing failed: ' + (job.error || 'Unknown error'), 'error');
                     document.getElementById('processingProgress').style.display = 'none';
                     document.getElementById('processBtn').disabled = false;
@@ -3899,6 +4154,7 @@
             // Cleanup previous wavesurfers and state
             cleanupPlayer();
             currentTrack = track;
+            currentJobId = jobId;  // Set currentJobId for karaoke sync
 
             var displayName = track.display_name || track.filename.replace(/\.[^/.]+$/, '');
             var stems = track.stems || {};
@@ -3990,7 +4246,7 @@
                 '</div>' +
                 
                 // Lyrics Controls
-                '<div style="display: flex; gap: 15px; margin-bottom: 15px;">' +
+                '<div style="display: flex; gap: 15px; margin-bottom: 15px; flex-wrap: wrap;">' +
                 '<button class="btn extract-lyrics-btn" id="extractLyricsBtn">' +
                 '<i class="fas fa-microphone-alt"></i> Extract Lyrics' +
                 '</button>' +
@@ -4003,6 +4259,12 @@
                 '</select>' +
                 '<button class="btn btn-secondary" id="toggleLyricsBtn" style="display: none;">' +
                 '<i class="fas fa-closed-captioning"></i> Show Lyrics' +
+                '</button>' +
+                '<button class="btn btn-secondary" id="editLyricsBtn" style="display: none;">' +
+                '<i class="fas fa-edit"></i> Edit Lyrics' +
+                '</button>' +
+                '<button class="btn btn-secondary" id="karaokeLyricsBtn" style="display: none;">' +
+                '<i class="fas fa-tv"></i> Karaoke View' +
                 '</button>' +
                 '</div>' +
                 
@@ -4374,6 +4636,16 @@
                 toggleLyricsPanel();
             });
             
+            // Edit lyrics button
+            document.getElementById('editLyricsBtn').addEventListener('click', function() {
+                openLyricsEditor();
+            });
+            
+            // Karaoke view button
+            document.getElementById('karaokeLyricsBtn').addEventListener('click', function() {
+                openKaraokePage();
+            });
+            
             // Check for existing lyrics
             checkExistingLyrics(jobId);
 
@@ -4566,6 +4838,11 @@
                 currentLyrics = data;
                 displayLyrics(data);
                 document.getElementById('toggleLyricsBtn').style.display = 'inline-flex';
+                document.getElementById('editLyricsBtn').style.display = 'inline-flex';
+                // Only show karaoke button for karaoke mode tracks
+                if (currentTrack && currentTrack.mode === 'karaoke') {
+                    document.getElementById('karaokeLyricsBtn').style.display = 'inline-flex';
+                }
                 document.getElementById('lyricsPanel').style.display = 'block';
                 showToast('Lyrics extracted successfully!', 'success');
             })
@@ -4587,9 +4864,23 @@
                     currentLyrics = data;
                     displayLyrics(data);
                     document.getElementById('toggleLyricsBtn').style.display = 'inline-flex';
+                    document.getElementById('editLyricsBtn').style.display = 'inline-flex';
+                    // Only show karaoke button for karaoke mode tracks
+                    if (currentTrack && currentTrack.mode === 'karaoke') {
+                        document.getElementById('karaokeLyricsBtn').style.display = 'inline-flex';
+                    }
+                } else if (currentTrack && currentTrack.mode === 'karaoke') {
+                    // Auto-extract lyrics for karaoke mode if not available
+                    showToast('Extracting lyrics for karaoke mode...', 'info');
+                    extractLyrics(jobId);
                 }
             })
-            .catch(function() {});
+            .catch(function() {
+                // If lyrics check failed and it's karaoke mode, try extracting
+                if (currentTrack && currentTrack.mode === 'karaoke') {
+                    extractLyrics(jobId);
+                }
+            });
         }
         
         function displayLyrics(data) {
@@ -4667,6 +4958,271 @@
                     line.classList.add('past');
                 }
             });
+            
+            // Sync to karaoke page via localStorage
+            syncPlayerState(time);
+        }
+        
+        // ==================== PLAYER SYNC FOR KARAOKE ====================
+        function syncPlayerState(time) {
+            if (!currentJobId) return;
+            
+            var duration = 0;
+            // Get duration from first stem
+            var firstStem = Object.values(stemPlayers)[0];
+            if (firstStem && firstStem.getDuration) {
+                duration = firstStem.getDuration();
+            }
+            
+            var syncData = {
+                jobId: currentJobId,
+                currentTime: time,
+                duration: duration,
+                isPlaying: !isPaused,
+                timestamp: Date.now()
+            };
+            
+            localStorage.setItem('harmonix_player_sync', JSON.stringify(syncData));
+        }
+        
+        // ==================== MODAL HELPERS ====================
+        function openModal(modalId) {
+            var modal = document.getElementById(modalId);
+            if (modal) {
+                modal.style.display = 'flex';
+                modal.classList.add('show');
+                document.body.style.overflow = 'hidden';
+            }
+        }
+        
+        function closeModal(modalId) {
+            var modal = document.getElementById(modalId);
+            if (modal) {
+                modal.style.display = 'none';
+                modal.classList.remove('show');
+                document.body.style.overflow = '';
+            }
+        }
+        
+        // Initialize modal close buttons
+        (function initModalCloseButtons() {
+            // Close on X button click
+            document.querySelectorAll('[data-modal-close]').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    var modal = this.closest('.modal');
+                    if (modal) {
+                        closeModal(modal.id);
+                    }
+                });
+            });
+            
+            // Close on backdrop click
+            document.querySelectorAll('.modal').forEach(function(modal) {
+                modal.addEventListener('click', function(e) {
+                    if (e.target === this) {
+                        closeModal(this.id);
+                    }
+                });
+            });
+            
+            // Close on Escape key
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    document.querySelectorAll('.modal.show').forEach(function(modal) {
+                        closeModal(modal.id);
+                    });
+                }
+            });
+        })();
+        
+        // ==================== LYRICS EDITOR ====================
+        function openLyricsEditor() {
+            if (!currentLyrics || !currentLyrics.lines) {
+                showToast('No lyrics to edit. Extract lyrics first.', 'error');
+                return;
+            }
+            
+            renderLyricsEditor();
+            openModal('lyricsEditorModal');
+        }
+        
+        function renderLyricsEditor() {
+            var container = document.getElementById('lyricsEditorContainer');
+            var langBadge = document.getElementById('editorLanguageBadge');
+            
+            if (langBadge && currentLyrics.language) {
+                langBadge.textContent = currentLyrics.language.toUpperCase();
+            }
+            
+            var html = '';
+            currentLyrics.lines.forEach(function(line, lineIdx) {
+                html += '<div class="editor-line" data-line-idx="' + lineIdx + '">';
+                
+                // Timing inputs
+                html += '<div class="line-timing">';
+                html += '<div class="timing-input"><label>Start</label><input type="text" class="line-start" value="' + formatTimeInput(line.start) + '" data-line="' + lineIdx + '"></div>';
+                html += '<div class="timing-input"><label>End</label><input type="text" class="line-end" value="' + formatTimeInput(line.end) + '" data-line="' + lineIdx + '"></div>';
+                html += '</div>';
+                
+                // Words
+                html += '<div class="line-words">';
+                if (line.words && line.words.length > 0) {
+                    line.words.forEach(function(word, wordIdx) {
+                        var wordText = word.word || word.text || '';
+                        var wordStart = word.start || 0;
+                        html += '<div class="word-edit" data-line="' + lineIdx + '" data-word="' + wordIdx + '">';
+                        html += '<input type="text" class="word-text" value="' + escapeHtml(wordText) + '" data-line="' + lineIdx + '" data-word="' + wordIdx + '">';
+                        html += '<span class="word-time">' + formatTimeShort(wordStart) + '</span>';
+                        html += '</div>';
+                    });
+                } else {
+                    // No word-level timing, show full line
+                    html += '<div class="word-edit full-line" data-line="' + lineIdx + '">';
+                    html += '<input type="text" class="word-text full" value="' + escapeHtml(line.text) + '" data-line="' + lineIdx + '">';
+                    html += '</div>';
+                }
+                html += '</div>';
+                
+                // Actions
+                html += '<div class="line-actions">';
+                html += '<button onclick="playFromLine(' + lineIdx + ')" title="Play from here"><i class="fas fa-play"></i></button>';
+                html += '<button class="delete-line" onclick="deleteLine(' + lineIdx + ')" title="Delete line"><i class="fas fa-trash"></i></button>';
+                html += '</div>';
+                
+                html += '</div>';
+            });
+            
+            container.innerHTML = html;
+        }
+        
+        function formatTimeInput(seconds) {
+            if (!seconds && seconds !== 0) return '0:00.00';
+            var mins = Math.floor(seconds / 60);
+            var secs = (seconds % 60).toFixed(2);
+            return mins + ':' + (secs < 10 ? '0' : '') + secs;
+        }
+        
+        function formatTimeShort(seconds) {
+            if (!seconds && seconds !== 0) return '0:00';
+            var mins = Math.floor(seconds / 60);
+            var secs = Math.floor(seconds % 60);
+            return mins + ':' + (secs < 10 ? '0' : '') + secs;
+        }
+        
+        function parseTimeInput(timeStr) {
+            var parts = timeStr.split(':');
+            if (parts.length === 2) {
+                return parseInt(parts[0]) * 60 + parseFloat(parts[1]);
+            }
+            return parseFloat(timeStr) || 0;
+        }
+        
+        function escapeHtml(text) {
+            var div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        function playFromLine(lineIdx) {
+            if (!currentLyrics || !currentLyrics.lines[lineIdx]) return;
+            
+            var startTime = currentLyrics.lines[lineIdx].start;
+            seekAllStems(startTime);
+            playAllStems();
+            closeModal('lyricsEditorModal');
+        }
+        
+        function deleteLine(lineIdx) {
+            if (!confirm('Delete this line?')) return;
+            
+            currentLyrics.lines.splice(lineIdx, 1);
+            renderLyricsEditor();
+            showToast('Line deleted. Save to apply changes.', 'info');
+        }
+        
+        function saveLyricsEdits() {
+            if (!currentJobId || !currentLyrics) {
+                showToast('No lyrics to save', 'error');
+                return;
+            }
+            
+            // Gather edited data from DOM
+            var container = document.getElementById('lyricsEditorContainer');
+            var editorLines = container.querySelectorAll('.editor-line');
+            
+            var updatedLines = [];
+            editorLines.forEach(function(lineEl) {
+                var lineIdx = parseInt(lineEl.dataset.lineIdx);
+                var originalLine = currentLyrics.lines[lineIdx];
+                
+                // Get timing
+                var startInput = lineEl.querySelector('.line-start');
+                var endInput = lineEl.querySelector('.line-end');
+                var newStart = parseTimeInput(startInput.value);
+                var newEnd = parseTimeInput(endInput.value);
+                
+                // Get words
+                var wordInputs = lineEl.querySelectorAll('.word-text');
+                var newWords = [];
+                var fullText = '';
+                
+                if (wordInputs.length === 1 && wordInputs[0].classList.contains('full')) {
+                    // Full line edit (no word timing)
+                    fullText = wordInputs[0].value;
+                } else {
+                    wordInputs.forEach(function(input, idx) {
+                        var origWord = originalLine.words && originalLine.words[idx];
+                        newWords.push({
+                            word: input.value,
+                            text: input.value,
+                            start: origWord ? origWord.start : newStart,
+                            end: origWord ? origWord.end : newEnd
+                        });
+                        fullText += input.value + ' ';
+                    });
+                }
+                
+                updatedLines.push({
+                    text: fullText.trim() || originalLine.text,
+                    start: newStart,
+                    end: newEnd,
+                    confidence: originalLine.confidence || 1.0,
+                    words: newWords.length > 0 ? newWords : originalLine.words
+                });
+            });
+            
+            // Update local lyrics
+            currentLyrics.lines = updatedLines;
+            currentLyrics.text = updatedLines.map(function(l) { return l.text; }).join('\n');
+            
+            // Send to server
+            fetch('/lyrics/' + currentJobId + '/save', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(currentLyrics)
+            })
+            .then(function(response) { return response.json(); })
+            .then(function(data) {
+                if (data.success) {
+                    showToast('Lyrics saved successfully!', 'success');
+                    displayLyrics(currentLyrics);
+                    closeModal('lyricsEditorModal');
+                } else {
+                    showToast('Failed to save: ' + (data.error || 'Unknown error'), 'error');
+                }
+            })
+            .catch(function(err) {
+                console.error('Save failed:', err);
+                showToast('Failed to save lyrics', 'error');
+            });
+        }
+        
+        function openKaraokePage() {
+            if (!currentJobId) {
+                showToast('No track loaded', 'error');
+                return;
+            }
+            window.open('/karaoke/' + currentJobId, '_blank');
         }
 
         function fetchMusicAnalysis(jobId) {
@@ -6406,6 +6962,30 @@
             
             // Update toggle icon
             updateThemeIcon(newTheme);
+            
+            // Notify all iframes about theme change
+            syncThemeToIframes(newTheme);
+        }
+        
+        function syncThemeToIframes(theme) {
+            // Get all embedded iframes
+            const iframes = [
+                document.getElementById('accountFrame'),
+                document.getElementById('docsFrame'),
+                document.getElementById('tutorialsFrame'),
+                document.getElementById('tunerFrame'),
+                document.getElementById('transposerFrame')
+            ];
+            
+            iframes.forEach(function(iframe) {
+                if (iframe && iframe.contentWindow) {
+                    try {
+                        iframe.contentWindow.postMessage({ type: 'theme-change', theme: theme }, '*');
+                    } catch (e) {
+                        console.log('Could not sync theme to iframe');
+                    }
+                }
+            });
         }
         
         function updateThemeIcon(theme) {

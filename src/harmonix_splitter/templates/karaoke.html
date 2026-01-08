@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Karaoke - {{ job_name }} | Harmonix</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #7c3aed;
+            --secondary: #06b6d4;
+            --bg: #0a0a0f;
+            --text: #ffffff;
+            --text-dim: #666;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        /* Header - minimal */
+        .karaoke-header {
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.5);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .track-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text);
+        }
+        
+        .track-title i {
+            color: var(--primary);
+            margin-right: 10px;
+        }
+        
+        .header-controls {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+        
+        .sync-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: var(--text-dim);
+        }
+        
+        .sync-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #ef4444;
+            transition: background 0.3s;
+        }
+        
+        .sync-indicator.connected {
+            background: #22c55e;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+        
+        .btn-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: var(--text);
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .btn-icon:hover {
+            background: var(--primary);
+            transform: scale(1.1);
+        }
+        
+        /* Main lyrics container */
+        .lyrics-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 40px;
+            overflow: hidden;
+        }
+        
+        .lyrics-scroll {
+            text-align: center;
+            max-width: 1200px;
+            width: 100%;
+        }
+        
+        .lyric-line {
+            padding: 20px 30px;
+            margin: 10px 0;
+            font-size: 36px;
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.3);
+            transition: all 0.3s ease;
+            line-height: 1.4;
+        }
+        
+        .lyric-line.upcoming {
+            color: rgba(255, 255, 255, 0.5);
+        }
+        
+        .lyric-line.current {
+            color: #ffffff;
+            font-size: 48px;
+            font-weight: 700;
+            text-shadow: 0 0 30px var(--primary), 0 0 60px var(--primary);
+            transform: scale(1.05);
+        }
+        
+        .lyric-line.past {
+            color: rgba(255, 255, 255, 0.2);
+            font-size: 32px;
+        }
+        
+        /* Word highlighting */
+        .lyric-line .word {
+            display: inline-block;
+            transition: all 0.15s ease;
+            padding: 0 2px;
+        }
+        
+        .lyric-line.current .word.highlight {
+            color: var(--secondary);
+            text-shadow: 0 0 20px var(--secondary);
+            transform: scale(1.1);
+        }
+        
+        .lyric-line.current .word.sung {
+            color: var(--primary);
+        }
+        
+        /* Progress bar at bottom */
+        .progress-container {
+            padding: 20px 30px;
+            background: rgba(0, 0, 0, 0.5);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .progress-bar {
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            width: 0%;
+            transition: width 0.1s linear;
+        }
+        
+        .time-display {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+            font-size: 14px;
+            color: var(--text-dim);
+        }
+        
+        /* Waiting state */
+        .waiting-state {
+            text-align: center;
+            color: var(--text-dim);
+        }
+        
+        .waiting-state i {
+            font-size: 60px;
+            margin-bottom: 20px;
+            animation: pulse 1.5s infinite;
+        }
+        
+        .waiting-state h2 {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+        
+        .waiting-state p {
+            font-size: 16px;
+        }
+        
+        /* Fullscreen mode */
+        body.fullscreen .karaoke-header,
+        body.fullscreen .progress-container {
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        body.fullscreen:hover .karaoke-header,
+        body.fullscreen:hover .progress-container {
+            opacity: 1;
+        }
+        
+        body.fullscreen .lyrics-container {
+            padding: 20px;
+        }
+        
+        body.fullscreen .lyric-line {
+            font-size: 48px;
+        }
+        
+        body.fullscreen .lyric-line.current {
+            font-size: 64px;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .lyric-line {
+                font-size: 24px;
+                padding: 12px 15px;
+            }
+            
+            .lyric-line.current {
+                font-size: 32px;
+            }
+            
+            .lyric-line.past {
+                font-size: 20px;
+            }
+            
+            .lyrics-container {
+                padding: 20px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .karaoke-header {
+                padding: 10px 15px;
+            }
+            
+            .track-title {
+                font-size: 14px;
+            }
+            
+            .lyric-line {
+                font-size: 20px;
+            }
+            
+            .lyric-line.current {
+                font-size: 26px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="karaoke-header">
+        <div class="track-title">
+            <i class="fas fa-music"></i>
+            <span id="trackName">{{ job_name }}</span>
+        </div>
+        <div class="header-controls">
+            <div class="sync-status">
+                <div class="sync-indicator" id="syncIndicator"></div>
+                <span id="syncText">Waiting for player...</span>
+            </div>
+            <button class="btn-icon" id="fullscreenBtn" title="Toggle Fullscreen">
+                <i class="fas fa-expand"></i>
+            </button>
+            <button class="btn-icon" id="closeBtn" title="Close" onclick="window.close()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    </header>
+    
+    <!-- Lyrics Display -->
+    <main class="lyrics-container">
+        <div class="lyrics-scroll" id="lyricsScroll">
+            <div class="waiting-state" id="waitingState">
+                <i class="fas fa-headphones"></i>
+                <h2>Ready for Karaoke</h2>
+                <p>Start playing on the main dashboard to sync lyrics</p>
+            </div>
+        </div>
+    </main>
+    
+    <!-- Progress -->
+    <footer class="progress-container">
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+        </div>
+        <div class="time-display">
+            <span id="currentTime">0:00</span>
+            <span id="totalTime">0:00</span>
+        </div>
+    </footer>
+    
+    <script>
+        const jobId = '{{ job_id }}';
+        let lyrics = null;
+        let currentLineIndex = -1;
+        let isConnected = false;
+        let lastSyncTime = 0;
+        
+        // Fetch lyrics on load
+        fetchLyrics();
+        
+        // Listen for player sync via localStorage
+        setupPlayerSync();
+        
+        async function fetchLyrics() {
+            try {
+                const response = await fetch(`/lyrics/${jobId}`);
+                const data = await response.json();
+                
+                console.log('Lyrics fetch response:', data);
+                
+                if (data.available && data.lines && data.lines.length > 0) {
+                    lyrics = data;
+                    renderLyrics();
+                    document.getElementById('waitingState').style.display = 'none';
+                    // Show lyrics immediately
+                    document.getElementById('syncText').textContent = 'Lyrics loaded - Play on dashboard to sync';
+                } else if (data.error) {
+                    document.getElementById('lyricsScroll').innerHTML = `
+                        <div class="waiting-state">
+                            <i class="fas fa-exclamation-circle"></i>
+                            <h2>Lyrics Not Found</h2>
+                            <p>${data.error}</p>
+                            <p style="margin-top: 20px; font-size: 14px;">Go to dashboard and extract lyrics first</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Failed to fetch lyrics:', error);
+                document.getElementById('lyricsScroll').innerHTML = `
+                    <div class="waiting-state">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <h2>Error Loading Lyrics</h2>
+                        <p>Could not connect to server</p>
+                    </div>
+                `;
+            }
+        }
+        
+        function renderLyrics() {
+            const container = document.getElementById('lyricsScroll');
+            
+            if (!lyrics || !lyrics.lines.length) {
+                container.innerHTML = `
+                    <div class="waiting-state">
+                        <i class="fas fa-microphone-slash"></i>
+                        <h2>No Lyrics Available</h2>
+                        <p>Extract lyrics from the dashboard first</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            let html = '';
+            lyrics.lines.forEach((line, idx) => {
+                html += `<div class="lyric-line" data-idx="${idx}" data-start="${line.start}" data-end="${line.end}">`;
+                
+                if (line.words && line.words.length > 0) {
+                    line.words.forEach(word => {
+                        const text = word.word || word.text || '';
+                        html += `<span class="word" data-start="${word.start}" data-end="${word.end}">${text}</span> `;
+                    });
+                } else {
+                    html += line.text;
+                }
+                
+                html += '</div>';
+            });
+            
+            container.innerHTML = html;
+        }
+        
+        function setupPlayerSync() {
+            // Listen for storage events from main dashboard
+            window.addEventListener('storage', function(e) {
+                if (e.key === 'harmonix_player_sync') {
+                    try {
+                        const data = JSON.parse(e.newValue);
+                        console.log('Storage event received:', data);
+                        if (data && data.jobId === jobId) {
+                            handlePlayerSync(data);
+                        }
+                    } catch (err) {
+                        console.error('Sync parse error:', err);
+                    }
+                }
+            });
+            
+            // Also check periodically for same-tab updates
+            setInterval(checkLocalSync, 200);
+            
+            // Initial check
+            checkLocalSync();
+        }
+        
+        function checkLocalSync() {
+            const syncData = localStorage.getItem('harmonix_player_sync');
+            if (syncData) {
+                try {
+                    const data = JSON.parse(syncData);
+                    // Check if this is for our job and recent (within 2 seconds)
+                    if (data && data.jobId === jobId && data.timestamp > Date.now() - 2000) {
+                        // Avoid processing same timestamp twice
+                        if (data.timestamp !== lastSyncTime) {
+                            lastSyncTime = data.timestamp;
+                            handlePlayerSync(data);
+                        }
+                    }
+                } catch (e) {
+                    console.error('Local sync error:', e);
+                }
+            }
+        }
+        
+        function handlePlayerSync(data) {
+            // Update connection status
+            if (!isConnected) {
+                isConnected = true;
+                document.getElementById('syncIndicator').classList.add('connected');
+                document.getElementById('syncText').textContent = 'Synced with player';
+            }
+            
+            // Update progress
+            const progress = (data.currentTime / data.duration) * 100;
+            document.getElementById('progressFill').style.width = progress + '%';
+            document.getElementById('currentTime').textContent = formatTime(data.currentTime);
+            document.getElementById('totalTime').textContent = formatTime(data.duration);
+            
+            // Update lyrics highlighting
+            updateLyricsHighlight(data.currentTime);
+        }
+        
+        function updateLyricsHighlight(time) {
+            if (!lyrics) return;
+            
+            const lines = document.querySelectorAll('.lyric-line');
+            let newCurrentIndex = -1;
+            
+            lines.forEach((line, idx) => {
+                const start = parseFloat(line.dataset.start);
+                const end = parseFloat(line.dataset.end);
+                
+                line.classList.remove('current', 'past', 'upcoming');
+                
+                if (time >= start && time <= end) {
+                    line.classList.add('current');
+                    newCurrentIndex = idx;
+                    
+                    // Word highlighting
+                    const words = line.querySelectorAll('.word');
+                    words.forEach(word => {
+                        const wordStart = parseFloat(word.dataset.start);
+                        const wordEnd = parseFloat(word.dataset.end);
+                        
+                        word.classList.remove('highlight', 'sung');
+                        if (time >= wordStart && time <= wordEnd) {
+                            word.classList.add('highlight');
+                        } else if (time > wordEnd) {
+                            word.classList.add('sung');
+                        }
+                    });
+                } else if (time > end) {
+                    line.classList.add('past');
+                } else if (time < start && time > start - 5) {
+                    line.classList.add('upcoming');
+                }
+            });
+            
+            // Scroll to current line if changed
+            if (newCurrentIndex !== currentLineIndex && newCurrentIndex >= 0) {
+                currentLineIndex = newCurrentIndex;
+                const currentLine = lines[currentLineIndex];
+                if (currentLine) {
+                    currentLine.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'center'
+                    });
+                }
+            }
+        }
+        
+        function formatTime(seconds) {
+            if (!seconds || isNaN(seconds)) return '0:00';
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${mins}:${secs.toString().padStart(2, '0')}`;
+        }
+        
+        // Fullscreen toggle
+        document.getElementById('fullscreenBtn').addEventListener('click', function() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen();
+                document.body.classList.add('fullscreen');
+                this.innerHTML = '<i class="fas fa-compress"></i>';
+            } else {
+                document.exitFullscreen();
+                document.body.classList.remove('fullscreen');
+                this.innerHTML = '<i class="fas fa-expand"></i>';
+            }
+        });
+        
+        // Handle fullscreen change
+        document.addEventListener('fullscreenchange', function() {
+            const btn = document.getElementById('fullscreenBtn');
+            if (!document.fullscreenElement) {
+                document.body.classList.remove('fullscreen');
+                btn.innerHTML = '<i class="fas fa-expand"></i>';
+            }
+        });
+        
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && document.fullscreenElement) {
+                document.exitFullscreen();
+            }
+            if (e.key === 'f' || e.key === 'F') {
+                document.getElementById('fullscreenBtn').click();
+            }
+        });
+    </script>
+</body>
+</html>

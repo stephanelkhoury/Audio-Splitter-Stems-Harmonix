@@ -1,7 +1,93 @@
 {% extends "base.html" %}
 
-{% block title %}Harmonix – AI-Powered Audio Stem Separation{% endblock %}
-{% block description %}Unmix the sound. Reveal the music. Extract vocals, drums, bass, and instruments from any song with AI-powered stem separation.{% endblock %}
+{% block title %}Harmonix – Free AI Stem Separator & Vocal Remover Online{% endblock %}
+{% block meta_title %}Harmonix – Free AI Stem Separator & Vocal Remover Online{% endblock %}
+{% block description %}Free AI-powered stem separator. Extract vocals, drums, bass & instruments from any song in seconds. Remove vocals for karaoke, isolate instruments for remixes. No software needed, works in browser.{% endblock %}
+{% block keywords %}free stem separator, vocal remover online, AI music separator, extract vocals from song, remove vocals free, karaoke maker online, isolate instruments, stem extraction, vocal isolation tool, instrumental creator, beat maker, drum separator, bass extractor, Demucs alternative, Spleeter alternative, audio splitter online{% endblock %}
+
+{% block og_title %}Harmonix – Free AI Stem Separator & Vocal Remover{% endblock %}
+{% block og_description %}Extract vocals, drums, bass & instruments from any song in seconds. Free AI-powered audio stem separation tool.{% endblock %}
+{% block twitter_title %}Harmonix – Free AI Stem Separator & Vocal Remover{% endblock %}
+{% block twitter_description %}Extract vocals, drums, bass & instruments from any song in seconds. Free AI-powered stem separation.{% endblock %}
+
+{% block structured_data %}
+<!-- FAQ Schema for Landing Page -->
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+        {
+            "@type": "Question",
+            "name": "What is stem separation?",
+            "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Stem separation is the process of isolating individual audio components (vocals, drums, bass, instruments) from a mixed song. Harmonix uses AI to separate these stems with professional quality."
+            }
+        },
+        {
+            "@type": "Question",
+            "name": "Is Harmonix free to use?",
+            "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Yes, Harmonix offers free stem separation with generous limits. You can extract vocals, drums, bass, and instruments from any song without payment."
+            }
+        },
+        {
+            "@type": "Question",
+            "name": "How accurate is the vocal removal?",
+            "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Harmonix achieves 99% accuracy in vocal removal using state-of-the-art AI models. The separated stems maintain high audio quality suitable for professional use."
+            }
+        },
+        {
+            "@type": "Question",
+            "name": "What audio formats are supported?",
+            "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Harmonix supports MP3, WAV, FLAC, M4A, OGG, and most common audio formats. Output stems are available in high-quality WAV or MP3 format."
+            }
+        },
+        {
+            "@type": "Question",
+            "name": "Can I use Harmonix for karaoke?",
+            "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Absolutely! Remove vocals from any song to create karaoke tracks. Harmonix also extracts synced lyrics that display word-by-word during playback."
+            }
+        }
+    ]
+}
+</script>
+
+<!-- WebApplication Schema -->
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "Harmonix Audio Stem Separator",
+    "url": "https://harmonix.audio",
+    "applicationCategory": "MultimediaApplication",
+    "operatingSystem": "Any",
+    "browserRequirements": "Requires JavaScript. Works in Chrome, Firefox, Safari, Edge.",
+    "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+    },
+    "featureList": [
+        "AI-powered vocal removal",
+        "Drum stem extraction",
+        "Bass isolation",
+        "Instrument separation",
+        "Synced lyrics extraction",
+        "MIDI conversion",
+        "Batch processing"
+    ]
+}
+</script>
+{% endblock %}
 
 {% block extra_styles %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/pages/landing.css') }}">
@@ -194,45 +280,59 @@
     </div>
     <div class="usecases-grid stagger-children">
         <div class="usecase-card hover-lift">
-            <div class="usecase-icon"><i class="fas fa-keyboard"></i></div>
+            <div class="usecase-icon"><i class="fas fa-guitar"></i></div>
             <div>
                 <h3>Musicians & Bands</h3>
-                <p>Learn songs by isolating individual parts. Practice with stems.</p>
+                <p>Learn songs by isolating individual parts. Practice along with any instrument track.</p>
             </div>
         </div>
         <div class="usecase-card hover-lift">
-            <div class="usecase-icon"><i class="fas fa-headphones-alt"></i></div>
+            <div class="usecase-icon"><i class="fas fa-compact-disc"></i></div>
             <div>
                 <h3>DJs & Remixers</h3>
-                <p>Extract acapellas and instrumentals for creative remixes.</p>
+                <p>Extract acapellas and instrumentals for creative remixes and mashups.</p>
             </div>
         </div>
         <div class="usecase-card hover-lift">
             <div class="usecase-icon"><i class="fas fa-church"></i></div>
             <div>
                 <h3>Choirs & Worship</h3>
-                <p>Get lyrics and backing tracks for rehearsals and performances.</p>
+                <p>Get lyrics and backing tracks for rehearsals, services, and performances.</p>
             </div>
         </div>
         <div class="usecase-card hover-lift">
-            <div class="usecase-icon"><i class="fas fa-video"></i></div>
+            <div class="usecase-icon"><i class="fas fa-film"></i></div>
             <div>
                 <h3>Content Creators</h3>
-                <p>Remove vocals for background music. Add custom lyrics to videos.</p>
+                <p>Remove vocals for background music. Create custom soundtracks for videos.</p>
             </div>
         </div>
         <div class="usecase-card hover-lift">
-            <div class="usecase-icon"><i class="fas fa-microphone-alt"></i></div>
+            <div class="usecase-icon"><i class="fas fa-sliders-h"></i></div>
             <div>
                 <h3>Audio Engineers</h3>
-                <p>Stem separation for mixing, mastering, and restoration projects.</p>
+                <p>Stem separation for mixing, mastering, restoration, and remastering projects.</p>
             </div>
         </div>
         <div class="usecase-card hover-lift">
-            <div class="usecase-icon"><i class="fas fa-graduation-cap"></i></div>
+            <div class="usecase-icon"><i class="fas fa-chalkboard-teacher"></i></div>
             <div>
-                <h3>Music Education</h3>
+                <h3>Music Educators</h3>
                 <p>Teach composition and arrangement with isolated instrument tracks.</p>
+            </div>
+        </div>
+        <div class="usecase-card hover-lift">
+            <div class="usecase-icon"><i class="fas fa-microphone"></i></div>
+            <div>
+                <h3>Karaoke Enthusiasts</h3>
+                <p>Create karaoke versions of any song. Sing along with synced lyrics display.</p>
+            </div>
+        </div>
+        <div class="usecase-card hover-lift">
+            <div class="usecase-icon"><i class="fas fa-podcast"></i></div>
+            <div>
+                <h3>Podcasters & Streamers</h3>
+                <p>Extract clean audio, remove background music, and enhance voice clarity.</p>
             </div>
         </div>
     </div>
@@ -298,6 +398,112 @@
                 <i class="fas fa-play"></i> Try Demo
             </a>
         </div>
+    </div>
+</section>
+
+<!-- FAQ Section for SEO -->
+<section class="faq-section" id="faq">
+    <div class="section-header fade-in">
+        <span class="section-badge"><i class="fas fa-question-circle"></i> FAQ</span>
+        <h2>Frequently Asked Questions</h2>
+        <p>Everything you need to know about stem separation and vocal removal.</p>
+    </div>
+    <div class="faq-container">
+        <article class="faq-item fade-in" itemscope itemtype="https://schema.org/Question">
+            <h3 class="faq-question" itemprop="name">
+                <i class="fas fa-chevron-right"></i>
+                What is stem separation and how does it work?
+            </h3>
+            <div class="faq-answer" itemscope itemtype="https://schema.org/Answer" itemprop="acceptedAnswer">
+                <div itemprop="text">
+                    <p>Stem separation is the process of isolating individual audio components (vocals, drums, bass, instruments) from a mixed song. Harmonix uses advanced AI neural networks trained on millions of songs to analyze spectral patterns and separate each element with studio-quality precision. Our technology is based on state-of-the-art models like Demucs, achieving 99% accuracy in most cases.</p>
+                </div>
+            </div>
+        </article>
+        
+        <article class="faq-item fade-in" itemscope itemtype="https://schema.org/Question">
+            <h3 class="faq-question" itemprop="name">
+                <i class="fas fa-chevron-right"></i>
+                Is Harmonix really free to use?
+            </h3>
+            <div class="faq-answer" itemscope itemtype="https://schema.org/Answer" itemprop="acceptedAnswer">
+                <div itemprop="text">
+                    <p>Yes! Harmonix offers a generous free tier that allows you to process 3 songs per month with 4-stem separation. This is perfect for trying out the service and casual use. For more demanding needs, we offer affordable Creator and Studio plans with additional features and higher limits.</p>
+                </div>
+            </div>
+        </article>
+        
+        <article class="faq-item fade-in" itemscope itemtype="https://schema.org/Question">
+            <h3 class="faq-question" itemprop="name">
+                <i class="fas fa-chevron-right"></i>
+                How accurate is the vocal removal?
+            </h3>
+            <div class="faq-answer" itemscope itemtype="https://schema.org/Answer" itemprop="acceptedAnswer">
+                <div itemprop="text">
+                    <p>Harmonix achieves 99% accuracy in vocal removal using state-of-the-art AI models. The separated stems maintain high audio quality suitable for professional use in music production, remixing, karaoke creation, and content creation. Results may vary depending on the complexity of the original mix.</p>
+                </div>
+            </div>
+        </article>
+        
+        <article class="faq-item fade-in" itemscope itemtype="https://schema.org/Question">
+            <h3 class="faq-question" itemprop="name">
+                <i class="fas fa-chevron-right"></i>
+                What audio formats are supported?
+            </h3>
+            <div class="faq-answer" itemscope itemtype="https://schema.org/Answer" itemprop="acceptedAnswer">
+                <div itemprop="text">
+                    <p>Harmonix supports all popular audio formats including MP3, WAV, FLAC, M4A, OGG, AAC, and more. You can also paste YouTube URLs to process songs directly. Output stems are available in high-quality WAV (lossless) or MP3 format for easy sharing and use in any DAW or audio software.</p>
+                </div>
+            </div>
+        </article>
+        
+        <article class="faq-item fade-in" itemscope itemtype="https://schema.org/Question">
+            <h3 class="faq-question" itemprop="name">
+                <i class="fas fa-chevron-right"></i>
+                Can I use Harmonix for karaoke?
+            </h3>
+            <div class="faq-answer" itemscope itemtype="https://schema.org/Answer" itemprop="acceptedAnswer">
+                <div itemprop="text">
+                    <p>Absolutely! Harmonix is perfect for creating karaoke tracks. Simply upload a song, and our AI will remove the vocals to create a clean instrumental. We also extract synced lyrics with word-level timing that display karaoke-style during playback. Export in LRC format for use with any karaoke software.</p>
+                </div>
+            </div>
+        </article>
+        
+        <article class="faq-item fade-in" itemscope itemtype="https://schema.org/Question">
+            <h3 class="faq-question" itemprop="name">
+                <i class="fas fa-chevron-right"></i>
+                How long does processing take?
+            </h3>
+            <div class="faq-answer" itemscope itemtype="https://schema.org/Answer" itemprop="acceptedAnswer">
+                <div itemprop="text">
+                    <p>Most songs are processed in under 2 minutes. Processing time depends on the song length and current server load. Premium users get priority processing with faster queue times. You'll receive a notification when your stems are ready to download or stream in our built-in studio player.</p>
+                </div>
+            </div>
+        </article>
+        
+        <article class="faq-item fade-in" itemscope itemtype="https://schema.org/Question">
+            <h3 class="faq-question" itemprop="name">
+                <i class="fas fa-chevron-right"></i>
+                What is the difference between 4-stem and 6-stem separation?
+            </h3>
+            <div class="faq-answer" itemscope itemtype="https://schema.org/Answer" itemprop="acceptedAnswer">
+                <div itemprop="text">
+                    <p>4-stem separation extracts: Vocals, Drums, Bass, and Other (instruments). 6-stem separation provides more granular control by also separating Guitar and Piano into their own tracks. The 6-stem model is available on paid plans and is ideal for musicians who want to isolate specific instruments for learning or remixing.</p>
+                </div>
+            </div>
+        </article>
+        
+        <article class="faq-item fade-in" itemscope itemtype="https://schema.org/Question">
+            <h3 class="faq-question" itemprop="name">
+                <i class="fas fa-chevron-right"></i>
+                Is Harmonix better than Spleeter or LALAL.AI?
+            </h3>
+            <div class="faq-answer" itemscope itemtype="https://schema.org/Answer" itemprop="acceptedAnswer">
+                <div itemprop="text">
+                    <p>Harmonix uses the latest Demucs models which consistently outperform older technologies like Spleeter in blind listening tests. Compared to services like LALAL.AI, Harmonix offers competitive quality with additional features like synced lyrics extraction, a built-in mixing studio, and MIDI conversion. Try our free tier to compare the results yourself!</p>
+                </div>
+            </div>
+        </article>
     </div>
 </section>
 {% endblock %}

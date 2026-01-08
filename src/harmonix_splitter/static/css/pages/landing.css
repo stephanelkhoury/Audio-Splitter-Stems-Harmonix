@@ -479,10 +479,22 @@
 
 .usecases-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 25px;
-    max-width: 1200px;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+    max-width: 1400px;
     margin: 0 auto;
+}
+
+@media (max-width: 1200px) {
+    .usecases-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 600px) {
+    .usecases-grid {
+        grid-template-columns: 1fr;
+    }
 }
 
 .usecase-card {
@@ -751,6 +763,72 @@
     border-color: var(--primary);
 }
 
+/* === FAQ Section === */
+.faq-section {
+    padding: 80px 40px;
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.faq-container {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.faq-item {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    transition: all var(--transition-base);
+}
+
+.faq-item:hover {
+    border-color: var(--primary);
+}
+
+.faq-question {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 20px 25px;
+    margin: 0;
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-semibold);
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: all var(--transition-base);
+}
+
+.faq-question i {
+    color: var(--primary);
+    font-size: 12px;
+    transition: transform var(--transition-base);
+}
+
+.faq-item.active .faq-question i {
+    transform: rotate(90deg);
+}
+
+.faq-answer {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease-out;
+}
+
+.faq-item.active .faq-answer {
+    max-height: 500px;
+}
+
+.faq-answer p {
+    padding: 0 25px 20px 55px;
+    margin: 0;
+    color: var(--text-muted);
+    line-height: var(--line-height-relaxed);
+    font-size: var(--font-size-sm);
+}
+
 /* === Responsive === */
 @media (max-width: 1024px) {
     .steps-container {
@@ -790,11 +868,21 @@
     .usecases-section,
     .pricing-section,
     .how-section,
-    .cta-section {
+    .cta-section,
+    .faq-section {
         padding: 60px 20px;
     }
     
     .pricing-card.featured {
         transform: none;
+    }
+    
+    .faq-question {
+        padding: 16px 20px;
+        font-size: var(--font-size-sm);
+    }
+    
+    .faq-answer p {
+        padding: 0 20px 16px 45px;
     }
 }

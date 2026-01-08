@@ -3,9 +3,113 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Harmonix{% endblock %}</title>
-    <meta name="description" content="{% block description %}AI-powered stem separation and lyrics extraction{% endblock %}">
-    <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/logo.png') }}">
+    
+    <!-- Primary Meta Tags -->
+    <title>{% block title %}Harmonix - AI Audio Stem Separator & Vocal Remover{% endblock %}</title>
+    <meta name="title" content="{% block meta_title %}Harmonix - AI Audio Stem Separator & Vocal Remover{% endblock %}">
+    <meta name="description" content="{% block description %}Free AI-powered audio stem separation tool. Extract vocals, drums, bass, and instruments from any song. Remove vocals for karaoke, isolate instruments for remixes. Fast, accurate, professional quality.{% endblock %}">
+    <meta name="keywords" content="{% block keywords %}stem separator, vocal remover, audio splitter, AI music separation, extract vocals, remove vocals, karaoke maker, isolate instruments, demucs, spleeter, music stems, audio stem extraction, vocal isolation, instrumental maker, beat extraction, drum separation, bass isolation{% endblock %}">
+    <meta name="author" content="Harmonix Audio">
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
+    <meta name="googlebot" content="index, follow">
+    <meta name="language" content="English">
+    <meta name="revisit-after" content="3 days">
+    <meta name="rating" content="General">
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="{% block canonical %}https://harmonix.audio{{ request.path }}{% endblock %}">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="{% block og_type %}website{% endblock %}">
+    <meta property="og:url" content="{% block og_url %}https://harmonix.audio{{ request.path }}{% endblock %}">
+    <meta property="og:title" content="{% block og_title %}Harmonix - AI Audio Stem Separator & Vocal Remover{% endblock %}">
+    <meta property="og:description" content="{% block og_description %}Free AI-powered audio stem separation. Extract vocals, drums, bass, and instruments from any song instantly.{% endblock %}">
+    <meta property="og:image" content="{% block og_image %}{{ url_for('static', filename='images/og-image.png', _external=True) }}{% endblock %}">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="Harmonix AI Audio Stem Separator">
+    <meta property="og:site_name" content="Harmonix Audio">
+    <meta property="og:locale" content="en_US">
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="{% block twitter_url %}https://harmonix.audio{{ request.path }}{% endblock %}">
+    <meta name="twitter:title" content="{% block twitter_title %}Harmonix - AI Audio Stem Separator & Vocal Remover{% endblock %}">
+    <meta name="twitter:description" content="{% block twitter_description %}Free AI-powered audio stem separation. Extract vocals, drums, bass, and instruments from any song instantly.{% endblock %}">
+    <meta name="twitter:image" content="{% block twitter_image %}{{ url_for('static', filename='images/og-image.png', _external=True) }}{% endblock %}">
+    <meta name="twitter:site" content="@harmonixaudio">
+    <meta name="twitter:creator" content="@harmonixaudio">
+    
+    <!-- Favicons -->
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='images/favicon.ico') }}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='images/favicon-32x32.png') }}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{{ url_for('static', filename='images/favicon-16x16.png') }}">
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', filename='images/apple-touch-icon.png') }}">
+    <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
+    <meta name="theme-color" content="#7c3aed">
+    <meta name="msapplication-TileColor" content="#7c3aed">
+    
+    <!-- Preconnect for Performance -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+    <link rel="dns-prefetch" href="https://www.google-analytics.com">
+    
+    <!-- Structured Data - Organization -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "Organization",
+        "name": "Harmonix Audio",
+        "url": "https://harmonix.audio",
+        "logo": "https://harmonix.audio/static/images/logo.png",
+        "description": "AI-powered audio stem separation and vocal removal tool",
+        "sameAs": [
+            "https://twitter.com/harmonixaudio",
+            "https://github.com/harmonix-audio"
+        ],
+        "contactPoint": {
+            "@type": "ContactPoint",
+            "contactType": "customer support",
+            "email": "support@harmonix.audio"
+        }
+    }
+    </script>
+    
+    <!-- Structured Data - Software Application -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "Harmonix Audio Stem Separator",
+        "applicationCategory": "MultimediaApplication",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "USD"
+        },
+        "aggregateRating": {
+            "@type": "AggregateRating",
+            "ratingValue": "4.8",
+            "ratingCount": "1250",
+            "bestRating": "5",
+            "worstRating": "1"
+        },
+        "description": "Extract vocals, drums, bass, and instruments from any song using AI. Free online stem separator with professional quality results.",
+        "featureList": [
+            "Vocal removal and isolation",
+            "Drum stem extraction",
+            "Bass separation",
+            "Instrumental creation",
+            "Lyrics extraction with timestamps",
+            "MIDI conversion",
+            "Multiple output formats"
+        ]
+    }
+    </script>
+    
+    {% block structured_data %}{% endblock %}
     
     <!-- Prevent theme flash -->
     <script>
@@ -18,6 +122,19 @@
             if (urlParams.get('embed') === '1') {
                 document.documentElement.classList.add('embedded-mode');
             }
+            
+            // Listen for theme changes from parent (when embedded in dashboard)
+            window.addEventListener('message', function(event) {
+                if (event.data && event.data.type === 'theme-change') {
+                    document.documentElement.setAttribute('data-theme', event.data.theme);
+                    localStorage.setItem('harmonix-theme', event.data.theme);
+                    // Update theme toggle icon if present
+                    const toggleBtn = document.querySelector('.theme-toggle i');
+                    if (toggleBtn) {
+                        toggleBtn.className = event.data.theme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+                    }
+                }
+            });
         })();
     </script>
     

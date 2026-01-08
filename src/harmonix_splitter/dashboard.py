@@ -331,6 +331,67 @@ def landing():
     return render_template('landing.html')
 
 
+@app.route('/robots.txt')
+def robots():
+    """Serve robots.txt for search engines"""
+    return send_from_directory(app.static_folder, 'robots.txt', mimetype='text/plain')
+
+
+@app.route('/sitemap.xml')
+def sitemap():
+    """Generate dynamic sitemap for SEO"""
+    from datetime import datetime
+    
+    pages = [
+        {'url': '/', 'priority': '1.0', 'changefreq': 'weekly'},
+        {'url': '/features', 'priority': '0.8', 'changefreq': 'monthly'},
+        {'url': '/pricing', 'priority': '0.8', 'changefreq': 'monthly'},
+        {'url': '/tutorials', 'priority': '0.7', 'changefreq': 'weekly'},
+        {'url': '/docs', 'priority': '0.7', 'changefreq': 'monthly'},
+        {'url': '/about', 'priority': '0.6', 'changefreq': 'monthly'},
+        {'url': '/contact', 'priority': '0.5', 'changefreq': 'monthly'},
+        {'url': '/blog', 'priority': '0.7', 'changefreq': 'daily'},
+        {'url': '/login', 'priority': '0.5', 'changefreq': 'yearly'},
+        {'url': '/register', 'priority': '0.6', 'changefreq': 'yearly'},
+        {'url': '/tuner', 'priority': '0.6', 'changefreq': 'monthly'},
+        {'url': '/transposer', 'priority': '0.6', 'changefreq': 'monthly'},
+    ]
+    
+    base_url = request.url_root.rstrip('/')
+    if 'localhost' in base_url or '127.0.0.1' in base_url:
+        base_url = 'https://harmonix.audio'
+    
+    lastmod = datetime.now().strftime('%Y-%m-%d')
+    
+    xml = '<?xml version="1.0" encoding="UTF-8"?>\n'
+    xml += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+    
+    for page in pages:
+        xml += '  <url>\n'
+        xml += f'    <loc>{base_url}{page["url"]}</loc>\n'
+        xml += f'    <lastmod>{lastmod}</lastmod>\n'
+        xml += f'    <changefreq>{page["changefreq"]}</changefreq>\n'
+        xml += f'    <priority>{page["priority"]}</priority>\n'
+        xml += '  </url>\n'
+    
+    xml += '</urlset>'
+    
+    return Response(xml, mimetype='application/xml')
+
+
+# ==================== HEALTH CHECK ====================
+
+@app.route('/health')
+def health_check():
+    """Health check endpoint for container orchestration and load balancers"""
+    return jsonify({
+        "status": "healthy",
+        "service": "harmonix-dashboard",
+        "version": "1.0.0",
+        "timestamp": datetime.utcnow().isoformat()
+    }), 200
+
+
 @app.route('/dashboard')
 @app.route('/app')
 @app.route('/studio')
@@ -2537,6 +2598,131 @@ def get_lyrics_lrc(job_id):
         
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+
+@app.route('/lyrics/<job_id>/save', methods=['POST'])
+def save_lyrics(job_id):
+    """Save edited lyrics to both JSON and LRC files"""
+    try:
+        # Get current user and check ownership
+        current_user = session.get('user_id')
+        is_admin = session.get('user_role') == 'admin'
+        
+        with jobs_lock:
+            job = jobs_storage.get(job_id)
+            if not job:
+                return jsonify({'error': 'Job not found'}), 404
+            
+            job_owner = job.get('user')
+            if not is_admin and job_owner != current_user:
+                return jsonify({'error': 'Permission denied'}), 403
+        
+        # Get the lyrics data from request
+        data = request.get_json()
+        if not data or 'lines' not in data:
+            return jsonify({'error': 'Invalid lyrics data'}), 400
+        
+        # Get job directory
+        user_output_dir = get_user_output_dir(job_owner)
+        job_dir = user_output_dir / job_id
+        
+        if not job_dir.exists():
+            return jsonify({'error': 'Job directory not found'}), 404
+        
+        # Find existing lyrics files
+        json_files = list(job_dir.glob("*_lyrics.json"))
+        lrc_files = list(job_dir.glob("*_lyrics.lrc"))
+        
+        if not json_files:
+            # Create new filename based on job
+            base_name = job.get('original_name', 'audio').replace(' ', '_')
+            json_file = job_dir / f"{base_name}_lyrics.json"
+            lrc_file = job_dir / f"{base_name}_lyrics.lrc"
+        else:
+            json_file = json_files[0]
+            lrc_file = job_dir / json_files[0].name.replace('.json', '.lrc')
+        
+        # Build the full lyrics data
+        lyrics_data = {
+            'text': data.get('text', ''),
+            'lines': data['lines'],
+            'language': data.get('language', 'unknown'),
+            'language_confidence': data.get('language_confidence', 1.0),
+            'duration': data.get('duration', 0),
+            'edited': True,
+            'edit_timestamp': datetime.now().isoformat()
+        }
+        
+        # Save JSON file
+        with open(json_file, 'w', encoding='utf-8') as f:
+            json.dump(lyrics_data, f, ensure_ascii=False, indent=2)
+        
+        # Generate and save LRC file
+        lrc_content = generate_lrc_from_lines(data['lines'])
+        with open(lrc_file, 'w', encoding='utf-8') as f:
+            f.write(lrc_content)
+        
+        logger.info(f"Saved edited lyrics for job {job_id}")
+        
+        return jsonify({
+            'success': True,
+            'message': 'Lyrics saved successfully',
+            'json_file': str(json_file),
+            'lrc_file': str(lrc_file)
+        })
+        
+    except Exception as e:
+        logger.error(f"Failed to save lyrics: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+def generate_lrc_from_lines(lines):
+    """Generate LRC format from lyrics lines"""
+    lrc_lines = []
+    for line in lines:
+        start = line.get('start', 0)
+        mins = int(start // 60)
+        secs = start % 60
+        
+        # Build text from words if available
+        if line.get('words'):
+            text = ' '.join(w.get('word', w.get('text', '')) for w in line['words'])
+        else:
+            text = line.get('text', '')
+        
+        lrc_lines.append(f"[{mins:02d}:{secs:05.2f}]{text}")
+    
+    return '\n'.join(lrc_lines)
+
+
+@app.route('/karaoke/<job_id>')
+def karaoke_page(job_id):
+    """Karaoke display page - full screen lyrics for singers"""
+    try:
+        # Get current user and check ownership
+        current_user = session.get('user_id')
+        is_admin = session.get('user_role') == 'admin'
+        
+        with jobs_lock:
+            job = jobs_storage.get(job_id)
+            if not job:
+                return "Job not found", 404
+            
+            job_owner = job.get('user')
+            if not is_admin and job_owner != current_user:
+                return "Permission denied", 403
+        
+        # Get job details for display
+        job_name = job.get('original_name', 'Unknown Track')
+        
+        return render_template('karaoke.html', 
+                               job_id=job_id, 
+                               job_name=job_name,
+                               job_owner=job_owner)
+        
+    except Exception as e:
+        logger.error(f"Failed to load karaoke page: {e}")
+        return f"Error: {str(e)}", 500
 
 
 if __name__ == '__main__':

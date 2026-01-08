@@ -1,0 +1,28 @@
+# Harmonix Audio - robots.txt
+# https://harmonix.audio
+
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /static/js/
+Disallow: /outputs/
+Disallow: /temp/
+Disallow: /uploads/
+
+# Sitemap location
+Sitemap: https://harmonix.audio/sitemap.xml
+
+# Crawl-delay for politeness
+Crawl-delay: 1
+
+# Google specific
+User-agent: Googlebot
+Allow: /
+Disallow: /api/
+Disallow: /outputs/
+
+# Bing specific  
+User-agent: Bingbot
+Allow: /
+Disallow: /api/
+Disallow: /outputs/

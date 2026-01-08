@@ -1,0 +1,36 @@
+# Harmonix Audio Splitter - CPU-only Dockerfile
+# Smaller image for development and CPU-based deployments
+
+FROM python:3.11-slim
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1 \
+    DEBIAN_FRONTEND=noninteractive
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ffmpeg \
+    libsndfile1 \
+    libmagic1 \
+    git \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Install CPU-only PyTorch first
+RUN pip install torch torchaudio --index-url https://download.pytorch.org/whl/cpu
+
+# Copy and install requirements
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY . .
+RUN pip install -e .
+
+RUN mkdir -p data/uploads data/outputs data/temp logs models/weights
+
+EXPOSE 5000 8000
+
+CMD ["python", "run_dashboard.py"]

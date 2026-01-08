@@ -506,6 +506,40 @@
         font-size: 12px;
     }
     
+    /* ===== Light Theme Overrides ===== */
+    [data-theme="light"] .account-nav {
+        background: #ffffff;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    }
+    [data-theme="light"] .account-section {
+        background: #ffffff;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+    }
+    [data-theme="light"] .history-item {
+        background: #f8fafc;
+    }
+    [data-theme="light"] .toggle-switch {
+        background: #e2e8f0;
+    }
+    [data-theme="light"] .cropper-modal {
+        background: #ffffff;
+    }
+    [data-theme="light"] .cropper-container-wrapper {
+        background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+        border-color: rgba(124, 58, 237, 0.2);
+    }
+    [data-theme="light"] .cropper-modal-header {
+        background: linear-gradient(135deg, rgba(124, 58, 237, 0.08), rgba(236, 72, 153, 0.08));
+    }
+    [data-theme="light"] .cropper-modal-actions .btn-cancel {
+        background: #f8fafc;
+        border-color: #e2e8f0;
+        color: #334155;
+    }
+    [data-theme="light"] .cropper-tip {
+        background: rgba(124, 58, 237, 0.08);
+    }
+    
     @media (max-width: 900px) {
         .account-layout {
             grid-template-columns: 1fr;

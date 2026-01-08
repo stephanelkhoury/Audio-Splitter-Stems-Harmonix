@@ -1,0 +1,104 @@
+{
+    "name": "Harmonix Audio Stem Separator",
+    "short_name": "Harmonix",
+    "description": "Free AI-powered audio stem separation. Extract vocals, drums, bass, and instruments from any song.",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#0a0a0f",
+    "theme_color": "#7c3aed",
+    "orientation": "any",
+    "scope": "/",
+    "icons": [
+        {
+            "src": "/static/images/icon-72x72.png",
+            "sizes": "72x72",
+            "type": "image/png",
+            "purpose": "any maskable"
+        },
+        {
+            "src": "/static/images/icon-96x96.png",
+            "sizes": "96x96",
+            "type": "image/png",
+            "purpose": "any maskable"
+        },
+        {
+            "src": "/static/images/icon-128x128.png",
+            "sizes": "128x128",
+            "type": "image/png",
+            "purpose": "any maskable"
+        },
+        {
+            "src": "/static/images/icon-144x144.png",
+            "sizes": "144x144",
+            "type": "image/png",
+            "purpose": "any maskable"
+        },
+        {
+            "src": "/static/images/icon-152x152.png",
+            "sizes": "152x152",
+            "type": "image/png",
+            "purpose": "any maskable"
+        },
+        {
+            "src": "/static/images/icon-192x192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "any maskable"
+        },
+        {
+            "src": "/static/images/icon-384x384.png",
+            "sizes": "384x384",
+            "type": "image/png",
+            "purpose": "any maskable"
+        },
+        {
+            "src": "/static/images/icon-512x512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any maskable"
+        }
+    ],
+    "categories": ["music", "entertainment", "productivity"],
+    "screenshots": [
+        {
+            "src": "/static/images/screenshot-desktop.png",
+            "sizes": "1920x1080",
+            "type": "image/png",
+            "form_factor": "wide"
+        },
+        {
+            "src": "/static/images/screenshot-mobile.png",
+            "sizes": "390x844",
+            "type": "image/png",
+            "form_factor": "narrow"
+        }
+    ],
+    "shortcuts": [
+        {
+            "name": "Upload Song",
+            "short_name": "Upload",
+            "description": "Upload a new song for stem separation",
+            "url": "/dashboard",
+            "icons": [
+                {
+                    "src": "/static/images/icon-upload.png",
+                    "sizes": "96x96"
+                }
+            ]
+        },
+        {
+            "name": "My Tracks",
+            "short_name": "Tracks",
+            "description": "View your processed tracks",
+            "url": "/dashboard",
+            "icons": [
+                {
+                    "src": "/static/images/icon-tracks.png",
+                    "sizes": "96x96"
+                }
+            ]
+        }
+    ],
+    "related_applications": [],
+    "prefer_related_applications": false
+}
