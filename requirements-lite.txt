@@ -1,0 +1,35 @@
+# Lite requirements for Railway deployment
+# Dashboard + API only - AI processing handled by external GPU service
+
+# Web Dashboard
+flask>=3.0.0
+flask-cors>=4.0.0
+gunicorn>=21.0.0
+
+# API
+fastapi>=0.104.0
+uvicorn[standard]>=0.24.0
+pydantic>=2.0.0
+pydantic-settings>=2.0.0
+python-multipart>=0.0.6
+
+# Storage & File handling
+boto3>=1.28.0
+python-magic>=0.4.27
+Pillow>=10.0.0
+
+# Redis for job queue
+redis>=5.0.0
+
+# Utilities
+requests>=2.31.0
+python-json-logger>=2.0.0
+tqdm>=4.66.0
+click>=8.1.0
+rich>=13.0.0
+
+# Audio metadata only (no processing)
+mutagen>=1.47.0
+
+# YAML config
+pyyaml>=6.0.0
