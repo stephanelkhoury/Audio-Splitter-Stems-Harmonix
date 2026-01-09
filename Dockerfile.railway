@@ -5,7 +5,8 @@ FROM python:3.11-slim-bookworm
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    PIP_NO_CACHE_DIR=1
+    PIP_NO_CACHE_DIR=1 \
+    PYTHONPATH=/app/src
 
 WORKDIR /app
 
@@ -28,6 +29,9 @@ COPY config/ ./config/
 COPY data/users.json ./data/users.json
 COPY run_dashboard.py .
 COPY pyproject.toml .
+
+# Install the package
+RUN pip install --no-cache-dir -e .
 
 # Create directories
 RUN mkdir -p data/uploads data/outputs data/temp logs

@@ -13,15 +13,36 @@ from flask import Flask, render_template, request, jsonify, send_file, send_from
 from werkzeug.utils import secure_filename
 import threading
 import logging
-import librosa
-import numpy as np
-import soundfile as sf
 
-from harmonix_splitter.core.orchestrator import create_orchestrator
+# Optional imports - may not be available in lite deployment
+try:
+    import librosa
+    import numpy as np
+    import soundfile as sf
+    AUDIO_LIBS_AVAILABLE = True
+except ImportError:
+    AUDIO_LIBS_AVAILABLE = False
+    librosa = None
+    np = None
+    sf = None
+
+# ML-dependent imports - only load if available
+try:
+    from harmonix_splitter.core.orchestrator import create_orchestrator
+    from harmonix_splitter.analysis.music_analyzer import MusicAnalyzer, estimate_processing_time
+    from harmonix_splitter.audio.processor import AudioProcessor
+    from harmonix_splitter.audio.lyrics import LyricsExtractor, LyricsResult
+    ML_AVAILABLE = True
+except ImportError:
+    ML_AVAILABLE = False
+    create_orchestrator = None
+    MusicAnalyzer = None
+    estimate_processing_time = None
+    AudioProcessor = None
+    LyricsExtractor = None
+    LyricsResult = None
+
 from harmonix_splitter.config.settings import Settings
-from harmonix_splitter.analysis.music_analyzer import MusicAnalyzer, estimate_processing_time
-from harmonix_splitter.audio.processor import AudioProcessor
-from harmonix_splitter.audio.lyrics import LyricsExtractor, LyricsResult
 
 # Initialize Flask app
 app = Flask(__name__)
