@@ -4567,6 +4567,16 @@
                     if (ws && !mutedStems.has(stemName)) {
                         ws.setVolume(slider.value / 100);
                     }
+                    // Also update Tone.js player volume if pitch shifting is active
+                    if (toneInitialized && tonePlayers[stemName]) {
+                        var player = tonePlayers[stemName];
+                        var volumePercent = slider.value / 100;
+                        if (volumePercent <= 0 || mutedStems.has(stemName)) {
+                            player.volume.value = -Infinity;
+                        } else {
+                            player.volume.value = 20 * Math.log10(volumePercent);
+                        }
+                    }
                 });
             });
 
@@ -4715,6 +4725,9 @@
                 }
             });
             
+            // Update Tone.js player volumes based on mute/solo state
+            updateTonePlayerVolumes();
+            
             // Also adjust WaveSurfer display (keep speed normal for visual sync)
             Object.keys(wavesurfers).forEach(function(stemName) {
                 var ws = wavesurfers[stemName];
@@ -4724,9 +4737,14 @@
                         // Keep playback at normal speed for visual timeline
                         media.playbackRate = 1.0;
                         media.preservesPitch = true;
-                        // Mute the HTML5 audio since Tone.js handles the sound
-                        if (Object.keys(tonePlayers).length > 0) {
+                        // Mute the HTML5 audio only when Tone.js is active and pitch is shifted
+                        // When pitch is 0 and Tone.js is not used, let WaveSurfer handle audio
+                        if (Object.keys(tonePlayers).length > 0 && semitones !== 0) {
                             media.muted = true;
+                        } else if (semitones === 0) {
+                            // Restore WaveSurfer audio when pitch is reset to 0
+                            // Respect the mixer mute state
+                            media.muted = false;
                         }
                     }
                 }
@@ -4772,8 +4790,39 @@
             }
         }
         
+        // Update Tone.js player volumes based on mixer mute/solo state
+        function updateTonePlayerVolumes() {
+            var hasSolo = soloStems.size > 0;
+            
+            Object.keys(tonePlayers).forEach(function(stemName) {
+                var player = tonePlayers[stemName];
+                if (!player) return;
+                
+                var slider = document.querySelector('.volume-slider[data-stem="' + stemName + '"');
+                var shouldBeMuted = mutedStems.has(stemName);
+                var shouldBeSilent = hasSolo && !soloStems.has(stemName);
+                
+                if (shouldBeMuted || shouldBeSilent) {
+                    // Mute this Tone.js player
+                    player.volume.value = -Infinity;
+                } else {
+                    // Set volume based on slider (convert 0-100 to dB, where 100 = 0dB)
+                    var volumePercent = slider ? slider.value / 100 : 1;
+                    // Convert to dB: 0% = -Infinity, 100% = 0dB
+                    if (volumePercent <= 0) {
+                        player.volume.value = -Infinity;
+                    } else {
+                        player.volume.value = 20 * Math.log10(volumePercent);
+                    }
+                }
+            });
+        }
+        
         // Play/pause Tone.js players along with WaveSurfer
         function playTonePlayers() {
+            // First update volumes based on mute/solo state
+            updateTonePlayerVolumes();
+            
             Object.keys(tonePlayers).forEach(function(stemName) {
                 var player = tonePlayers[stemName];
                 if (player && player.loaded && player.state !== 'started') {
@@ -4839,10 +4888,8 @@
                 displayLyrics(data);
                 document.getElementById('toggleLyricsBtn').style.display = 'inline-flex';
                 document.getElementById('editLyricsBtn').style.display = 'inline-flex';
-                // Only show karaoke button for karaoke mode tracks
-                if (currentTrack && currentTrack.mode === 'karaoke') {
-                    document.getElementById('karaokeLyricsBtn').style.display = 'inline-flex';
-                }
+                // Show karaoke button when lyrics are available
+                document.getElementById('karaokeLyricsBtn').style.display = 'inline-flex';
                 document.getElementById('lyricsPanel').style.display = 'block';
                 showToast('Lyrics extracted successfully!', 'success');
             })
@@ -4865,10 +4912,8 @@
                     displayLyrics(data);
                     document.getElementById('toggleLyricsBtn').style.display = 'inline-flex';
                     document.getElementById('editLyricsBtn').style.display = 'inline-flex';
-                    // Only show karaoke button for karaoke mode tracks
-                    if (currentTrack && currentTrack.mode === 'karaoke') {
-                        document.getElementById('karaokeLyricsBtn').style.display = 'inline-flex';
-                    }
+                    // Show karaoke button when lyrics are available
+                    document.getElementById('karaokeLyricsBtn').style.display = 'inline-flex';
                 } else if (currentTrack && currentTrack.mode === 'karaoke') {
                     // Auto-extract lyrics for karaoke mode if not available
                     showToast('Extracting lyrics for karaoke mode...', 'info');
@@ -5222,7 +5267,18 @@
                 showToast('No track loaded', 'error');
                 return;
             }
-            window.open('/karaoke/' + currentJobId, '_blank');
+            // Open in new tab with proper security attributes
+            var karaokeWindow = window.open('/karaoke/' + currentJobId, '_blank', 'noopener,noreferrer');
+            if (!karaokeWindow) {
+                // Popup blocked - try alternative method
+                var link = document.createElement('a');
+                link.href = '/karaoke/' + currentJobId;
+                link.target = '_blank';
+                link.rel = 'noopener noreferrer';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
         }
 
         function fetchMusicAnalysis(jobId) {
@@ -5776,6 +5832,11 @@
                     track.style.opacity = '1';
                 }
             });
+            
+            // Also update Tone.js player volumes if pitch shifting is active
+            if (toneInitialized) {
+                updateTonePlayerVolumes();
+            }
         }
 
         function togglePlayAll() {

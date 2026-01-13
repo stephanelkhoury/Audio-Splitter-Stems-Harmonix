@@ -335,7 +335,15 @@
         
         async function fetchLyrics() {
             try {
-                const response = await fetch(`/lyrics/${jobId}`);
+                const response = await fetch(`/lyrics/${jobId}`, {
+                    credentials: 'include'  // Include session cookies
+                });
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`Server error: ${response.status} - ${errorText}`);
+                }
+                
                 const data = await response.json();
                 
                 console.log('Lyrics fetch response:', data);
@@ -355,6 +363,16 @@
                             <p style="margin-top: 20px; font-size: 14px;">Go to dashboard and extract lyrics first</p>
                         </div>
                     `;
+                } else if (!data.available) {
+                    // No lyrics extracted yet
+                    document.getElementById('lyricsScroll').innerHTML = `
+                        <div class="waiting-state">
+                            <i class="fas fa-microphone-slash"></i>
+                            <h2>Lyrics Not Extracted</h2>
+                            <p>${data.message || 'No lyrics available for this track'}</p>
+                            <p style="margin-top: 20px; font-size: 14px;">Go to the dashboard and click "Extract Lyrics" first</p>
+                        </div>
+                    `;
                 }
             } catch (error) {
                 console.error('Failed to fetch lyrics:', error);
@@ -362,7 +380,8 @@
                     <div class="waiting-state">
                         <i class="fas fa-exclamation-triangle"></i>
                         <h2>Error Loading Lyrics</h2>
-                        <p>Could not connect to server</p>
+                        <p>${error.message || 'Could not connect to server'}</p>
+                        <p style="margin-top: 20px; font-size: 14px;">Make sure you're logged in and try refreshing the page</p>
                     </div>
                 `;
             }

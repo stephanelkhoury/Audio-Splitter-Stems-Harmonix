@@ -2733,8 +2733,11 @@ def karaoke_page(job_id):
             if not is_admin and job_owner != current_user:
                 return "Permission denied", 403
         
-        # Get job details for display
-        job_name = job.get('original_name', 'Unknown Track')
+        # Get job details for display - try multiple fields for name
+        job_name = job.get('original_name') or job.get('display_name') or job.get('filename', 'Unknown Track')
+        # Clean up the name (remove extension if present)
+        if job_name.endswith(('.mp3', '.wav', '.flac', '.m4a', '.ogg')):
+            job_name = job_name.rsplit('.', 1)[0]
         
         return render_template('karaoke.html', 
                                job_id=job_id, 
