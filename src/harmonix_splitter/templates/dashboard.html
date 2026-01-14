@@ -4000,6 +4000,7 @@
                     '<div class="track-meta">' + stemCount + ' stems • ' + date + (track.has_lyrics ? ' • <i class="fas fa-closed-captioning" style="color: #7c3aed;"></i> Lyrics' : '') + '</div>' +
                     '</div>' +
                     '<div class="track-actions">' +
+                    '<button class="icon-btn view-report-btn" title="View Report"><i class="fas fa-eye"></i></button>' +
                     '<button class="icon-btn play-track-btn" title="Play"><i class="fas fa-play"></i></button>' +
                     '<button class="icon-btn edit-btn" title="Edit Name"><i class="fas fa-edit"></i></button>' +
                     '<button class="icon-btn download-track-btn" title="Download All"><i class="fas fa-download"></i></button>' +
@@ -4013,6 +4014,11 @@
             // Attach event listeners
             container.querySelectorAll('.track-item').forEach(function(item) {
                 var jobId = item.getAttribute('data-job-id');
+
+                item.querySelector('.view-report-btn').addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    openReportModal(jobId);
+                });
 
                 item.querySelector('.play-track-btn').addEventListener('click', function(e) {
                     e.stopPropagation();
@@ -4069,6 +4075,169 @@
             });
         }
 
+        // ==================== TRACK REPORT ====================
+        var currentReportJobId = null;
+
+        function openReportModal(jobId) {
+            currentReportJobId = jobId;
+            var modal = document.getElementById('reportModal');
+            var body = document.getElementById('reportModalBody');
+            
+            // Show loading state
+            body.innerHTML = '<div class="report-loading"><i class="fas fa-spinner fa-spin"></i> Loading report...</div>';
+            modal.classList.add('active');
+            
+            // Fetch report data
+            fetch('/job/' + jobId + '/report')
+                .then(function(response) {
+                    if (!response.ok) throw new Error('Failed to load report');
+                    return response.json();
+                })
+                .then(function(report) {
+                    renderReport(report);
+                })
+                .catch(function(error) {
+                    body.innerHTML = '<div class="report-loading" style="color: var(--danger);"><i class="fas fa-exclamation-triangle"></i> ' + error.message + '</div>';
+                });
+        }
+
+        function renderReport(report) {
+            var body = document.getElementById('reportModalBody');
+            var stemCount = Object.keys(report.stems || {}).length;
+            
+            // Format dates
+            var createdDate = report.created_at ? new Date(report.created_at).toLocaleString() : 'Unknown';
+            var completedDate = report.completed_at ? new Date(report.completed_at).toLocaleString() : 'N/A';
+            var processingTime = report.processing_time ? report.processing_time.toFixed(1) + 's' : 'N/A';
+            
+            // Status badge class
+            var statusClass = report.status === 'completed' ? 'completed' : (report.status === 'processing' ? 'processing' : 'failed');
+            
+            var html = '<div class="report-header">' +
+                '<div class="report-icon"><i class="fas fa-music"></i></div>' +
+                '<div class="report-title-section">' +
+                '<h2>' + (report.display_name || 'Unknown Track') + 
+                '<span class="report-status ' + statusClass + '">' + report.status + '</span></h2>' +
+                '<div class="report-meta">Original: ' + (report.filename || 'Unknown') + '</div>' +
+                '</div>' +
+                '</div>';
+            
+            // Stats grid
+            html += '<div class="report-grid">' +
+                '<div class="report-stat"><div class="report-stat-value">' + stemCount + '</div><div class="report-stat-label">Stems Created</div></div>' +
+                '<div class="report-stat"><div class="report-stat-value">' + (report.quality || 'balanced').charAt(0).toUpperCase() + (report.quality || 'balanced').slice(1) + '</div><div class="report-stat-label">Quality</div></div>' +
+                '<div class="report-stat"><div class="report-stat-value">' + processingTime + '</div><div class="report-stat-label">Processing Time</div></div>' +
+                '<div class="report-stat"><div class="report-stat-value">' + (report.has_lyrics ? '<i class="fas fa-check" style="color: var(--success);"></i>' : '<i class="fas fa-times" style="color: var(--text-dim);"></i>') + '</div><div class="report-stat-label">Lyrics</div></div>' +
+                '</div>';
+            
+            // Music Analysis Section
+            if (report.music_info && (report.music_info.tempo || report.music_info.key)) {
+                html += '<div class="report-section">' +
+                    '<div class="report-section-title"><i class="fas fa-headphones"></i> Audio Analysis</div>' +
+                    '<div class="report-music-info">';
+                
+                if (report.music_info.tempo) {
+                    html += '<div class="report-music-item">' +
+                        '<div class="report-music-value">' + Math.round(report.music_info.tempo.bpm) + '</div>' +
+                        '<div class="report-music-label">BPM</div>' +
+                        '</div>';
+                }
+                
+                if (report.music_info.key) {
+                    html += '<div class="report-music-item">' +
+                        '<div class="report-music-value">' + report.music_info.key.key + ' ' + report.music_info.key.scale + '</div>' +
+                        '<div class="report-music-label">Key</div>' +
+                        '</div>';
+                    
+                    if (report.music_info.key.camelot) {
+                        html += '<div class="report-music-item">' +
+                            '<div class="report-music-value">' + report.music_info.key.camelot + '</div>' +
+                            '<div class="report-music-label">Camelot</div>' +
+                            '</div>';
+                    }
+                }
+                
+                if (report.music_info.duration) {
+                    var mins = Math.floor(report.music_info.duration / 60);
+                    var secs = Math.floor(report.music_info.duration % 60);
+                    html += '<div class="report-music-item">' +
+                        '<div class="report-music-value">' + mins + ':' + (secs < 10 ? '0' : '') + secs + '</div>' +
+                        '<div class="report-music-label">Duration</div>' +
+                        '</div>';
+                }
+                
+                html += '</div></div>';
+            }
+            
+            // Stems Section
+            if (stemCount > 0) {
+                html += '<div class="report-section">' +
+                    '<div class="report-section-title"><i class="fas fa-layer-group"></i> Generated Stems</div>' +
+                    '<div class="report-stems-list">';
+                
+                var stemIcons = {
+                    'vocals': 'fa-microphone',
+                    'drums': 'fa-drum',
+                    'bass': 'fa-guitar',
+                    'guitar': 'fa-guitar',
+                    'piano': 'fa-music',
+                    'other': 'fa-sliders-h',
+                    'instrumental': 'fa-headphones'
+                };
+                
+                Object.keys(report.stems).forEach(function(stemName) {
+                    var stem = report.stems[stemName];
+                    var icon = stemIcons[stemName] || 'fa-file-audio';
+                    var fileSize = stem.file_size ? formatFileSize(stem.file_size) : 'Unknown size';
+                    var duration = stem.duration ? formatDuration(stem.duration) : '';
+                    
+                    html += '<div class="report-stem-item">' +
+                        '<div class="report-stem-icon ' + stemName + '"><i class="fas ' + icon + '"></i></div>' +
+                        '<div class="report-stem-info">' +
+                        '<div class="report-stem-name">' + stemName + '</div>' +
+                        '<div class="report-stem-meta">' + (stem.format || 'MP3') + ' • ' + fileSize + (duration ? ' • ' + duration : '') + '</div>' +
+                        '</div>' +
+                        '</div>';
+                });
+                
+                html += '</div></div>';
+            }
+            
+            // Processing Details
+            html += '<div class="report-section">' +
+                '<div class="report-section-title"><i class="fas fa-cog"></i> Processing Details</div>' +
+                '<div class="report-details">' +
+                '<div class="report-detail-item"><span class="report-detail-label">Job ID</span><span class="report-detail-value" style="font-family: monospace; font-size: 11px;">' + report.job_id + '</span></div>' +
+                '<div class="report-detail-item"><span class="report-detail-label">Mode</span><span class="report-detail-value">' + (report.mode || 'grouped') + '</span></div>' +
+                '<div class="report-detail-item"><span class="report-detail-label">Created</span><span class="report-detail-value">' + createdDate + '</span></div>' +
+                '<div class="report-detail-item"><span class="report-detail-label">Completed</span><span class="report-detail-value">' + completedDate + '</span></div>' +
+                '</div></div>';
+            
+            body.innerHTML = html;
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes < 1024) return bytes + ' B';
+            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+            return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+        }
+
+        function formatDuration(seconds) {
+            var mins = Math.floor(seconds / 60);
+            var secs = Math.floor(seconds % 60);
+            return mins + ':' + (secs < 10 ? '0' : '') + secs;
+        }
+
+        function closeReportModal() {
+            document.getElementById('reportModal').classList.remove('active');
+            currentReportJobId = null;
+        }
+
+        function downloadReport() {
+            // For now, show a message - PDF export can be added later
+            showToast('PDF export coming soon!', 'info');
+        }
+
         // ==================== EDIT TRACK NAME ====================
         function openEditModal(jobId) {
             var track = allTracks.find(function(t) { return t.job_id === jobId; });
@@ -4121,6 +4290,7 @@
         document.addEventListener('keydown', function(e) {
             if (e.key === 'Escape') {
                 closeEditModal();
+                closeReportModal();
             }
             // Spacebar to play/pause (only when not typing in an input)
             if (e.key === ' ' && e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {

@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Karaoke - {{ job_name }} | Harmonix</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+Arabic:wght@400;500;600;700&family=Amiri:wght@400;700&display=swap" rel="stylesheet">
     <style>
         :root {
             --primary: #7c3aed;
@@ -70,11 +70,6 @@
             width: 10px;
             height: 10px;
             border-radius: 50%;
-            background: #ef4444;
-            transition: background 0.3s;
-        }
-        
-        .sync-indicator.connected {
             background: #22c55e;
             animation: pulse 2s infinite;
         }
@@ -111,6 +106,7 @@
             justify-content: center;
             align-items: center;
             padding: 40px;
+            padding-bottom: 20px;
             overflow: hidden;
         }
         
@@ -118,16 +114,48 @@
             text-align: center;
             max-width: 1200px;
             width: 100%;
+            max-height: calc(100vh - 280px);
+            overflow-y: auto;
+            scroll-behavior: smooth;
+        }
+        
+        .lyrics-scroll::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .lyrics-scroll::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        
+        .lyrics-scroll::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 3px;
         }
         
         .lyric-line {
-            padding: 20px 30px;
-            margin: 10px 0;
-            font-size: 36px;
+            padding: 15px 30px;
+            margin: 8px 0;
+            font-size: 32px;
             font-weight: 500;
             color: rgba(255, 255, 255, 0.3);
             transition: all 0.3s ease;
             line-height: 1.4;
+            cursor: pointer;
+            border-radius: 8px;
+        }
+        
+        .lyric-line.rtl {
+            direction: rtl;
+            text-align: right;
+            font-family: 'Noto Sans Arabic', 'Amiri', 'Inter', sans-serif;
+        }
+        
+        .lyric-line.rtl .word {
+            direction: rtl;
+        }
+        
+        .lyric-line:hover {
+            background: rgba(255, 255, 255, 0.05);
         }
         
         .lyric-line.upcoming {
@@ -136,15 +164,16 @@
         
         .lyric-line.current {
             color: #ffffff;
-            font-size: 48px;
+            font-size: 42px;
             font-weight: 700;
             text-shadow: 0 0 30px var(--primary), 0 0 60px var(--primary);
-            transform: scale(1.05);
+            transform: scale(1.02);
+            background: rgba(124, 58, 237, 0.1);
         }
         
         .lyric-line.past {
             color: rgba(255, 255, 255, 0.2);
-            font-size: 32px;
+            font-size: 28px;
         }
         
         /* Word highlighting */
@@ -165,10 +194,78 @@
         }
         
         /* Progress bar at bottom */
-        .progress-container {
+        .player-container {
             padding: 20px 30px;
-            background: rgba(0, 0, 0, 0.5);
+            background: linear-gradient(to top, rgba(0, 0, 0, 0.9), rgba(0, 0, 0, 0.7));
             border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .player-controls {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 15px;
+        }
+        
+        .control-btn {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: var(--text);
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+        
+        .control-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: scale(1.05);
+        }
+        
+        .control-btn.play-btn {
+            width: 70px;
+            height: 70px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            font-size: 24px;
+        }
+        
+        .control-btn.play-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 30px rgba(124, 58, 237, 0.5);
+        }
+        
+        .control-btn.active {
+            background: var(--primary);
+        }
+        
+        .volume-control {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .volume-slider {
+            width: 100px;
+            height: 4px;
+            -webkit-appearance: none;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 2px;
+            outline: none;
+        }
+        
+        .volume-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 14px;
+            height: 14px;
+            background: var(--text);
+            border-radius: 50%;
+            cursor: pointer;
         }
         
         .progress-bar {
@@ -176,6 +273,12 @@
             background: rgba(255, 255, 255, 0.1);
             border-radius: 3px;
             overflow: hidden;
+            cursor: pointer;
+            position: relative;
+        }
+        
+        .progress-bar:hover {
+            height: 8px;
         }
         
         .progress-fill {
@@ -183,6 +286,19 @@
             background: linear-gradient(90deg, var(--primary), var(--secondary));
             width: 0%;
             transition: width 0.1s linear;
+            position: relative;
+        }
+        
+        .progress-bar:hover .progress-fill::after {
+            content: '';
+            position: absolute;
+            right: -6px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 12px;
+            height: 12px;
+            background: var(--text);
+            border-radius: 50%;
         }
         
         .time-display {
@@ -191,6 +307,18 @@
             margin-top: 10px;
             font-size: 14px;
             color: var(--text-dim);
+        }
+        
+        .instrumental-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 12px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-left: 15px;
         }
         
         /* Waiting state */
@@ -202,12 +330,13 @@
         .waiting-state i {
             font-size: 60px;
             margin-bottom: 20px;
-            animation: pulse 1.5s infinite;
+            color: var(--primary);
         }
         
         .waiting-state h2 {
             font-size: 24px;
             margin-bottom: 10px;
+            color: var(--text);
         }
         
         .waiting-state p {
@@ -215,14 +344,18 @@
         }
         
         /* Fullscreen mode */
-        body.fullscreen .karaoke-header,
-        body.fullscreen .progress-container {
+        body.fullscreen .karaoke-header {
             opacity: 0;
             transition: opacity 0.3s;
         }
         
+        body.fullscreen .player-container {
+            opacity: 0.3;
+            transition: opacity 0.3s;
+        }
+        
         body.fullscreen:hover .karaoke-header,
-        body.fullscreen:hover .progress-container {
+        body.fullscreen:hover .player-container {
             opacity: 1;
         }
         
@@ -231,11 +364,11 @@
         }
         
         body.fullscreen .lyric-line {
-            font-size: 48px;
+            font-size: 42px;
         }
         
         body.fullscreen .lyric-line.current {
-            font-size: 64px;
+            font-size: 56px;
         }
         
         /* Responsive */
@@ -278,23 +411,29 @@
     </style>
 </head>
 <body>
+    <!-- Hidden Audio Player for Instrumental -->
+    <audio id="audioPlayer" preload="auto"></audio>
+    
     <!-- Header -->
     <header class="karaoke-header">
         <div class="track-title">
-            <i class="fas fa-music"></i>
+            <i class="fas fa-microphone-alt"></i>
             <span id="trackName">{{ job_name }}</span>
+            <span class="instrumental-badge">
+                <i class="fas fa-music"></i> Instrumental
+            </span>
         </div>
         <div class="header-controls">
             <div class="sync-status">
                 <div class="sync-indicator" id="syncIndicator"></div>
-                <span id="syncText">Waiting for player...</span>
+                <span id="syncText">Ready to play</span>
             </div>
             <button class="btn-icon" id="fullscreenBtn" title="Toggle Fullscreen">
                 <i class="fas fa-expand"></i>
             </button>
-            <button class="btn-icon" id="closeBtn" title="Close" onclick="window.close()">
-                <i class="fas fa-times"></i>
-            </button>
+            <a href="/dashboard" class="btn-icon" title="Back to Dashboard">
+                <i class="fas fa-arrow-left"></i>
+            </a>
         </div>
     </header>
     
@@ -304,14 +443,39 @@
             <div class="waiting-state" id="waitingState">
                 <i class="fas fa-headphones"></i>
                 <h2>Ready for Karaoke</h2>
-                <p>Start playing on the main dashboard to sync lyrics</p>
+                <p>Loading lyrics and instrumental track...</p>
             </div>
         </div>
     </main>
     
-    <!-- Progress -->
-    <footer class="progress-container">
-        <div class="progress-bar">
+    <!-- Player Controls -->
+    <footer class="player-container">
+        <div class="player-controls">
+            <div class="volume-control">
+                <button class="control-btn" id="muteBtn" title="Mute/Unmute">
+                    <i class="fas fa-volume-up"></i>
+                </button>
+                <input type="range" class="volume-slider" id="volumeSlider" min="0" max="100" value="80">
+            </div>
+            
+            <button class="control-btn" id="prevBtn" title="Restart">
+                <i class="fas fa-undo"></i>
+            </button>
+            <button class="control-btn" id="rewindBtn" title="Rewind 10s">
+                <i class="fas fa-backward"></i>
+            </button>
+            <button class="control-btn play-btn" id="playBtn" title="Play/Pause">
+                <i class="fas fa-play"></i>
+            </button>
+            <button class="control-btn" id="forwardBtn" title="Forward 10s">
+                <i class="fas fa-forward"></i>
+            </button>
+            <button class="control-btn" id="loopBtn" title="Loop">
+                <i class="fas fa-redo"></i>
+            </button>
+        </div>
+        
+        <div class="progress-bar" id="progressBar">
             <div class="progress-fill" id="progressFill"></div>
         </div>
         <div class="time-display">
@@ -324,19 +488,140 @@
         const jobId = '{{ job_id }}';
         let lyrics = null;
         let currentLineIndex = -1;
-        let isConnected = false;
-        let lastSyncTime = 0;
+        let isLooping = false;
         
-        // Fetch lyrics on load
+        // Audio player
+        const audio = document.getElementById('audioPlayer');
+        const playBtn = document.getElementById('playBtn');
+        const prevBtn = document.getElementById('prevBtn');
+        const rewindBtn = document.getElementById('rewindBtn');
+        const forwardBtn = document.getElementById('forwardBtn');
+        const loopBtn = document.getElementById('loopBtn');
+        const muteBtn = document.getElementById('muteBtn');
+        const volumeSlider = document.getElementById('volumeSlider');
+        const progressBar = document.getElementById('progressBar');
+        const progressFill = document.getElementById('progressFill');
+        const currentTimeEl = document.getElementById('currentTime');
+        const totalTimeEl = document.getElementById('totalTime');
+        const syncText = document.getElementById('syncText');
+        
+        // Initialize
+        initPlayer();
         fetchLyrics();
         
-        // Listen for player sync via localStorage
-        setupPlayerSync();
+        function initPlayer() {
+            // Load instrumental track (vocals removed)
+            audio.src = `/download/${jobId}/instrumental`;
+            audio.volume = 0.8;
+            
+            // Audio events
+            audio.addEventListener('loadedmetadata', () => {
+                totalTimeEl.textContent = formatTime(audio.duration);
+                syncText.textContent = 'Instrumental loaded - Press play!';
+            });
+            
+            audio.addEventListener('timeupdate', () => {
+                const progress = (audio.currentTime / audio.duration) * 100;
+                progressFill.style.width = progress + '%';
+                currentTimeEl.textContent = formatTime(audio.currentTime);
+                
+                // Sync lyrics
+                updateLyricsHighlight(audio.currentTime);
+            });
+            
+            audio.addEventListener('ended', () => {
+                if (isLooping) {
+                    audio.currentTime = 0;
+                    audio.play();
+                } else {
+                    playBtn.innerHTML = '<i class="fas fa-play"></i>';
+                    syncText.textContent = 'Song ended - Press play to restart';
+                }
+            });
+            
+            audio.addEventListener('error', (e) => {
+                console.error('Audio error:', e);
+                syncText.textContent = 'Error loading instrumental track';
+                document.getElementById('lyricsScroll').innerHTML = `
+                    <div class="waiting-state">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <h2>Instrumental Track Not Found</h2>
+                        <p>This track may not have been processed yet.</p>
+                        <p style="margin-top: 20px; font-size: 14px;">Go to the dashboard and process the song first.</p>
+                    </div>
+                `;
+            });
+            
+            // Play/Pause button
+            playBtn.addEventListener('click', togglePlay);
+            
+            // Restart button
+            prevBtn.addEventListener('click', () => {
+                audio.currentTime = 0;
+                if (audio.paused) {
+                    audio.play();
+                    playBtn.innerHTML = '<i class="fas fa-pause"></i>';
+                }
+            });
+            
+            // Rewind 10 seconds
+            rewindBtn.addEventListener('click', () => {
+                audio.currentTime = Math.max(0, audio.currentTime - 10);
+            });
+            
+            // Forward 10 seconds
+            forwardBtn.addEventListener('click', () => {
+                audio.currentTime = Math.min(audio.duration, audio.currentTime + 10);
+            });
+            
+            // Loop button
+            loopBtn.addEventListener('click', () => {
+                isLooping = !isLooping;
+                loopBtn.classList.toggle('active', isLooping);
+                audio.loop = isLooping;
+            });
+            
+            // Mute button
+            muteBtn.addEventListener('click', () => {
+                audio.muted = !audio.muted;
+                muteBtn.innerHTML = audio.muted 
+                    ? '<i class="fas fa-volume-mute"></i>' 
+                    : '<i class="fas fa-volume-up"></i>';
+            });
+            
+            // Volume slider
+            volumeSlider.addEventListener('input', (e) => {
+                audio.volume = e.target.value / 100;
+                audio.muted = false;
+                muteBtn.innerHTML = audio.volume === 0 
+                    ? '<i class="fas fa-volume-mute"></i>' 
+                    : '<i class="fas fa-volume-up"></i>';
+            });
+            
+            // Progress bar click to seek
+            progressBar.addEventListener('click', (e) => {
+                const rect = progressBar.getBoundingClientRect();
+                const percent = (e.clientX - rect.left) / rect.width;
+                audio.currentTime = percent * audio.duration;
+            });
+        }
+        
+        function togglePlay() {
+            if (audio.paused) {
+                audio.play();
+                playBtn.innerHTML = '<i class="fas fa-pause"></i>';
+                syncText.textContent = 'Playing instrumental';
+            } else {
+                audio.pause();
+                playBtn.innerHTML = '<i class="fas fa-play"></i>';
+                syncText.textContent = 'Paused';
+            }
+        }
         
         async function fetchLyrics() {
             try {
                 const response = await fetch(`/lyrics/${jobId}`, {
-                    credentials: 'include'  // Include session cookies
+                    credentials: 'include'
                 });
                 
                 if (!response.ok) {
@@ -345,15 +630,13 @@
                 }
                 
                 const data = await response.json();
-                
                 console.log('Lyrics fetch response:', data);
                 
                 if (data.available && data.lines && data.lines.length > 0) {
                     lyrics = data;
                     renderLyrics();
-                    document.getElementById('waitingState').style.display = 'none';
-                    // Show lyrics immediately
-                    document.getElementById('syncText').textContent = 'Lyrics loaded - Play on dashboard to sync';
+                    const waitingEl = document.getElementById('waitingState');
+                    if (waitingEl) waitingEl.style.display = 'none';
                 } else if (data.error) {
                     document.getElementById('lyricsScroll').innerHTML = `
                         <div class="waiting-state">
@@ -364,13 +647,12 @@
                         </div>
                     `;
                 } else if (!data.available) {
-                    // No lyrics extracted yet
                     document.getElementById('lyricsScroll').innerHTML = `
                         <div class="waiting-state">
                             <i class="fas fa-microphone-slash"></i>
                             <h2>Lyrics Not Extracted</h2>
                             <p>${data.message || 'No lyrics available for this track'}</p>
-                            <p style="margin-top: 20px; font-size: 14px;">Go to the dashboard and click "Extract Lyrics" first</p>
+                            <p style="margin-top: 20px; font-size: 14px;">You can still enjoy the instrumental karaoke!</p>
                         </div>
                     `;
                 }
@@ -378,13 +660,21 @@
                 console.error('Failed to fetch lyrics:', error);
                 document.getElementById('lyricsScroll').innerHTML = `
                     <div class="waiting-state">
-                        <i class="fas fa-exclamation-triangle"></i>
-                        <h2>Error Loading Lyrics</h2>
-                        <p>${error.message || 'Could not connect to server'}</p>
-                        <p style="margin-top: 20px; font-size: 14px;">Make sure you're logged in and try refreshing the page</p>
+                        <i class="fas fa-microphone-slash"></i>
+                        <h2>No Lyrics Available</h2>
+                        <p>Lyrics couldn't be loaded, but you can still enjoy the instrumental!</p>
                     </div>
                 `;
             }
+        }
+        
+        // Detect if text contains Arabic/RTL characters
+        function isRTL(text) {
+            if (!text) return false;
+            // Arabic Unicode range: \u0600-\u06FF, \u0750-\u077F, \u08A0-\u08FF
+            // Also includes Arabic Presentation Forms
+            const rtlPattern = /[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/;
+            return rtlPattern.test(text);
         }
         
         function renderLyrics() {
@@ -395,7 +685,7 @@
                     <div class="waiting-state">
                         <i class="fas fa-microphone-slash"></i>
                         <h2>No Lyrics Available</h2>
-                        <p>Extract lyrics from the dashboard first</p>
+                        <p>Enjoy the instrumental track!</p>
                     </div>
                 `;
                 return;
@@ -403,81 +693,41 @@
             
             let html = '';
             lyrics.lines.forEach((line, idx) => {
-                html += `<div class="lyric-line" data-idx="${idx}" data-start="${line.start}" data-end="${line.end}">`;
+                const startTime = line.start || 0;
+                const lineText = line.text || (line.words ? line.words.map(w => w.word || w.text || '').join(' ') : '');
+                const rtlClass = isRTL(lineText) ? ' rtl' : '';
+                
+                html += `<div class="lyric-line${rtlClass}" data-idx="${idx}" data-start="${startTime}" data-end="${line.end || startTime + 5}">`;
                 
                 if (line.words && line.words.length > 0) {
+                    // For RTL, we keep the words in order but the CSS handles direction
                     line.words.forEach(word => {
                         const text = word.word || word.text || '';
-                        html += `<span class="word" data-start="${word.start}" data-end="${word.end}">${text}</span> `;
+                        html += `<span class="word" data-start="${word.start || 0}" data-end="${word.end || 0}">${text}</span> `;
                     });
                 } else {
-                    html += line.text;
+                    html += line.text || '';
                 }
                 
                 html += '</div>';
             });
             
             container.innerHTML = html;
-        }
-        
-        function setupPlayerSync() {
-            // Listen for storage events from main dashboard
-            window.addEventListener('storage', function(e) {
-                if (e.key === 'harmonix_player_sync') {
-                    try {
-                        const data = JSON.parse(e.newValue);
-                        console.log('Storage event received:', data);
-                        if (data && data.jobId === jobId) {
-                            handlePlayerSync(data);
+            
+            // Add click handlers for lyrics seeking
+            document.querySelectorAll('.lyric-line').forEach(line => {
+                line.addEventListener('click', () => {
+                    const startTime = parseFloat(line.dataset.start);
+                    if (!isNaN(startTime)) {
+                        audio.currentTime = startTime;
+                        if (audio.paused) {
+                            audio.play();
+                            playBtn.innerHTML = '<i class="fas fa-pause"></i>';
+                            syncText.textContent = 'Playing instrumental';
                         }
-                    } catch (err) {
-                        console.error('Sync parse error:', err);
                     }
-                }
+                });
             });
-            
-            // Also check periodically for same-tab updates
-            setInterval(checkLocalSync, 200);
-            
-            // Initial check
-            checkLocalSync();
-        }
-        
-        function checkLocalSync() {
-            const syncData = localStorage.getItem('harmonix_player_sync');
-            if (syncData) {
-                try {
-                    const data = JSON.parse(syncData);
-                    // Check if this is for our job and recent (within 2 seconds)
-                    if (data && data.jobId === jobId && data.timestamp > Date.now() - 2000) {
-                        // Avoid processing same timestamp twice
-                        if (data.timestamp !== lastSyncTime) {
-                            lastSyncTime = data.timestamp;
-                            handlePlayerSync(data);
-                        }
-                    }
-                } catch (e) {
-                    console.error('Local sync error:', e);
-                }
-            }
-        }
-        
-        function handlePlayerSync(data) {
-            // Update connection status
-            if (!isConnected) {
-                isConnected = true;
-                document.getElementById('syncIndicator').classList.add('connected');
-                document.getElementById('syncText').textContent = 'Synced with player';
-            }
-            
-            // Update progress
-            const progress = (data.currentTime / data.duration) * 100;
-            document.getElementById('progressFill').style.width = progress + '%';
-            document.getElementById('currentTime').textContent = formatTime(data.currentTime);
-            document.getElementById('totalTime').textContent = formatTime(data.duration);
-            
-            // Update lyrics highlighting
-            updateLyricsHighlight(data.currentTime);
         }
         
         function updateLyricsHighlight(time) {
@@ -536,6 +786,52 @@
             return `${mins}:${secs.toString().padStart(2, '0')}`;
         }
         
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            // Don't trigger shortcuts if typing in an input
+            if (e.target.tagName === 'INPUT') return;
+            
+            switch(e.key) {
+                case ' ':
+                    e.preventDefault();
+                    togglePlay();
+                    break;
+                case 'ArrowLeft':
+                    audio.currentTime = Math.max(0, audio.currentTime - 5);
+                    break;
+                case 'ArrowRight':
+                    audio.currentTime = Math.min(audio.duration, audio.currentTime + 5);
+                    break;
+                case 'ArrowUp':
+                    e.preventDefault();
+                    audio.volume = Math.min(1, audio.volume + 0.1);
+                    volumeSlider.value = audio.volume * 100;
+                    break;
+                case 'ArrowDown':
+                    e.preventDefault();
+                    audio.volume = Math.max(0, audio.volume - 0.1);
+                    volumeSlider.value = audio.volume * 100;
+                    break;
+                case 'm':
+                case 'M':
+                    muteBtn.click();
+                    break;
+                case 'l':
+                case 'L':
+                    loopBtn.click();
+                    break;
+                case 'f':
+                case 'F':
+                    document.getElementById('fullscreenBtn').click();
+                    break;
+                case 'Escape':
+                    if (document.fullscreenElement) {
+                        document.exitFullscreen();
+                    }
+                    break;
+            }
+        });
+        
         // Fullscreen toggle
         document.getElementById('fullscreenBtn').addEventListener('click', function() {
             if (!document.fullscreenElement) {
@@ -555,16 +851,6 @@
             if (!document.fullscreenElement) {
                 document.body.classList.remove('fullscreen');
                 btn.innerHTML = '<i class="fas fa-expand"></i>';
-            }
-        });
-        
-        // Keyboard shortcuts
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape' && document.fullscreenElement) {
-                document.exitFullscreen();
-            }
-            if (e.key === 'f' || e.key === 'F') {
-                document.getElementById('fullscreenBtn').click();
             }
         });
     </script>

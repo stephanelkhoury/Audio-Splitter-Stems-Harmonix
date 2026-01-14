@@ -152,3 +152,482 @@
         </div>
     </div>
 </div>
+
+<!-- Track Report Modal -->
+<div class="modal" id="reportModal">
+    <div class="modal-content modal-large" style="max-width: 700px;">
+        <div class="modal-header">
+            <h3 class="modal-title"><i class="fas fa-file-alt"></i> Track Report</h3>
+            <button class="modal-close" onclick="closeReportModal()">&times;</button>
+        </div>
+        <div class="modal-body modal-body-scroll" id="reportModalBody">
+            <div class="report-loading">
+                <i class="fas fa-spinner fa-spin"></i> Loading report...
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeReportModal()">Close</button>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Report Modal Styles */
+.report-loading {
+    text-align: center;
+    padding: 40px;
+    color: var(--text-muted);
+}
+
+.report-loading i {
+    font-size: 32px;
+    margin-bottom: 15px;
+    display: block;
+}
+
+.report-header {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 20px;
+}
+
+.report-icon {
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    color: white;
+}
+
+.report-title-section h2 {
+    margin: 0 0 5px 0;
+    font-size: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.report-status {
+    font-size: 11px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.report-status.completed {
+    background: rgba(16, 185, 129, 0.2);
+    color: #10b981;
+}
+
+.report-status.processing {
+    background: rgba(124, 58, 237, 0.2);
+    color: #7c3aed;
+}
+
+.report-status.failed {
+    background: rgba(239, 68, 68, 0.2);
+    color: #ef4444;
+}
+
+.report-meta {
+    color: var(--text-muted);
+    font-size: 13px;
+}
+
+.report-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 15px;
+    margin-bottom: 25px;
+}
+
+.report-stat {
+    background: var(--darker);
+    border-radius: 10px;
+    padding: 15px;
+    text-align: center;
+}
+
+.report-stat-value {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--primary);
+    margin-bottom: 5px;
+}
+
+.report-stat-label {
+    font-size: 11px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.report-section {
+    margin-bottom: 25px;
+}
+
+.report-section-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-muted);
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.report-section-title i {
+    color: var(--primary);
+}
+
+.report-music-info {
+    display: flex;
+    gap: 25px;
+    background: var(--darker);
+    padding: 20px;
+    border-radius: 10px;
+}
+
+.report-music-item {
+    text-align: center;
+}
+
+.report-music-value {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--secondary);
+    margin-bottom: 5px;
+}
+
+.report-music-label {
+    font-size: 11px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+}
+
+.report-stems-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.report-stem-item {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 12px 15px;
+    background: var(--darker);
+    border-radius: 10px;
+}
+
+.report-stem-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 16px;
+}
+
+.report-stem-icon.vocals { background: linear-gradient(135deg, #e91e63, #9c27b0); }
+.report-stem-icon.drums { background: linear-gradient(135deg, #ff5722, #ff9800); }
+.report-stem-icon.bass { background: linear-gradient(135deg, #3f51b5, #2196f3); }
+.report-stem-icon.guitar { background: linear-gradient(135deg, #4caf50, #8bc34a); }
+.report-stem-icon.piano { background: linear-gradient(135deg, #607d8b, #90a4ae); }
+.report-stem-icon.other { background: linear-gradient(135deg, #9e9e9e, #757575); }
+.report-stem-icon.instrumental { background: linear-gradient(135deg, #00bcd4, #03a9f4); }
+
+.report-stem-name {
+    font-weight: 600;
+    text-transform: capitalize;
+}
+
+.report-stem-meta {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 3px;
+}
+
+.report-details {
+    background: var(--darker);
+    border-radius: 10px;
+    padding: 15px;
+}
+
+.report-detail-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+}
+
+.report-detail-item:last-child {
+    border-bottom: none;
+}
+
+.report-detail-label {
+    color: var(--text-muted);
+    font-size: 13px;
+}
+
+.report-detail-value {
+    font-weight: 500;
+    font-size: 13px;
+}
+
+@media (max-width: 600px) {
+    .report-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .report-music-info {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+}
+</style>
+
+<!-- Track Report Modal -->
+<div class="modal" id="reportModal">
+    <div class="modal-content modal-large">
+        <div class="modal-header">
+            <h3 class="modal-title"><i class="fas fa-chart-bar"></i> Track Analysis Report</h3>
+            <button class="modal-close" data-modal-close>&times;</button>
+        </div>
+        <div class="modal-body" id="reportModalBody">
+            <div class="report-loading">
+                <i class="fas fa-spinner fa-spin"></i> Loading report...
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" data-modal-close>Close</button>
+            <button class="btn btn-primary" onclick="downloadReport()">
+                <i class="fas fa-download"></i> Export PDF
+            </button>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Report Modal Styles */
+.report-loading {
+    text-align: center;
+    padding: 40px;
+    color: var(--text-muted);
+}
+
+.report-header {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 20px;
+    background: linear-gradient(135deg, rgba(124, 58, 237, 0.1), rgba(6, 182, 212, 0.1));
+    border-radius: 12px;
+    margin-bottom: 25px;
+}
+
+.report-icon {
+    width: 70px;
+    height: 70px;
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    color: white;
+}
+
+.report-title-section h2 {
+    margin: 0 0 5px 0;
+    font-size: 20px;
+}
+
+.report-title-section .report-meta {
+    font-size: 13px;
+    color: var(--text-muted);
+}
+
+.report-title-section .report-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    margin-left: 10px;
+}
+
+.report-status.completed {
+    background: rgba(16, 185, 129, 0.15);
+    color: var(--success);
+}
+
+.report-status.processing {
+    background: rgba(245, 158, 11, 0.15);
+    color: var(--warning);
+}
+
+.report-status.failed {
+    background: rgba(239, 68, 68, 0.15);
+    color: var(--danger);
+}
+
+.report-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin-bottom: 25px;
+}
+
+.report-stat {
+    background: var(--bg-darker);
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+}
+
+.report-stat-value {
+    font-size: 28px;
+    font-weight: 700;
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.report-stat-label {
+    font-size: 12px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    margin-top: 5px;
+}
+
+.report-section {
+    margin-bottom: 25px;
+}
+
+.report-section-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.report-section-title i {
+    color: var(--primary);
+}
+
+.report-stems-list {
+    display: grid;
+    gap: 10px;
+}
+
+.report-stem-item {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 15px;
+    background: var(--bg-darker);
+    border-radius: 10px;
+}
+
+.report-stem-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    color: white;
+}
+
+.report-stem-icon.vocals { background: linear-gradient(135deg, #ec4899, #f43f5e); }
+.report-stem-icon.drums { background: linear-gradient(135deg, #f59e0b, #ef4444); }
+.report-stem-icon.bass { background: linear-gradient(135deg, #10b981, #06b6d4); }
+.report-stem-icon.guitar { background: linear-gradient(135deg, #8b5cf6, #6366f1); }
+.report-stem-icon.piano { background: linear-gradient(135deg, #6366f1, #8b5cf6); }
+.report-stem-icon.other { background: linear-gradient(135deg, #64748b, #94a3b8); }
+.report-stem-icon.instrumental { background: linear-gradient(135deg, #06b6d4, #0891b2); }
+
+.report-stem-info {
+    flex: 1;
+}
+
+.report-stem-name {
+    font-weight: 600;
+    text-transform: capitalize;
+}
+
+.report-stem-meta {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 3px;
+}
+
+.report-music-info {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 15px;
+}
+
+.report-music-item {
+    background: var(--bg-darker);
+    border-radius: 10px;
+    padding: 15px;
+    text-align: center;
+}
+
+.report-music-value {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--primary);
+}
+
+.report-music-label {
+    font-size: 11px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    margin-top: 5px;
+}
+
+.report-details {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+}
+
+.report-detail-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 15px;
+    background: var(--bg-darker);
+    border-radius: 8px;
+    font-size: 13px;
+}
+
+.report-detail-label {
+    color: var(--text-muted);
+}
+
+.report-detail-value {
+    font-weight: 600;
+}
+</style>

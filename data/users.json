@@ -33,7 +33,8 @@
       "monthly": {
         "2026-01": 1
       }
-    }
+    },
+    "avatar": "/avatars/stephanelkhoury2000_b18d2480_8776875a.jpg"
   },
   "jenny.chidiac_73838abb": {
     "email": "jenny.chidiac@gmail.com",
@@ -42,7 +43,7 @@
     "role": "user",
     "name": "Jenny Chidiac",
     "created_at": "2025-12-30T21:01:49.019544",
-    "last_login": "2026-01-08T23:03:37.638195",
+    "last_login": "2026-01-14T17:23:20.359400",
     "is_active": true,
     "plan": "free",
     "usage": {

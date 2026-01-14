@@ -331,6 +331,18 @@ def process_audio_async(job_id, audio_path, quality, mode, instruments, display_
                     'completed_at': datetime.now().isoformat()
                 })
             
+            # Log activity for song processed
+            if username:
+                from harmonix_splitter.auth import log_activity
+                stem_count = len(stem_urls)
+                log_activity(username, 'song_processed', f'{display_name or base_name} - {stem_count} stems', {
+                    'job_id': job_id,
+                    'filename': display_name or base_name,
+                    'stem_count': stem_count,
+                    'quality': quality,
+                    'processing_time': result.processing_time
+                })
+            
             logger.info(f"Job {job_id}: Completed successfully in {result.processing_time:.1f}s")
         else:
             raise Exception(result.metadata.get('error', 'Unknown error'))
@@ -426,7 +438,7 @@ def index():
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     """User login page"""
-    from harmonix_splitter.auth import authenticate_user
+    from harmonix_splitter.auth import authenticate_user, log_activity
     
     if request.method == 'POST':
         email = request.form.get('email', '')
@@ -451,6 +463,36 @@ def login():
             
             if remember:
                 session.permanent = True
+            
+            # Log the login activity
+            user_agent = request.headers.get('User-Agent', 'Unknown')
+            browser = 'Browser'
+            if 'Chrome' in user_agent:
+                browser = 'Chrome'
+            elif 'Firefox' in user_agent:
+                browser = 'Firefox'
+            elif 'Safari' in user_agent:
+                browser = 'Safari'
+            elif 'Edge' in user_agent:
+                browser = 'Edge'
+            
+            os_name = 'Unknown'
+            if 'Windows' in user_agent:
+                os_name = 'Windows'
+            elif 'Mac' in user_agent:
+                os_name = 'macOS'
+            elif 'Linux' in user_agent:
+                os_name = 'Linux'
+            elif 'iPhone' in user_agent or 'iPad' in user_agent:
+                os_name = 'iOS'
+            elif 'Android' in user_agent:
+                os_name = 'Android'
+            
+            log_activity(user.get('username'), 'login', f'{browser} on {os_name}', {
+                'browser': browser,
+                'os': os_name,
+                'ip': request.remote_addr
+            })
             
             flash('Welcome back!', 'success')
             
@@ -902,13 +944,26 @@ def account():
         return redirect('/login')
     
     # Get user stats from auth module
-    from harmonix_splitter.auth import get_user_stats, get_user
+    from harmonix_splitter.auth import get_user_stats, get_user, get_user_activities, get_activity_icon, format_time_ago
     
     username = session.get('user_id')
     if not username:
         return redirect('/login')
     user_stats = get_user_stats(username)
     user_data = get_user(username)
+    
+    # Get recent activities
+    raw_activities = get_user_activities(username, limit=10)
+    activities = []
+    for act in raw_activities:
+        activities.append({
+            'type': act.get('type', 'unknown'),
+            'description': act.get('description', ''),
+            'timestamp': act.get('timestamp', ''),
+            'time_ago': format_time_ago(act.get('timestamp', '')),
+            'icon': get_activity_icon(act.get('type', '')),
+            'metadata': act.get('metadata', {})
+        })
     
     # Include avatar and bio from user_data (or session fallback)
     return render_template('account.html',
@@ -922,7 +977,34 @@ def account():
                               'avatar': user_data.get('avatar') if user_data else session.get('user_avatar'),
                               'bio': user_data.get('bio', '') if user_data else session.get('user_bio', ''),
                           },
-                          user_stats=user_stats)
+                          user_stats=user_stats,
+                          activities=activities)
+
+
+@app.route('/api/activities')
+def get_activities():
+    """Get user's recent activities"""
+    if 'user_id' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+    
+    from harmonix_splitter.auth import get_user_activities, get_activity_icon, format_time_ago
+    
+    username = session.get('user_id')
+    limit = request.args.get('limit', 10, type=int)
+    
+    raw_activities = get_user_activities(username, limit=limit)
+    activities = []
+    for act in raw_activities:
+        activities.append({
+            'type': act.get('type', 'unknown'),
+            'description': act.get('description', ''),
+            'timestamp': act.get('timestamp', ''),
+            'time_ago': format_time_ago(act.get('timestamp', '')),
+            'icon': get_activity_icon(act.get('type', '')),
+            'metadata': act.get('metadata', {})
+        })
+    
+    return jsonify({'activities': activities})
 
 
 @app.route('/account/update', methods=['POST'])
@@ -2028,12 +2110,105 @@ def download_stem(job_id, stem_name):
     # Log the file being served for debugging
     logger.debug(f"Serving stem: {stem_file.name} ({stem_file.stat().st_size / 1024 / 1024:.1f} MB)")
     
+    # Log activity for download (only if it's a direct download, not streaming for player)
+    if username and request.args.get('download') == 'true':
+        from harmonix_splitter.auth import log_activity
+        log_activity(username, 'download', f'{stem_name}.{stem_file.suffix[1:]} exported', {
+            'job_id': job_id,
+            'stem_name': stem_name,
+            'file_size': stem_file.stat().st_size
+        })
+    
     return send_file(
         stem_file,
         as_attachment=False,  # Allow streaming for player
         download_name=stem_file.name,
         mimetype=mimetype
     )
+
+
+@app.route('/job/<job_id>/report')
+def get_job_report(job_id):
+    """Get detailed report/analysis for a specific job"""
+    username = session.get('user_id')
+    user_role = session.get('user_role')
+    
+    with jobs_lock:
+        job = jobs_storage.get(job_id)
+        if not job:
+            return jsonify({'error': 'Job not found'}), 404
+        
+        # Check ownership (admin can view any)
+        if user_role != 'admin' and job.get('user') != username:
+            return jsonify({'error': 'Access denied'}), 403
+    
+    # Get user-specific output directory
+    job_owner = job.get('user')
+    user_output_dir = get_user_output_dir(job_owner)
+    job_dir = user_output_dir / job_id
+    
+    # Build detailed report
+    report = {
+        'job_id': job_id,
+        'display_name': job.get('display_name', job.get('filename', 'Unknown')),
+        'filename': job.get('filename', ''),
+        'status': job.get('status', 'unknown'),
+        'created_at': job.get('created_at', ''),
+        'completed_at': job.get('completed_at', ''),
+        'processing_time': job.get('processing_time'),
+        'quality': job.get('quality', 'balanced'),
+        'mode': job.get('mode', 'grouped'),
+        'user': job.get('user', 'anonymous'),
+        'stems': {},
+        'music_info': job.get('music_info', {}),
+        'detected_instruments': job.get('detected_instruments', []),
+        'has_lyrics': job.get('has_lyrics', False),
+    }
+    
+    # Get stem file details
+    if job_dir.exists():
+        for stem_name, stem_url in (job.get('stems') or {}).items():
+            # Find the actual file
+            stem_file = None
+            for ext in ['.mp3', '.wav']:
+                for f in job_dir.glob(f"*_{stem_name}{ext}"):
+                    stem_file = f
+                    break
+                if stem_file:
+                    break
+            
+            if stem_file and stem_file.exists():
+                stat = stem_file.stat()
+                # Try to get duration if librosa is available
+                duration = None
+                if AUDIO_LIBS_AVAILABLE:
+                    try:
+                        y, sr = librosa.load(str(stem_file), sr=None, duration=60)
+                        duration = len(y) / sr
+                    except:
+                        pass
+                
+                report['stems'][stem_name] = {
+                    'name': stem_name,
+                    'url': stem_url,
+                    'file_size': stat.st_size,
+                    'format': stem_file.suffix[1:].upper(),
+                    'duration': duration
+                }
+        
+        # Check for lyrics file
+        lyrics_files = list(job_dir.glob("*_lyrics.json"))
+        if lyrics_files:
+            report['has_lyrics'] = True
+            try:
+                with open(lyrics_files[0], 'r') as f:
+                    lyrics_data = json.load(f)
+                    report['lyrics_language'] = lyrics_data.get('language', 'en')
+                    report['lyrics_word_count'] = len(lyrics_data.get('words', []))
+            except:
+                pass
+    
+    return jsonify(report)
 
 
 @app.route('/jobs')
@@ -2549,10 +2724,20 @@ def get_lyrics(job_id):
         current_user = session.get('user_id')
         is_admin = session.get('user_role') == 'admin'
         
+        # Scan for the user's jobs if not already in storage
+        if job_id not in jobs_storage:
+            scan_existing_outputs(current_user)
+        
         with jobs_lock:
             job = jobs_storage.get(job_id)
             if not job:
-                return jsonify({'error': 'Job not found', 'available': False}), 404
+                # Try scanning all for admin
+                if is_admin:
+                    scan_existing_outputs()
+                    job = jobs_storage.get(job_id)
+                
+                if not job:
+                    return jsonify({'error': 'Job not found', 'available': False}), 404
             
             job_owner = job.get('user')  # Job stores username as 'user'
             if not is_admin and job_owner != current_user:
@@ -2563,7 +2748,7 @@ def get_lyrics(job_id):
         job_dir = user_output_dir / job_id
         
         if not job_dir.exists():
-            return jsonify({'error': 'Job not found', 'available': False}), 404
+            return jsonify({'error': 'Job directory not found', 'available': False}), 404
         
         # Find lyrics file
         lyrics_files = list(job_dir.glob("*_lyrics.json"))
@@ -2579,7 +2764,7 @@ def get_lyrics(job_id):
         
     except Exception as e:
         logger.error(f"Failed to get lyrics: {e}")
-        return jsonify({'error': str(e)}), 500
+        return jsonify({'error': str(e), 'available': False}), 500
 
 
 @app.route('/lyrics/<job_id>/lrc')
@@ -2724,10 +2909,20 @@ def karaoke_page(job_id):
         current_user = session.get('user_id')
         is_admin = session.get('user_role') == 'admin'
         
+        # Scan for the user's jobs if not already in storage
+        if job_id not in jobs_storage:
+            scan_existing_outputs(current_user)
+        
         with jobs_lock:
             job = jobs_storage.get(job_id)
             if not job:
-                return "Job not found", 404
+                # Try one more scan of all outputs for admin
+                if is_admin:
+                    scan_existing_outputs()
+                    job = jobs_storage.get(job_id)
+                
+                if not job:
+                    return "Job not found", 404
             
             job_owner = job.get('user')
             if not is_admin and job_owner != current_user:

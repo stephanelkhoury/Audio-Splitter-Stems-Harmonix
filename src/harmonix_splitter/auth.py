@@ -577,3 +577,106 @@ def get_current_user() -> dict | None:
     if 'user' in session:
         return session['user']
     return None
+
+
+# ==================== ACTIVITY TRACKING ====================
+
+ACTIVITY_FILE = DATA_DIR / "activities.json"
+
+
+def load_activities() -> dict:
+    """Load activities from JSON file"""
+    if not ACTIVITY_FILE.exists():
+        return {}
+    try:
+        with open(ACTIVITY_FILE, 'r') as f:
+            return json.load(f)
+    except:
+        return {}
+
+
+def save_activities(activities: dict):
+    """Save activities to JSON file"""
+    with open(ACTIVITY_FILE, 'w') as f:
+        json.dump(activities, f, indent=2)
+
+
+def log_activity(username: str, activity_type: str, description: str, metadata: dict = None):
+    """
+    Log a user activity
+    
+    activity_type: 'song_processed', 'download', 'login', 'logout', 'upload', 'midi_converted', etc.
+    """
+    activities = load_activities()
+    
+    if username not in activities:
+        activities[username] = []
+    
+    activity = {
+        "type": activity_type,
+        "description": description,
+        "timestamp": datetime.now().isoformat(),
+        "metadata": metadata or {}
+    }
+    
+    # Add to the beginning of the list (most recent first)
+    activities[username].insert(0, activity)
+    
+    # Keep only the last 100 activities per user
+    activities[username] = activities[username][:100]
+    
+    save_activities(activities)
+
+
+def get_user_activities(username: str, limit: int = 10) -> list:
+    """Get recent activities for a user"""
+    activities = load_activities()
+    user_activities = activities.get(username, [])
+    return user_activities[:limit]
+
+
+def get_activity_icon(activity_type: str) -> str:
+    """Get Font Awesome icon for activity type"""
+    icons = {
+        'song_processed': 'fa-music',
+        'download': 'fa-download',
+        'login': 'fa-sign-in-alt',
+        'logout': 'fa-sign-out-alt',
+        'upload': 'fa-upload',
+        'midi_converted': 'fa-file-audio',
+        'lyrics_extracted': 'fa-closed-captioning',
+        'account_updated': 'fa-user-edit',
+        'password_changed': 'fa-key',
+        'plan_upgraded': 'fa-crown',
+    }
+    return icons.get(activity_type, 'fa-circle')
+
+
+def format_time_ago(timestamp_str: str) -> str:
+    """Format a timestamp as 'X time ago'"""
+    try:
+        timestamp = datetime.fromisoformat(timestamp_str)
+        now = datetime.now()
+        diff = now - timestamp
+        
+        seconds = diff.total_seconds()
+        
+        if seconds < 60:
+            return "Just now"
+        elif seconds < 3600:
+            mins = int(seconds // 60)
+            return f"{mins} minute{'s' if mins != 1 else ''} ago"
+        elif seconds < 86400:
+            hours = int(seconds // 3600)
+            return f"{hours} hour{'s' if hours != 1 else ''} ago"
+        elif seconds < 604800:
+            days = int(seconds // 86400)
+            return f"{days} day{'s' if days != 1 else ''} ago"
+        elif seconds < 2592000:
+            weeks = int(seconds // 604800)
+            return f"{weeks} week{'s' if weeks != 1 else ''} ago"
+        else:
+            return timestamp.strftime("%b %d, %Y")
+    except:
+        return "Unknown"
+

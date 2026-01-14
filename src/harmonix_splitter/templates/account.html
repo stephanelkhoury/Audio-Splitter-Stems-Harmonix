@@ -825,37 +825,27 @@
             
             <div class="account-section" id="history">
                 <h2><i class="fas fa-history"></i> Recent Activity</h2>
-                <div class="history-list">
-                    <div class="history-item">
-                        <div class="history-item-info">
-                            <div class="history-icon"><i class="fas fa-music"></i></div>
-                            <div>
-                                <h4>Song Processed</h4>
-                                <p>Summer_Vibes.mp3 - 4 stems</p>
+                <div class="history-list" id="activityList">
+                    {% if activities and activities|length > 0 %}
+                        {% for activity in activities %}
+                        <div class="history-item">
+                            <div class="history-item-info">
+                                <div class="history-icon"><i class="fas {{ activity.icon }}"></i></div>
+                                <div>
+                                    <h4>{% if activity.type == 'song_processed' %}Song Processed{% elif activity.type == 'download' %}Stems Downloaded{% elif activity.type == 'login' %}Login{% elif activity.type == 'logout' %}Logout{% elif activity.type == 'midi_converted' %}MIDI Converted{% elif activity.type == 'lyrics_extracted' %}Lyrics Extracted{% elif activity.type == 'account_updated' %}Account Updated{% elif activity.type == 'password_changed' %}Password Changed{% elif activity.type == 'plan_upgraded' %}Plan Upgraded{% else %}Activity{% endif %}</h4>
+                                    <p>{{ activity.description }}</p>
+                                </div>
                             </div>
+                            <span style="color: var(--text-muted); font-size: 13px;">{{ activity.time_ago }}</span>
                         </div>
-                        <span style="color: var(--text-muted); font-size: 13px;">2 hours ago</span>
-                    </div>
-                    <div class="history-item">
-                        <div class="history-item-info">
-                            <div class="history-icon"><i class="fas fa-download"></i></div>
-                            <div>
-                                <h4>Stems Downloaded</h4>
-                                <p>vocals.mp3 exported</p>
-                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="empty-state" style="text-align: center; padding: 40px 20px; color: var(--text-muted);">
+                            <i class="fas fa-history" style="font-size: 48px; opacity: 0.3; margin-bottom: 15px;"></i>
+                            <h4 style="color: var(--text-dim); margin-bottom: 8px;">No activity yet</h4>
+                            <p style="font-size: 14px;">Your recent activities will appear here</p>
                         </div>
-                        <span style="color: var(--text-muted); font-size: 13px;">3 hours ago</span>
-                    </div>
-                    <div class="history-item">
-                        <div class="history-item-info">
-                            <div class="history-icon"><i class="fas fa-sign-in-alt"></i></div>
-                            <div>
-                                <h4>Login</h4>
-                                <p>Chrome on macOS</p>
-                            </div>
-                        </div>
-                        <span style="color: var(--text-muted); font-size: 13px;">1 day ago</span>
-                    </div>
+                    {% endif %}
                 </div>
             </div>
             
