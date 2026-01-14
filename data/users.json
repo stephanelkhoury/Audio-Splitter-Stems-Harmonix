@@ -1,19 +1,20 @@
 {
   "admin": {
     "email": "admin@harmonix.music.com",
-    "password_hash": "e2ef28e195970bd402b97fd9ccc08c1de842ac73b10d40e12cce73bd2cec89d5",
-    "salt": "4f3a2db95bd0582d097cb7cd004b349c",
+    "password_hash": "a35fc8364072a9bf466dc1f9051753d66795f6909b98922adadf135da52ce757",
+    "salt": "ae3234d22a00fc4886b86c35d42eb01b",
     "role": "admin",
     "name": "Admin Harmonix",
     "created_at": "2025-12-30T00:16:33.894633",
-    "last_login": "2026-01-09T22:43:37.927490",
+    "last_login": "2026-01-14T22:25:22.007373",
     "is_active": true,
     "plan": "studio",
     "usage": {
-      "songs_processed": 1,
+      "songs_processed": 2,
       "stems_downloaded": 0,
       "monthly": {
-        "2025-12": 1
+        "2025-12": 1,
+        "2026-01": 1
       }
     }
   },
@@ -28,10 +29,10 @@
     "is_active": true,
     "plan": "free",
     "usage": {
-      "songs_processed": 1,
+      "songs_processed": 3,
       "stems_downloaded": 0,
       "monthly": {
-        "2026-01": 1
+        "2026-01": 3
       }
     },
     "avatar": "/avatars/stephanelkhoury2000_b18d2480_8776875a.jpg"
@@ -43,7 +44,7 @@
     "role": "user",
     "name": "Jenny Chidiac",
     "created_at": "2025-12-30T21:01:49.019544",
-    "last_login": "2026-01-14T17:23:20.359400",
+    "last_login": "2026-01-14T22:25:12.886941",
     "is_active": true,
     "plan": "free",
     "usage": {

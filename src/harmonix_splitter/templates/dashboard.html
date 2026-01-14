@@ -223,6 +223,52 @@
         [data-theme="light"] .lyrics-panel {
             background: #f8fafc;
         }
+        
+        /* Light mode - Global Timeline */
+        [data-theme="light"] .global-timeline {
+            background: rgba(241, 245, 249, 0.9);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+        }
+        
+        [data-theme="light"] .timeline-bar {
+            background: rgba(0, 0, 0, 0.1);
+        }
+        
+        [data-theme="light"] .timeline-cursor {
+            background: #0f172a;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+        
+        [data-theme="light"] .time-display {
+            background: rgba(0, 0, 0, 0.05);
+        }
+        
+        [data-theme="light"] .time-display .ms {
+            color: #64748b;
+        }
+        
+        [data-theme="light"] .stem-track {
+            background: #ffffff;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+        }
+        
+        [data-theme="light"] .sync-indicator {
+            border-color: rgba(0, 0, 0, 0.2);
+        }
+        
+        [data-theme="light"] .drift-display {
+            color: #64748b;
+        }
+        
+        /* Timeline label */
+        .timeline-label {
+            font-size: 12px;
+            color: #888;
+        }
+        
+        [data-theme="light"] .timeline-label {
+            color: #64748b;
+        }
 
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -1042,8 +1088,8 @@
 
         .drift-display {
             font-family: 'Courier New', monospace;
-            font-size: 10px;
-            color: #555;
+            font-size: 11px;
+            color: #888;
             margin-left: 5px;
         }
 
@@ -4376,9 +4422,9 @@
                 '<div class="global-timeline">' +
                 '<div style="display: flex; justify-content: space-between; align-items: center;">' +
                 '<div style="display: flex; align-items: center; gap: 10px;">' +
-                '<span style="font-size: 12px; color: #888;">TIMELINE</span>' +
+                '<span class="timeline-label">TIMELINE</span>' +
                 '<span class="sync-indicator" id="globalSyncIndicator" title="Global sync status"></span>' +
-                '<span class="drift-display" id="globalDrift" style="font-size: 11px;"></span>' +
+                '<span class="drift-display" id="globalDrift"></span>' +
                 '</div>' +
                 '<div class="time-display">' +
                 '<span class="current" id="currentTime">00:00</span>' +

@@ -29,6 +29,49 @@
             display: flex;
             flex-direction: column;
             overflow: hidden;
+            position: relative;
+        }
+        
+        /* Video Background */
+        .video-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            overflow: hidden;
+            background: var(--bg);
+        }
+        
+        .video-background video {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            min-width: 100%;
+            min-height: 100%;
+            width: auto;
+            height: auto;
+            transform: translate(-50%, -50%);
+            object-fit: cover;
+        }
+        
+        .video-background.hidden video {
+            display: none;
+        }
+        
+        .video-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            pointer-events: none;
+        }
+        
+        .video-background.hidden .video-overlay {
+            background: var(--bg);
         }
         
         /* Header - minimal */
@@ -37,8 +80,10 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            background: rgba(0, 0, 0, 0.5);
+            background: rgba(0, 0, 0, 0.7);
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+            z-index: 10;
         }
         
         .track-title {
@@ -98,6 +143,19 @@
             transform: scale(1.1);
         }
         
+        .btn-icon.active {
+            background: var(--primary);
+        }
+        
+        .btn-icon.video-toggle {
+            position: relative;
+        }
+        
+        .btn-icon.video-toggle.disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+        
         /* Main lyrics container */
         .lyrics-container {
             flex: 1;
@@ -108,6 +166,8 @@
             padding: 40px;
             padding-bottom: 20px;
             overflow: hidden;
+            position: relative;
+            z-index: 5;
         }
         
         .lyrics-scroll {
@@ -411,6 +471,16 @@
     </style>
 </head>
 <body>
+    <!-- Video Background (muted, synced with audio) -->
+    <div class="video-background{% if not has_video %} hidden{% endif %}" id="videoBackground">
+        <video id="backgroundVideo" muted playsinline>
+            {% if has_video %}
+            <source src="/video/{{ job_id }}" type="video/mp4">
+            {% endif %}
+        </video>
+        <div class="video-overlay"></div>
+    </div>
+    
     <!-- Hidden Audio Player for Instrumental -->
     <audio id="audioPlayer" preload="auto"></audio>
     
@@ -428,6 +498,9 @@
                 <div class="sync-indicator" id="syncIndicator"></div>
                 <span id="syncText">Ready to play</span>
             </div>
+            <button class="btn-icon video-toggle{% if has_video %} active{% else %} disabled{% endif %}" id="videoToggleBtn" title="{% if has_video %}Toggle Video Background{% else %}No video available{% endif %}">
+                <i class="fas fa-video"></i>
+            </button>
             <button class="btn-icon" id="fullscreenBtn" title="Toggle Fullscreen">
                 <i class="fas fa-expand"></i>
             </button>
@@ -486,12 +559,17 @@
     
     <script>
         const jobId = '{{ job_id }}';
+        const hasVideo = {{ 'true' if has_video else 'false' }};
         let lyrics = null;
         let currentLineIndex = -1;
         let isLooping = false;
+        let videoEnabled = hasVideo;
         
         // Audio player
         const audio = document.getElementById('audioPlayer');
+        const video = document.getElementById('backgroundVideo');
+        const videoBackground = document.getElementById('videoBackground');
+        const videoToggleBtn = document.getElementById('videoToggleBtn');
         const playBtn = document.getElementById('playBtn');
         const prevBtn = document.getElementById('prevBtn');
         const rewindBtn = document.getElementById('rewindBtn');
@@ -507,7 +585,43 @@
         
         // Initialize
         initPlayer();
+        initVideo();
         fetchLyrics();
+        
+        function initVideo() {
+            if (!hasVideo) return;
+            
+            // Video toggle button
+            videoToggleBtn.addEventListener('click', () => {
+                if (!hasVideo) return;
+                
+                videoEnabled = !videoEnabled;
+                videoBackground.classList.toggle('hidden', !videoEnabled);
+                videoToggleBtn.classList.toggle('active', videoEnabled);
+                
+                if (videoEnabled && !audio.paused) {
+                    video.currentTime = audio.currentTime;
+                    video.play();
+                } else {
+                    video.pause();
+                }
+            });
+            
+            // Keep video in sync with audio
+            video.addEventListener('loadedmetadata', () => {
+                console.log('Video loaded, duration:', video.duration);
+            });
+        }
+        
+        function syncVideo() {
+            if (!hasVideo || !videoEnabled) return;
+            
+            // Sync video time with audio (allow small drift)
+            const drift = Math.abs(video.currentTime - audio.currentTime);
+            if (drift > 0.3) {
+                video.currentTime = audio.currentTime;
+            }
+        }
         
         function initPlayer() {
             // Load instrumental track (vocals removed)
@@ -517,7 +631,7 @@
             // Audio events
             audio.addEventListener('loadedmetadata', () => {
                 totalTimeEl.textContent = formatTime(audio.duration);
-                syncText.textContent = 'Instrumental loaded - Press play!';
+                syncText.textContent = hasVideo ? 'Instrumental + Video loaded - Press play!' : 'Instrumental loaded - Press play!';
             });
             
             audio.addEventListener('timeupdate', () => {
@@ -527,9 +641,35 @@
                 
                 // Sync lyrics
                 updateLyricsHighlight(audio.currentTime);
+                
+                // Sync video
+                syncVideo();
+            });
+            
+            audio.addEventListener('play', () => {
+                if (hasVideo && videoEnabled) {
+                    video.currentTime = audio.currentTime;
+                    video.play();
+                }
+            });
+            
+            audio.addEventListener('pause', () => {
+                if (hasVideo) {
+                    video.pause();
+                }
+            });
+            
+            audio.addEventListener('seeked', () => {
+                if (hasVideo && videoEnabled) {
+                    video.currentTime = audio.currentTime;
+                }
             });
             
             audio.addEventListener('ended', () => {
+                if (hasVideo) {
+                    video.pause();
+                    video.currentTime = 0;
+                }
                 if (isLooping) {
                     audio.currentTime = 0;
                     audio.play();
@@ -819,6 +959,10 @@
                 case 'l':
                 case 'L':
                     loopBtn.click();
+                    break;
+                case 'v':
+                case 'V':
+                    if (hasVideo) videoToggleBtn.click();
                     break;
                 case 'f':
                 case 'F':

@@ -1,0 +1,36 @@
+{
+  "jenny.chidiac_73838abb": [
+    {
+      "type": "login",
+      "description": "Chrome on macOS",
+      "timestamp": "2026-01-14T22:25:12.888255",
+      "metadata": {
+        "browser": "Chrome",
+        "os": "macOS",
+        "ip": "127.0.0.1"
+      }
+    },
+    {
+      "type": "login",
+      "description": "Chrome on macOS",
+      "timestamp": "2026-01-14T22:10:25.087938",
+      "metadata": {
+        "browser": "Chrome",
+        "os": "macOS",
+        "ip": "127.0.0.1"
+      }
+    }
+  ],
+  "admin": [
+    {
+      "type": "login",
+      "description": "Chrome on macOS",
+      "timestamp": "2026-01-14T22:25:22.008026",
+      "metadata": {
+        "browser": "Chrome",
+        "os": "macOS",
+        "ip": "127.0.0.1"
+      }
+    }
+  ]
+}

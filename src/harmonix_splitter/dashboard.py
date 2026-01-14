@@ -1847,9 +1847,13 @@ def download_and_process_url(job_id, url, quality, mode, instruments, output_nam
         job_output_dir = user_output_dir / job_id
         job_output_dir.mkdir(parents=True, exist_ok=True)
         
+        # Check if this is a YouTube URL (for video download)
+        is_youtube = 'youtube.com' in url.lower() or 'youtu.be' in url.lower()
+        
         with jobs_lock:
             jobs_storage[job_id]['progress'] = 5
             jobs_storage[job_id]['stage'] = 'Fetching video info...'
+            jobs_storage[job_id]['is_youtube'] = is_youtube
         
         # Configure yt-dlp for best audio quality as MP3
         ydl_opts = {
@@ -1901,11 +1905,40 @@ def download_and_process_url(job_id, url, quality, mode, instruments, output_nam
         audio_path.rename(original_audio_path)
         audio_path = original_audio_path
         
+        # Download video for YouTube URLs (for karaoke background)
+        has_video = False
+        if is_youtube:
+            try:
+                with jobs_lock:
+                    jobs_storage[job_id]['stage'] = 'Downloading video for karaoke...'
+                
+                video_ydl_opts = {
+                    'format': 'bestvideo[height<=720][ext=mp4]+bestaudio[ext=m4a]/best[height<=720][ext=mp4]/best[height<=720]',
+                    'outtmpl': str(job_output_dir / f'{display_name}_video.%(ext)s'),
+                    'quiet': True,
+                    'no_warnings': True,
+                    'noplaylist': True,
+                    'merge_output_format': 'mp4',
+                }
+                
+                with yt_dlp.YoutubeDL(video_ydl_opts) as video_ydl:
+                    video_ydl.download([url])
+                
+                # Check if video was downloaded
+                video_files = list(job_output_dir.glob(f'{display_name}_video.*'))
+                if video_files:
+                    has_video = True
+                    logger.info(f"Job {job_id}: Video downloaded for karaoke: {video_files[0].name}")
+                    
+            except Exception as video_err:
+                logger.warning(f"Job {job_id}: Video download failed (continuing without): {video_err}")
+        
         with jobs_lock:
             jobs_storage[job_id]['filename'] = audio_path.name
             jobs_storage[job_id]['display_name'] = display_name
             jobs_storage[job_id]['duration'] = duration
             jobs_storage[job_id]['video_title'] = video_title
+            jobs_storage[job_id]['has_video'] = has_video
             jobs_storage[job_id]['progress'] = 15
             jobs_storage[job_id]['status'] = 'analyzing'
             jobs_storage[job_id]['stage'] = 'Analyzing audio...'
@@ -2934,14 +2967,67 @@ def karaoke_page(job_id):
         if job_name.endswith(('.mp3', '.wav', '.flac', '.m4a', '.ogg')):
             job_name = job_name.rsplit('.', 1)[0]
         
+        # Check if video is available for this job
+        has_video = job.get('has_video', False)
+        if not has_video:
+            # Check if video file exists on disk
+            user_output_dir = get_user_output_dir(job_owner)
+            job_dir = user_output_dir / job_id
+            video_files = list(job_dir.glob('*_video.*')) if job_dir.exists() else []
+            has_video = len(video_files) > 0
+        
         return render_template('karaoke.html', 
                                job_id=job_id, 
                                job_name=job_name,
-                               job_owner=job_owner)
+                               job_owner=job_owner,
+                               has_video=has_video)
         
     except Exception as e:
         logger.error(f"Failed to load karaoke page: {e}")
         return f"Error: {str(e)}", 500
+
+
+@app.route('/video/<job_id>')
+def serve_video(job_id):
+    """Serve the video file for karaoke background"""
+    try:
+        username = session.get('user_id')
+        user_role = session.get('user_role')
+        
+        # Get job info
+        with jobs_lock:
+            job = jobs_storage.get(job_id)
+        
+        if job and user_role != 'admin' and job.get('user') != username:
+            return jsonify({'error': 'Access denied'}), 403
+        
+        job_owner = job.get('user') if job else username
+        user_output_dir = get_user_output_dir(job_owner)
+        job_dir = user_output_dir / job_id
+        
+        if not job_dir.exists():
+            return jsonify({'error': 'Job not found'}), 404
+        
+        # Find video file
+        video_files = list(job_dir.glob('*_video.mp4'))
+        if not video_files:
+            video_files = list(job_dir.glob('*_video.*'))
+        
+        if not video_files:
+            return jsonify({'error': 'Video not available'}), 404
+        
+        video_file = video_files[0]
+        mimetype = 'video/mp4' if video_file.suffix == '.mp4' else 'video/webm'
+        
+        return send_file(
+            video_file,
+            mimetype=mimetype,
+            as_attachment=False
+        )
+        
+    except Exception as e:
+        logger.error(f"Failed to serve video: {e}")
+        return jsonify({'error': str(e)}), 500
 
 
 if __name__ == '__main__':

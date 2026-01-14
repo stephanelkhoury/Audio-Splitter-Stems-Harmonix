@@ -108,7 +108,7 @@ class Navigation {
             
             if (!trigger || !menu) return;
             
-            // Touch support
+            // Touch support - use passive: false since we need preventDefault
             trigger.addEventListener('touchstart', (e) => {
                 e.preventDefault();
                 
@@ -120,7 +120,7 @@ class Navigation {
                 });
                 
                 dropdown.classList.toggle('open');
-            });
+            }, { passive: false });
         });
         
         // Close dropdowns on outside click
