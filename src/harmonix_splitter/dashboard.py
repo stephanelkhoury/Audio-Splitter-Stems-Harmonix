@@ -44,6 +44,9 @@ except ImportError:
 
 from harmonix_splitter.config.settings import Settings
 
+# Import shared library module
+from harmonix_splitter import library as shared_library
+
 # Initialize Flask app
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'harmonix-secret-key-change-in-production'
@@ -88,6 +91,10 @@ OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 # Job storage (in-memory for now)
 jobs_storage = {}
 jobs_lock = threading.Lock()
+
+# Batch queue storage
+batch_queues = {}  # username -> list of pending jobs
+batch_queue_lock = threading.Lock()
 
 # Allowed extensions
 ALLOWED_EXTENSIONS = {'.mp3', '.wav', '.flac', '.m4a', '.ogg', '.aac'}
@@ -188,11 +195,25 @@ def scan_existing_outputs(username: str | None = None):
                 lyrics_files = list(job_dir.glob("*_lyrics_*.json")) or list(job_dir.glob("*_lyrics.json"))
                 has_lyrics = len(lyrics_files) > 0
                 
+                # Load metadata file if it exists (for YouTube video ID, etc.)
+                metadata = {}
+                metadata_file = job_dir / 'job_metadata.json'
+                if metadata_file.exists():
+                    try:
+                        with open(metadata_file, 'r', encoding='utf-8') as f:
+                            metadata = json.load(f)
+                    except Exception:
+                        pass
+                
                 # Update existing job or create new record
                 if job_id in jobs_storage:
                     # Update stems for existing job with empty stems
                     jobs_storage[job_id]['stems'] = stems
                     jobs_storage[job_id]['has_lyrics'] = has_lyrics
+                    # Also update YouTube video ID from metadata
+                    if metadata.get('youtube_video_id'):
+                        jobs_storage[job_id]['youtube_video_id'] = metadata['youtube_video_id']
+                        jobs_storage[job_id]['has_video'] = True
                     logger.info(f"Updated job: {job_id} ({base_name}) with {len(stems)} stems")
                 else:
                     # Determine owner from directory structure
@@ -210,13 +231,19 @@ def scan_existing_outputs(username: str | None = None):
                         'job_id': job_id,
                         'filename': f"{base_name}.wav",
                         'display_name': base_name,
+                        'original_name': metadata.get('display_name') or metadata.get('video_title') or base_name,
                         'status': 'completed',
                         'progress': 100,
                         'stems': stems,
                         'has_lyrics': has_lyrics,
                         'user': owner,
                         'created_at': mod_time.isoformat(),
-                        'completed_at': mod_time.isoformat()
+                        'completed_at': mod_time.isoformat(),
+                        # YouTube/video info from metadata
+                        'youtube_video_id': metadata.get('youtube_video_id'),
+                        'source_url': metadata.get('source_url'),
+                        'is_youtube': metadata.get('is_youtube', False),
+                        'has_video': metadata.get('youtube_video_id') is not None
                     }
                     logger.info(f"Found existing job: {job_id} ({base_name}) for user: {owner or 'unknown'} with {len(stems)} stems")
     
@@ -841,6 +868,144 @@ def admin_backup():
     except Exception as e:
         logger.error(f"Backup error: {e}")
         return jsonify({'error': str(e)}), 500
+
+
+# ==================== ADMIN ARCHIVE MANAGEMENT ====================
+
+@app.route('/admin/library/stats', methods=['GET'])
+def admin_library_stats():
+    """Get shared library statistics"""
+    if 'user_id' not in session or session.get('user_role') != 'admin':
+        return jsonify({'error': 'Unauthorized'}), 403
+    
+    stats = shared_library.get_library_stats()
+    return jsonify(stats)
+
+
+@app.route('/admin/archive', methods=['GET'])
+def admin_get_archive():
+    """Get list of archived (soft-deleted) library items"""
+    if 'user_id' not in session or session.get('user_role') != 'admin':
+        return jsonify({'error': 'Unauthorized'}), 403
+    
+    archived_items = shared_library.get_archived_items()
+    return jsonify({'items': archived_items})
+
+
+@app.route('/admin/archive/restore/<youtube_id>', methods=['POST'])
+def admin_restore_archived(youtube_id):
+    """Restore an archived library item back to active library"""
+    if 'user_id' not in session or session.get('user_role') != 'admin':
+        return jsonify({'error': 'Unauthorized'}), 403
+    
+    success = shared_library.restore_from_archive(youtube_id)
+    
+    if success:
+        logger.info(f"Admin {session.get('user_id')} restored library item {youtube_id}")
+        return jsonify({'message': 'Library item restored successfully'})
+    else:
+        return jsonify({'error': 'Item not found in archive'}), 404
+
+
+@app.route('/admin/archive/delete/<youtube_id>', methods=['DELETE'])
+def admin_delete_archived(youtube_id):
+    """Permanently delete an archived library item (requires confirmation)"""
+    if 'user_id' not in session or session.get('user_role') != 'admin':
+        return jsonify({'error': 'Unauthorized'}), 403
+    
+    data = request.get_json() or {}
+    confirm = data.get('confirm', False)
+    
+    if not confirm:
+        # Get item info before confirming
+        archived_items = shared_library.get_archived_items()
+        item = next((i for i in archived_items if i.get('youtube_id') == youtube_id), None)
+        
+        if not item:
+            return jsonify({'error': 'Item not found in archive'}), 404
+        
+        return jsonify({
+            'requires_confirmation': True,
+            'message': f"Are you sure you want to permanently delete '{item.get('display_name', youtube_id)}'?",
+            'item': item
+        })
+    
+    # Confirmed - permanently delete
+    success = shared_library.permanently_delete_archived(youtube_id)
+    
+    if success:
+        logger.info(f"Admin {session.get('user_id')} permanently deleted library item {youtube_id}")
+        return jsonify({'message': 'Library item permanently deleted'})
+    else:
+        return jsonify({'error': 'Failed to delete item'}), 500
+
+
+@app.route('/admin/library/browse', methods=['GET'])
+def admin_browse_library():
+    """Browse all items in the shared library"""
+    if 'user_id' not in session or session.get('user_role') != 'admin':
+        return jsonify({'error': 'Unauthorized'}), 403
+    
+    library_items = shared_library.get_all_library_items()
+    return jsonify({'items': library_items})
+
+
+# ==================== POPULAR SONGS CACHE ====================
+
+@app.route('/admin/cache/refresh', methods=['POST'])
+def admin_refresh_cache():
+    """Manually trigger popular songs cache refresh"""
+    if 'user_id' not in session or session.get('user_role') != 'admin':
+        return jsonify({'error': 'Unauthorized'}), 403
+    
+    from harmonix_splitter import popular_cache
+    
+    data = request.get_json() or {}
+    max_songs = min(data.get('max_songs', 5), 20)  # Max 20 at a time
+    
+    # Run in background
+    def refresh():
+        popular_cache.refresh_popular_cache(max_songs=max_songs)
+    
+    thread = threading.Thread(target=refresh, daemon=True)
+    thread.start()
+    
+    return jsonify({
+        'message': f'Cache refresh started (max {max_songs} songs)',
+        'status': 'processing'
+    })
+
+
+@app.route('/admin/cache/status', methods=['GET'])
+def admin_cache_status():
+    """Get popular songs cache status"""
+    if 'user_id' not in session or session.get('user_role') != 'admin':
+        return jsonify({'error': 'Unauthorized'}), 403
+    
+    from harmonix_splitter import popular_cache
+    
+    config = popular_cache.load_cache_config()
+    cached_songs = popular_cache.get_cached_popular_songs()
+    
+    return jsonify({
+        'enabled': config.get('enabled', True),
+        'last_refresh': config.get('last_refresh'),
+        'cached_count': len(cached_songs),
+        'cached_songs': cached_songs
+    })
+
+
+@app.route('/api/popular', methods=['GET'])
+def api_popular_songs():
+    """Public API to get popular songs available for instant processing"""
+    from harmonix_splitter import popular_cache
+    
+    cached_songs = popular_cache.get_cached_popular_songs()
+    
+    return jsonify({
+        'songs': cached_songs,
+        'message': 'These songs are pre-cached for instant access!'
+    })
 
 
 # ==================== STATIC PAGES ====================
@@ -1757,6 +1922,71 @@ def upload_from_url():
         if not is_supported:
             return jsonify({'error': 'Unsupported URL. Supported: YouTube, SoundCloud, Vimeo, Bandcamp'}), 400
         
+        # ===== CHECK SHARED LIBRARY FIRST =====
+        # If this YouTube video was already processed, instantly link it to user's library
+        youtube_video_id = shared_library.extract_youtube_id(url)
+        
+        if youtube_video_id:
+            existing_metadata = shared_library.check_library_exists(youtube_video_id)
+            
+            if existing_metadata:
+                # Content already exists! Instantly add to user's library
+                username = session.get('user_id')
+                job_id = str(uuid.uuid4())
+                
+                # Get stems from library
+                stems = shared_library.get_library_stems(youtube_video_id)
+                stem_urls = {stem: f"/library/{youtube_video_id}/{stem}" for stem in stems}
+                
+                # Link to user's library
+                display_name = existing_metadata.get('display_name', existing_metadata.get('title', 'Unknown'))
+                shared_library.link_to_user_library(
+                    username=username,
+                    youtube_id=youtube_video_id,
+                    job_id=job_id,
+                    display_name=display_name,
+                    custom_data={
+                        'source_url': url,
+                        'quality': data.get('quality', 'balanced'),
+                        'mode': data.get('mode', 'grouped')
+                    }
+                )
+                
+                # Create job record (appears instant to user)
+                with jobs_lock:
+                    jobs_storage[job_id] = {
+                        'job_id': job_id,
+                        'filename': url,
+                        'display_name': display_name,
+                        'original_name': display_name,
+                        'status': 'completed',
+                        'progress': 100,
+                        'stage': 'Complete',
+                        'quality': data.get('quality', 'balanced'),
+                        'mode': data.get('mode', 'grouped'),
+                        'source_url': url,
+                        'user': username,
+                        'user_plan': session.get('user_plan', 'free'),
+                        'created_at': datetime.now().isoformat(),
+                        'completed_at': datetime.now().isoformat(),
+                        'stems': stem_urls,
+                        'youtube_video_id': youtube_video_id,
+                        'has_video': True,
+                        'is_library_link': True,
+                        'has_lyrics': bool(list(shared_library.get_library_path(youtube_video_id).glob("*_lyrics*.json"))),
+                        'duration': existing_metadata.get('duration', 0),
+                        'music_info': existing_metadata.get('music_info', {})
+                    }
+                
+                logger.info(f"Instant library link created for {youtube_video_id} -> user {username} as job {job_id}")
+                
+                return jsonify({
+                    'job_id': job_id,
+                    'status': 'completed',
+                    'message': 'Added to your library!',
+                    'instant': True  # Frontend can show this was instant
+                })
+        
         # ===== PLAN LIMIT ENFORCEMENT =====
         from harmonix_splitter.auth import check_usage_limit, get_plan, increment_song_usage
         
@@ -1779,6 +2009,7 @@ def upload_from_url():
         mode = data.get('mode', 'grouped')
         instruments_str = data.get('instruments', '')
         output_name = data.get('output_name', '').strip()
+        preview_mode = data.get('preview', False)  # 30-second preview mode
         
         # Parse instruments and validate against plan
         instruments = None
@@ -1815,21 +2046,23 @@ def upload_from_url():
                 'source_url': url,
                 'user': username,
                 'user_plan': user_plan,
+                'preview_mode': preview_mode,
                 'created_at': datetime.now().isoformat()
             }
         
         # Start background download and processing with username
         thread = threading.Thread(
             target=download_and_process_url,
-            args=(job_id, url, quality, mode, instruments, output_name, username)
+            args=(job_id, url, quality, mode, instruments, output_name, username, preview_mode)
         )
         thread.daemon = True
         thread.start()
         
+        preview_msg = " (30s preview)" if preview_mode else ""
         return jsonify({
             'job_id': job_id,
             'status': 'downloading',
-            'message': 'Download started. Processing will begin automatically.'
+            'message': f'Download started{preview_msg}. Processing will begin automatically.'
         })
         
     except Exception as e:
@@ -1837,23 +2070,194 @@ def upload_from_url():
         return jsonify({'error': str(e)}), 500
 
 
-def download_and_process_url(job_id, url, quality, mode, instruments, output_name, username=None):
+# ==================== BATCH QUEUE SYSTEM ====================
+
+@app.route('/batch-queue', methods=['POST'])
+def add_to_batch_queue():
+    """Add multiple URLs to a batch queue for sequential processing"""
+    try:
+        data = request.get_json()
+        urls = data.get('urls', [])
+        quality = data.get('quality', 'balanced')
+        mode = data.get('mode', 'grouped')
+        
+        if not urls or not isinstance(urls, list):
+            return jsonify({'error': 'No URLs provided. Provide an array of URLs.'}), 400
+        
+        username = session.get('user_id')
+        if not username:
+            return jsonify({'error': 'Login required for batch processing'}), 401
+        
+        # Validate URLs
+        supported_patterns = ['youtube.com', 'youtu.be', 'soundcloud.com', 'vimeo.com', 'bandcamp.com']
+        valid_urls = []
+        for url in urls[:20]:  # Limit to 20 URLs per batch
+            if any(p in url.lower() for p in supported_patterns):
+                valid_urls.append(url)
+        
+        if not valid_urls:
+            return jsonify({'error': 'No valid URLs found'}), 400
+        
+        # Create batch job
+        batch_id = str(uuid.uuid4())[:8]
+        batch_jobs = []
+        
+        with batch_queue_lock:
+            if username not in batch_queues:
+                batch_queues[username] = []
+            
+            for url in valid_urls:
+                job_id = str(uuid.uuid4())
+                batch_jobs.append({
+                    'job_id': job_id,
+                    'url': url,
+                    'quality': quality,
+                    'mode': mode,
+                    'status': 'queued',
+                    'batch_id': batch_id
+                })
+                batch_queues[username].append({
+                    'job_id': job_id,
+                    'url': url,
+                    'quality': quality,
+                    'mode': mode
+                })
+        
+        # Start background batch processor
+        thread = threading.Thread(
+            target=process_batch_queue,
+            args=(username,)
+        )
+        thread.daemon = True
+        thread.start()
+        
+        return jsonify({
+            'batch_id': batch_id,
+            'queued': len(valid_urls),
+            'jobs': batch_jobs,
+            'message': f'Queued {len(valid_urls)} URLs for processing'
+        })
+        
+    except Exception as e:
+        logger.error(f"Batch queue failed: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/batch-queue', methods=['GET'])
+def get_batch_queue():
+    """Get current batch queue status for the user"""
+    username = session.get('user_id')
+    if not username:
+        return jsonify({'error': 'Login required'}), 401
+    
+    with batch_queue_lock:
+        queue = batch_queues.get(username, [])
+        return jsonify({
+            'pending': len(queue),
+            'queue': queue
+        })
+
+
+@app.route('/batch-queue/<job_id>', methods=['DELETE'])
+def remove_from_batch_queue(job_id):
+    """Remove a job from the batch queue"""
+    username = session.get('user_id')
+    if not username:
+        return jsonify({'error': 'Login required'}), 401
+    
+    with batch_queue_lock:
+        if username in batch_queues:
+            batch_queues[username] = [
+                j for j in batch_queues[username] 
+                if j['job_id'] != job_id
+            ]
+    
+    return jsonify({'message': 'Removed from queue'})
+
+
+def process_batch_queue(username):
+    """Process queued jobs one at a time"""
+    while True:
+        job = None
+        with batch_queue_lock:
+            if username in batch_queues and batch_queues[username]:
+                job = batch_queues[username].pop(0)
+            else:
+                break  # Queue empty
+        
+        if job:
+            logger.info(f"Batch: Processing {job['url']} for {username}")
+            try:
+                # Call the URL processing directly (not via HTTP)
+                job_id = job['job_id']
+                url = job['url']
+                quality = job['quality']
+                mode = job['mode']
+                
+                # Create job record
+                with jobs_lock:
+                    jobs_storage[job_id] = {
+                        'job_id': job_id,
+                        'filename': url,
+                        'display_name': 'Batch Processing...',
+                        'status': 'downloading',
+                        'progress': 0,
+                        'stage': 'Downloading from URL...',
+                        'quality': quality,
+                        'mode': mode,
+                        'source_url': url,
+                        'user': username,
+                        'is_batch': True,
+                        'created_at': datetime.now().isoformat()
+                    }
+                
+                # Process the URL
+                download_and_process_url(job_id, url, quality, mode, None, None, username, False)
+                
+            except Exception as e:
+                logger.error(f"Batch job failed: {job['url']} - {e}")
+                with jobs_lock:
+                    if job['job_id'] in jobs_storage:
+                        jobs_storage[job['job_id']].update({
+                            'status': 'failed',
+                            'error': str(e)
+                        })
+    
+    logger.info(f"Batch queue completed for {username}")
+
+
+def download_and_process_url(job_id, url, quality, mode, instruments, output_name, username=None, preview_mode=False):
     """Background task to download audio from URL and process it"""
     try:
         import yt_dlp
+        import re
         
-        # Use user-specific output directory
-        user_output_dir = get_user_output_dir(username)
-        job_output_dir = user_output_dir / job_id
-        job_output_dir.mkdir(parents=True, exist_ok=True)
-        
-        # Check if this is a YouTube URL (for video download)
+        # Check if this is a YouTube URL and extract video ID
         is_youtube = 'youtube.com' in url.lower() or 'youtu.be' in url.lower()
+        youtube_video_id = shared_library.extract_youtube_id(url) if is_youtube else None
         
+        # For YouTube videos, save to shared library; otherwise use user folder
+        if youtube_video_id and not preview_mode:
+            # Create library entry for this YouTube video (not for previews)
+            job_output_dir = shared_library.create_library_entry(youtube_video_id, {
+                'source_url': url,
+                'quality': quality,
+                'mode': mode
+            })
+        else:
+            # Non-YouTube or preview: use user-specific folder
+            user_output_dir = get_user_output_dir(username)
+            job_output_dir = user_output_dir / job_id
+            job_output_dir.mkdir(parents=True, exist_ok=True)
+        
+        preview_label = " (preview)" if preview_mode else ""
         with jobs_lock:
             jobs_storage[job_id]['progress'] = 5
-            jobs_storage[job_id]['stage'] = 'Fetching video info...'
+            jobs_storage[job_id]['stage'] = f'Fetching video info{preview_label}...'
             jobs_storage[job_id]['is_youtube'] = is_youtube
+            jobs_storage[job_id]['youtube_video_id'] = youtube_video_id if not preview_mode else None
+            jobs_storage[job_id]['source_url'] = url
+            jobs_storage[job_id]['preview_mode'] = preview_mode
         
         # Configure yt-dlp for best audio quality as MP3
         ydl_opts = {
@@ -1905,48 +2309,68 @@ def download_and_process_url(job_id, url, quality, mode, instruments, output_nam
         audio_path.rename(original_audio_path)
         audio_path = original_audio_path
         
-        # Download video for YouTube URLs (for karaoke background)
-        has_video = False
-        if is_youtube:
-            try:
-                with jobs_lock:
-                    jobs_storage[job_id]['stage'] = 'Downloading video for karaoke...'
-                
-                video_ydl_opts = {
-                    'format': 'bestvideo[height<=720][ext=mp4]+bestaudio[ext=m4a]/best[height<=720][ext=mp4]/best[height<=720]',
-                    'outtmpl': str(job_output_dir / f'{display_name}_video.%(ext)s'),
-                    'quiet': True,
-                    'no_warnings': True,
-                    'noplaylist': True,
-                    'merge_output_format': 'mp4',
-                }
-                
-                with yt_dlp.YoutubeDL(video_ydl_opts) as video_ydl:
-                    video_ydl.download([url])
-                
-                # Check if video was downloaded
-                video_files = list(job_output_dir.glob(f'{display_name}_video.*'))
-                if video_files:
-                    has_video = True
-                    logger.info(f"Job {job_id}: Video downloaded for karaoke: {video_files[0].name}")
-                    
-            except Exception as video_err:
-                logger.warning(f"Job {job_id}: Video download failed (continuing without): {video_err}")
+        # For YouTube URLs, we use embedded YouTube player instead of downloading video
+        # This saves storage space and bandwidth
+        has_video = is_youtube and youtube_video_id is not None
         
         with jobs_lock:
             jobs_storage[job_id]['filename'] = audio_path.name
             jobs_storage[job_id]['display_name'] = display_name
+            jobs_storage[job_id]['original_name'] = display_name
             jobs_storage[job_id]['duration'] = duration
             jobs_storage[job_id]['video_title'] = video_title
             jobs_storage[job_id]['has_video'] = has_video
+            jobs_storage[job_id]['youtube_video_id'] = youtube_video_id
             jobs_storage[job_id]['progress'] = 15
             jobs_storage[job_id]['status'] = 'analyzing'
             jobs_storage[job_id]['stage'] = 'Analyzing audio...'
         
         logger.info(f"Job {job_id}: Audio saved as {original_audio_path.name}")
+        if youtube_video_id:
+            logger.info(f"Job {job_id}: Saving to shared library: {youtube_video_id}")
         
-        # Now process the audio (reuse existing function logic)
-        process_downloaded_audio(job_id, audio_path, quality, mode, instruments, display_name, username)
+        # Save/update library metadata for YouTube videos
+        if youtube_video_id:
+            metadata_file = job_output_dir / 'metadata.json'
+            if metadata_file.exists():
+                with open(metadata_file, 'r', encoding='utf-8') as f:
+                    metadata = json.load(f)
+            else:
+                metadata = {}
+            
+            metadata.update({
+                'display_name': display_name,
+                'title': video_title,
+                'duration': duration,
+                'source_url': url,
+                'is_youtube': True,
+                'youtube_video_id': youtube_video_id,
+                'has_video': True,
+                'quality': quality,
+                'mode': mode,
+                'processed_at': datetime.now().isoformat()
+            })
+            
+            with open(metadata_file, 'w', encoding='utf-8') as f:
+                json.dump(metadata, f, ensure_ascii=False, indent=2)
+        
+        # Now process the audio - pass youtube_video_id for library storage and preview mode
+        process_downloaded_audio(job_id, audio_path, quality, mode, instruments, display_name, username, youtube_video_id, preview_mode)
+        
+        # After processing, link to user's library if YouTube (not for previews)
+        if youtube_video_id and username and not preview_mode:
+            shared_library.link_to_user_library(
+                username=username,
+                youtube_id=youtube_video_id,
+                job_id=job_id,
+                display_name=display_name,
+                custom_data={
+                    'source_url': url,
+                    'quality': quality,
+                    'mode': mode
+                }
+            )
+            logger.info(f"Job {job_id}: Linked library item {youtube_video_id} to user {username}")
         
     except Exception as e:
         logger.error(f"Job {job_id}: URL download failed - {e}")
@@ -1958,13 +2382,21 @@ def download_and_process_url(job_id, url, quality, mode, instruments, output_nam
             })
 
 
-def process_downloaded_audio(job_id, audio_path, quality, mode, instruments, display_name, username=None):
+def process_downloaded_audio(job_id, audio_path, quality, mode, instruments, display_name, username=None, youtube_video_id=None, preview_mode=False):
     """Process audio that was downloaded from URL (similar to process_audio_async)"""
-    # Get user-specific output directory
-    user_output_dir = get_user_output_dir(username)
+    # Determine output directory: shared library for YouTube (non-preview), user folder otherwise
+    if youtube_video_id and not preview_mode:
+        output_dir = shared_library.get_library_path(youtube_video_id)
+    else:
+        output_dir = get_user_output_dir(username)
+    
+    # For preview mode, use draft quality for speed
+    actual_quality = 'draft' if preview_mode else quality
+    preview_label = " (30s preview)" if preview_mode else ""
     
     try:
         # Step 1: Analyze audio for tempo/key
+        music_info = {}
         try:
             analyzer = MusicAnalyzer()
             analysis = analyzer.analyze(Path(audio_path))
@@ -1996,35 +2428,51 @@ def process_downloaded_audio(job_id, audio_path, quality, mode, instruments, dis
         with jobs_lock:
             jobs_storage[job_id]['status'] = 'processing'
             jobs_storage[job_id]['progress'] = 25
-            jobs_storage[job_id]['stage'] = f'Separating stems ({quality} quality)...'
+            jobs_storage[job_id]['stage'] = f'Separating stems ({actual_quality} quality){preview_label}...'
         
-        logger.info(f"Job {job_id}: Starting {quality} quality separation")
+        logger.info(f"Job {job_id}: Starting {actual_quality} quality separation{preview_label}")
         
-        # Create orchestrator
-        orchestrator = create_orchestrator(auto_route=True)
+        # Create orchestrator with preview mode support
+        orchestrator = create_orchestrator(auto_route=True, preview_mode=preview_mode)
         
         with jobs_lock:
             jobs_storage[job_id]['progress'] = 30
         
-        # Process audio - output to the user-specific job directory
-        result = orchestrator.process(
-            audio_path=str(audio_path),
-            job_id=job_id,
-            quality=quality,
-            mode=mode,
-            target_instruments=instruments if instruments else None,
-            output_dir=str(user_output_dir),
-            custom_name=display_name
-        )
+        # For YouTube videos (non-preview), output directly to library folder
+        # For previews or other sources, output to user's job folder
+        if youtube_video_id and not preview_mode:
+            # Library storage: files go directly in library/{youtube_id}/
+            processing_output_dir = output_dir.parent  # Parent of library path
+            result = orchestrator.process(
+                audio_path=str(audio_path),
+                job_id=youtube_video_id,  # Use YouTube ID as job_id for library
+                quality=quality,
+                mode=mode,
+                target_instruments=instruments if instruments else None,
+                output_dir=str(processing_output_dir),
+                custom_name=display_name
+            )
+            job_dir = output_dir  # Library path
+        else:
+            # User storage: files go in user/{username}/{job_id}/
+            result = orchestrator.process(
+                audio_path=str(audio_path),
+                job_id=job_id,
+                quality=quality,
+                mode=mode,
+                target_instruments=instruments if instruments else None,
+                output_dir=str(output_dir),
+                custom_name=display_name
+            )
+            job_dir = output_dir / job_id
         
         with jobs_lock:
             jobs_storage[job_id]['progress'] = 90
             jobs_storage[job_id]['stage'] = 'Finalizing...'
         
         if result.status == "completed":
-            # Prepare stem URLs
+            # Prepare stem URLs - different for library vs user storage
             stem_urls = {}
-            job_dir = user_output_dir / job_id
             
             for stem_name in result.stems.keys():
                 # Check for WAV first (lossless), then MP3
@@ -2032,12 +2480,34 @@ def process_downloaded_audio(job_id, audio_path, quality, mode, instruments, dis
                 if not stem_file.exists():
                     stem_file = job_dir / f"{display_name}_{stem_name}.mp3"
                 if stem_file.exists():
-                    stem_urls[stem_name] = f"/download/{job_id}/{stem_name}"
+                    if youtube_video_id:
+                        stem_urls[stem_name] = f"/library/{youtube_video_id}/{stem_name}"
+                    else:
+                        stem_urls[stem_name] = f"/download/{job_id}/{stem_name}"
             
             # Add original audio as a "stem"
             original_files = list(job_dir.glob(f"*_original.*"))
             if original_files:
-                stem_urls['original'] = f"/download/{job_id}/original"
+                if youtube_video_id:
+                    stem_urls['original'] = f"/library/{youtube_video_id}/original"
+                else:
+                    stem_urls['original'] = f"/download/{job_id}/original"
+            
+            # Update library metadata with music info
+            if youtube_video_id:
+                metadata_file = job_dir / 'metadata.json'
+                if metadata_file.exists():
+                    with open(metadata_file, 'r', encoding='utf-8') as f:
+                        metadata = json.load(f)
+                else:
+                    metadata = {}
+                
+                metadata['music_info'] = music_info
+                metadata['stems'] = list(stem_urls.keys())
+                metadata['processing_time'] = result.processing_time
+                
+                with open(metadata_file, 'w', encoding='utf-8') as f:
+                    json.dump(metadata, f, ensure_ascii=False, indent=2)
             
             with jobs_lock:
                 jobs_storage[job_id].update({
@@ -2047,7 +2517,8 @@ def process_downloaded_audio(job_id, audio_path, quality, mode, instruments, dis
                     'stems': stem_urls,
                     'detected_instruments': result.detected_instruments,
                     'processing_time': result.processing_time,
-                    'completed_at': datetime.now().isoformat()
+                    'completed_at': datetime.now().isoformat(),
+                    'is_library_link': youtube_video_id is not None
                 })
             
             logger.info(f"Job {job_id}: Completed successfully in {result.processing_time:.1f}s")
@@ -2160,6 +2631,69 @@ def download_stem(job_id, stem_name):
     )
 
 
+@app.route('/library/<youtube_id>/<stem_name>')
+def download_library_stem(youtube_id, stem_name):
+    """Download a stem from shared library"""
+    username = session.get('user_id')
+    
+    # Verify user has this item linked (or is admin)
+    user_role = session.get('user_role')
+    if user_role != 'admin':
+        user_links = shared_library.get_user_library_links(username)
+        if youtube_id not in user_links:
+            return jsonify({'error': 'Access denied - not in your library'}), 403
+    
+    # Get library path
+    library_dir = shared_library.get_library_path(youtube_id)
+    
+    if not library_dir.exists():
+        return jsonify({'error': 'Library item not found'}), 404
+    
+    # Handle "original" stem
+    if stem_name == 'original':
+        original_files = list(library_dir.glob('*_original.*'))
+        if original_files:
+            stem_file = original_files[0]
+            ext = stem_file.suffix.lower()
+            mimetype = 'audio/mpeg' if ext == '.mp3' else 'audio/wav' if ext == '.wav' else 'audio/mp4'
+            return send_file(
+                stem_file,
+                as_attachment=False,
+                download_name=stem_file.name,
+                mimetype=mimetype
+            )
+        return jsonify({'error': 'Original audio not found'}), 404
+    
+    # Find stem file - prefer MP3 over WAV
+    stem_files = list(library_dir.glob(f"*_{stem_name}.mp3"))
+    mimetype = 'audio/mpeg'
+    
+    if not stem_files:
+        stem_files = list(library_dir.glob(f"*_{stem_name}.wav"))
+        mimetype = 'audio/wav'
+    
+    if not stem_files:
+        return jsonify({'error': f'Stem file not found: {stem_name}'}), 404
+    
+    stem_file = stem_files[0]
+    
+    # Log download activity
+    if username and request.args.get('download') == 'true':
+        from harmonix_splitter.auth import log_activity
+        log_activity(username, 'download', f'{stem_name}.{stem_file.suffix[1:]} from library', {
+            'youtube_id': youtube_id,
+            'stem_name': stem_name,
+            'file_size': stem_file.stat().st_size
+        })
+    
+    return send_file(
+        stem_file,
+        as_attachment=False,
+        download_name=stem_file.name,
+        mimetype=mimetype
+    )
+
+
 @app.route('/job/<job_id>/report')
 def get_job_report(job_id):
     """Get detailed report/analysis for a specific job"""
@@ -2246,12 +2780,43 @@ def get_job_report(job_id):
 
 @app.route('/jobs')
 def list_jobs():
-    """List jobs for the current user only"""
+    """List jobs for the current user including library links"""
     username = session.get('user_id')
     user_role = session.get('user_role')
     
     # Re-scan outputs for current user to catch any new files
     scan_existing_outputs(username)
+    
+    # Also load library links for the user
+    if username:
+        user_links = shared_library.get_user_library_links(username)
+        for youtube_id, link_info in user_links.items():
+            # Check if this link is already in jobs_storage
+            job_id = link_info.get('job_id', youtube_id)
+            with jobs_lock:
+                if job_id not in jobs_storage:
+                    # Get library metadata
+                    library_metadata = shared_library.get_library_metadata(youtube_id)
+                    if library_metadata:
+                        stems = shared_library.get_library_stems(youtube_id)
+                        stem_urls = {stem: f"/library/{youtube_id}/{stem}" for stem in stems.keys()}
+                        
+                        jobs_storage[job_id] = {
+                            'id': job_id,
+                            'status': 'completed',
+                            'user': username,
+                            'display_name': link_info.get('display_name', library_metadata.get('display_name', 'Unknown')),
+                            'filename': link_info.get('display_name', library_metadata.get('display_name', 'Unknown')),
+                            'created_at': link_info.get('linked_at', library_metadata.get('created_at', '')),
+                            'completed_at': link_info.get('linked_at', library_metadata.get('created_at', '')),
+                            'progress': 100,
+                            'stage': 'Complete',
+                            'stems': stem_urls,
+                            'youtube_video_id': youtube_id,
+                            'is_library_link': True,
+                            'music_info': library_metadata.get('music_info', {}),
+                            'source_url': library_metadata.get('source_url', f'https://youtube.com/watch?v={youtube_id}')
+                        }
     
     with jobs_lock:
         # Filter jobs to only show user's own jobs (admin sees all)
@@ -2270,7 +2835,7 @@ def list_jobs():
 
 @app.route('/delete/<job_id>', methods=['DELETE'])
 def delete_job(job_id):
-    """Delete a job and its files - only owner can delete"""
+    """Delete a job and its files - handles both regular jobs and library links"""
     username = session.get('user_id')
     user_role = session.get('user_role')
     
@@ -2283,26 +2848,50 @@ def delete_job(job_id):
         if user_role != 'admin' and job.get('user') != username:
             return jsonify({'error': 'Access denied'}), 403
         
-        # Get user-specific output directory
         job_owner = job.get('user')
-        user_output_dir = get_user_output_dir(job_owner)
         
-        # Delete output files from user's directory
-        output_dir = user_output_dir / job_id
-        if output_dir.exists():
-            import shutil
-            shutil.rmtree(output_dir)
+        # Check if this is a library-linked item
+        youtube_id = job.get('youtube_video_id')
+        is_library_link = job.get('is_library_link', False) or youtube_id
         
-        # Also check legacy location for backward compatibility
-        legacy_dir = OUTPUT_DIR / job_id
-        if legacy_dir.exists():
-            import shutil
-            shutil.rmtree(legacy_dir)
-        
-        # Delete from storage
-        del jobs_storage[job_id]
+        if is_library_link and youtube_id:
+            # Soft delete: just unlink from user's library
+            shared_library.unlink_from_user_library(job_owner, youtube_id)
+            
+            # Check if anyone else is using this
+            usage = shared_library.get_library_usage(youtube_id)
+            if usage == 0:
+                # No more users - archive it (admin can restore/delete later)
+                shared_library.archive_library_item(youtube_id)
+                logger.info(f"Library item {youtube_id} archived (no more users)")
+            
+            # Remove from jobs storage
+            del jobs_storage[job_id]
+            
+            return jsonify({
+                'message': 'Removed from your library',
+                'type': 'unlinked'
+            })
+        else:
+            # Regular delete: actually remove files
+            user_output_dir = get_user_output_dir(job_owner)
+            
+            # Delete output files from user's directory
+            output_dir = user_output_dir / job_id
+            if output_dir.exists():
+                import shutil
+                shutil.rmtree(output_dir)
+            
+            # Also check legacy location for backward compatibility
+            legacy_dir = OUTPUT_DIR / job_id
+            if legacy_dir.exists():
+                import shutil
+                shutil.rmtree(legacy_dir)
+            
+            # Delete from storage
+            del jobs_storage[job_id]
     
-    return jsonify({'message': 'Job deleted successfully'})
+    return jsonify({'message': 'Job deleted successfully', 'type': 'deleted'})
 
 
 @app.route('/rename/<job_id>', methods=['PUT'])
@@ -2976,10 +3565,13 @@ def karaoke_page(job_id):
         if job_name.endswith(('.mp3', '.wav', '.flac', '.m4a', '.ogg')):
             job_name = job_name.rsplit('.', 1)[0]
         
-        # Check if video is available for this job
-        has_video = job.get('has_video', False)
+        # Get YouTube video ID if available (for embedded video background)
+        youtube_video_id = job.get('youtube_video_id')
+        
+        # Check if video is available - either YouTube embed or local file
+        has_video = youtube_video_id is not None
         if not has_video:
-            # Check if video file exists on disk
+            # Fallback: check if local video file exists on disk (legacy support)
             user_output_dir = get_user_output_dir(job_owner)
             job_dir = user_output_dir / job_id
             video_files = list(job_dir.glob('*_video.*')) if job_dir.exists() else []
@@ -2989,7 +3581,8 @@ def karaoke_page(job_id):
                                job_id=job_id, 
                                job_name=job_name,
                                job_owner=job_owner,
-                               has_video=has_video)
+                               has_video=has_video,
+                               youtube_video_id=youtube_video_id)
         
     except Exception as e:
         logger.error(f"Failed to load karaoke page: {e}")
@@ -3042,6 +3635,37 @@ def serve_video(job_id):
 if __name__ == '__main__':
     # Scan for existing outputs on startup
     scan_existing_outputs()
+    
+    # Pre-warm AI models in background to speed up first request
+    def prewarm_models():
+        """Load AI models at startup for faster first request"""
+        try:
+            logger.info("🔥 Pre-warming AI models...")
+            start_time = time.time()
+            
+            # Import and initialize the separator (loads models)
+            from harmonix_splitter.core.separator import HarmonixSeparator, SeparationConfig, QualityMode
+            
+            # Load the balanced quality model (most commonly used)
+            config = SeparationConfig(quality=QualityMode.BALANCED)
+            _ = HarmonixSeparator(config)
+            
+            elapsed = time.time() - start_time
+            logger.info(f"✅ AI models pre-warmed in {elapsed:.1f}s - First request will be faster!")
+        except Exception as e:
+            logger.warning(f"⚠️ Model pre-warming failed (will load on first request): {e}")
+    
+    # Run pre-warming in background thread
+    import threading
+    prewarm_thread = threading.Thread(target=prewarm_models, daemon=True)
+    prewarm_thread.start()
+    
+    # Start background cache worker for popular songs
+    try:
+        from harmonix_splitter import popular_cache
+        popular_cache.start_background_cache_worker()
+    except Exception as e:
+        logger.warning(f"⚠️ Popular cache worker failed to start: {e}")
     
     # Get port from environment (Railway uses PORT env var)
     port = int(os.environ.get('PORT', 5001))

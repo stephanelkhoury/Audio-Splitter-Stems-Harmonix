@@ -252,6 +252,9 @@ class HarmonixOrchestrator:
             Dictionary of separated stems
         """
         # Create separation config with quality settings
+        # Determine preview_mode from orchestrator attribute
+        preview_mode = getattr(self, 'preview_mode', False)
+        
         config = SeparationConfig(
             quality=QualityMode(routing_plan["quality"]),
             mode=SeparationMode(routing_plan["mode"]),
@@ -261,6 +264,9 @@ class HarmonixOrchestrator:
             preserve_sample_rate=True,  # Keep native sample rate
             output_format="mp3",        # MP3 output for storage efficiency
             bit_depth=24,               # 24-bit studio quality
+            # Preview mode settings
+            preview_mode=preview_mode,  # Process only 30 seconds if True
+            preview_duration=30,        # Preview duration in seconds
         )
         
         # Initialize separator
@@ -361,7 +367,8 @@ class HarmonixOrchestrator:
 
 def create_orchestrator(
     auto_route: bool = True,
-    settings: Optional[Settings] = None
+    settings: Optional[Settings] = None,
+    preview_mode: bool = False
 ) -> HarmonixOrchestrator:
     """
     Factory function to create orchestrator
@@ -369,11 +376,14 @@ def create_orchestrator(
     Args:
         auto_route: Enable automatic routing
         settings: Custom settings
+        preview_mode: If True, process only first 30 seconds
         
     Returns:
         Configured HarmonixOrchestrator
     """
-    return HarmonixOrchestrator(
+    orchestrator = HarmonixOrchestrator(
         settings=settings,
         auto_route=auto_route
     )
+    orchestrator.preview_mode = preview_mode
+    return orchestrator

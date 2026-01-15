@@ -44,19 +44,29 @@
             background: var(--bg);
         }
         
-        .video-background video {
+        .video-background video,
+        .video-background iframe {
             position: absolute;
             top: 50%;
             left: 50%;
             min-width: 100%;
             min-height: 100%;
-            width: auto;
-            height: auto;
+            width: 177.78vh; /* 16:9 aspect ratio */
+            height: 100vh;
             transform: translate(-50%, -50%);
             object-fit: cover;
+            pointer-events: none;
         }
         
-        .video-background.hidden video {
+        /* YouTube iframe needs extra scaling to hide controls */
+        .video-background .youtube-player {
+            width: 300%;
+            height: 300%;
+            transform: translate(-50%, -50%) scale(1.5);
+        }
+        
+        .video-background.hidden video,
+        .video-background.hidden iframe {
             display: none;
         }
         
@@ -66,7 +76,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.6);
+            background: rgba(0, 0, 0, 0.5);
             pointer-events: none;
         }
         
@@ -432,57 +442,302 @@
         }
         
         /* Responsive */
-        @media (max-width: 768px) {
+        @media (max-width: 1024px) {
             .lyric-line {
-                font-size: 24px;
-                padding: 12px 15px;
+                font-size: 28px;
+                padding: 12px 20px;
             }
             
             .lyric-line.current {
-                font-size: 32px;
-            }
-            
-            .lyric-line.past {
-                font-size: 20px;
+                font-size: 36px;
             }
             
             .lyrics-container {
-                padding: 20px;
+                padding: 30px 20px;
+            }
+            
+            .lyrics-scroll {
+                max-height: calc(100vh - 260px);
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .karaoke-header {
+                padding: 12px 15px;
+                flex-wrap: wrap;
+                gap: 10px;
+            }
+            
+            .track-title {
+                font-size: 14px;
+                flex: 1;
+                min-width: 0;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+            
+            .track-title i {
+                margin-right: 6px;
+            }
+            
+            .instrumental-badge {
+                display: none;
+            }
+            
+            .header-controls {
+                gap: 8px;
+            }
+            
+            .sync-status {
+                display: none;
+            }
+            
+            .btn-icon {
+                width: 36px;
+                height: 36px;
+                font-size: 14px;
+            }
+            
+            .lyric-line {
+                font-size: 22px;
+                padding: 10px 15px;
+                margin: 6px 0;
+            }
+            
+            .lyric-line.current {
+                font-size: 28px;
+            }
+            
+            .lyric-line.past {
+                font-size: 18px;
+            }
+            
+            .lyrics-container {
+                padding: 15px 10px;
+                padding-bottom: 10px;
+            }
+            
+            .lyrics-scroll {
+                max-height: calc(100vh - 220px);
+                padding: 0 5px;
+            }
+            
+            /* Player controls - mobile */
+            .player-container {
+                padding: 12px 15px;
+            }
+            
+            .player-controls {
+                gap: 8px;
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+            
+            .control-btn {
+                width: 40px;
+                height: 40px;
+                font-size: 14px;
+            }
+            
+            .control-btn.play-btn {
+                width: 50px;
+                height: 50px;
+                font-size: 18px;
+            }
+            
+            .volume-control {
+                order: 10;
+                width: 100%;
+                justify-content: center;
+                margin-top: 8px;
+                display: none; /* Hide on mobile, use hardware volume */
+            }
+            
+            .time-display {
+                font-size: 12px;
+            }
+            
+            /* Fullscreen on mobile */
+            body.fullscreen .lyric-line {
+                font-size: 28px;
+            }
+            
+            body.fullscreen .lyric-line.current {
+                font-size: 36px;
             }
         }
         
         @media (max-width: 480px) {
             .karaoke-header {
-                padding: 10px 15px;
+                padding: 10px 12px;
             }
             
             .track-title {
-                font-size: 14px;
+                font-size: 13px;
+                max-width: 150px;
+            }
+            
+            .btn-icon {
+                width: 32px;
+                height: 32px;
+                font-size: 12px;
             }
             
             .lyric-line {
-                font-size: 20px;
+                font-size: 18px;
+                padding: 8px 10px;
+                margin: 5px 0;
             }
             
             .lyric-line.current {
-                font-size: 26px;
+                font-size: 24px;
+            }
+            
+            .lyric-line.past {
+                font-size: 16px;
+            }
+            
+            .lyrics-scroll {
+                max-height: calc(100vh - 200px);
+            }
+            
+            .player-container {
+                padding: 10px 12px;
+            }
+            
+            .control-btn {
+                width: 36px;
+                height: 36px;
+                font-size: 13px;
+            }
+            
+            .control-btn.play-btn {
+                width: 46px;
+                height: 46px;
+                font-size: 16px;
+            }
+            
+            .progress-bar {
+                height: 6px;
+            }
+            
+            .time-display {
+                font-size: 11px;
+            }
+            
+            .waiting-state i {
+                font-size: 40px;
+            }
+            
+            .waiting-state h2 {
+                font-size: 20px;
+            }
+            
+            .waiting-state p {
+                font-size: 14px;
+            }
+            
+            /* Fullscreen on small mobile */
+            body.fullscreen .lyric-line {
+                font-size: 22px;
+            }
+            
+            body.fullscreen .lyric-line.current {
+                font-size: 28px;
+            }
+        }
+        
+        /* Very small screens */
+        @media (max-width: 360px) {
+            .track-title {
+                font-size: 12px;
+                max-width: 120px;
+            }
+            
+            .lyric-line {
+                font-size: 16px;
+            }
+            
+            .lyric-line.current {
+                font-size: 20px;
+            }
+            
+            .control-btn {
+                width: 32px;
+                height: 32px;
+            }
+            
+            .control-btn.play-btn {
+                width: 40px;
+                height: 40px;
+            }
+        }
+        
+        /* Landscape mobile */
+        @media (max-height: 500px) and (orientation: landscape) {
+            .karaoke-header {
+                padding: 8px 15px;
+            }
+            
+            .lyrics-container {
+                padding: 10px;
+            }
+            
+            .lyrics-scroll {
+                max-height: calc(100vh - 140px);
+            }
+            
+            .lyric-line {
+                font-size: 18px;
+                padding: 6px 10px;
+                margin: 4px 0;
+            }
+            
+            .lyric-line.current {
+                font-size: 24px;
+            }
+            
+            .player-container {
+                padding: 8px 15px;
+            }
+            
+            .control-btn {
+                width: 32px;
+                height: 32px;
+            }
+            
+            .control-btn.play-btn {
+                width: 40px;
+                height: 40px;
             }
         }
     </style>
 </head>
 <body>
-    <!-- Video Background (muted, synced with audio) -->
+    <!-- Video Background (YouTube embed or local video, muted, synced with audio) -->
     <div class="video-background{% if not has_video %} hidden{% endif %}" id="videoBackground">
+        {% if youtube_video_id %}
+        <!-- YouTube Embed (muted, no controls) -->
+        <div id="youtubePlayer" class="youtube-player"></div>
+        {% else %}
+        <!-- Fallback: Local video file -->
         <video id="backgroundVideo" muted playsinline>
             {% if has_video %}
             <source src="/video/{{ job_id }}" type="video/mp4">
             {% endif %}
         </video>
+        {% endif %}
         <div class="video-overlay"></div>
     </div>
     
     <!-- Hidden Audio Player for Instrumental -->
     <audio id="audioPlayer" preload="auto"></audio>
+    
+    <!-- YouTube IFrame API -->
+    {% if youtube_video_id %}
+    <script src="https://www.youtube.com/iframe_api"></script>
+    {% endif %}
     
     <!-- Header -->
     <header class="karaoke-header">
@@ -560,14 +815,19 @@
     <script>
         const jobId = '{{ job_id }}';
         const hasVideo = {{ 'true' if has_video else 'false' }};
+        const youtubeVideoId = '{{ youtube_video_id or "" }}';
+        const useYouTube = youtubeVideoId.length > 0;
+        
         let lyrics = null;
         let currentLineIndex = -1;
         let isLooping = false;
         let videoEnabled = hasVideo;
+        let ytPlayer = null;
+        let ytReady = false;
         
         // Audio player
         const audio = document.getElementById('audioPlayer');
-        const video = document.getElementById('backgroundVideo');
+        const video = useYouTube ? null : document.getElementById('backgroundVideo');
         const videoBackground = document.getElementById('videoBackground');
         const videoToggleBtn = document.getElementById('videoToggleBtn');
         const playBtn = document.getElementById('playBtn');
@@ -582,6 +842,47 @@
         const currentTimeEl = document.getElementById('currentTime');
         const totalTimeEl = document.getElementById('totalTime');
         const syncText = document.getElementById('syncText');
+        
+        // YouTube IFrame API callback
+        function onYouTubeIframeAPIReady() {
+            if (!useYouTube) return;
+            
+            ytPlayer = new YT.Player('youtubePlayer', {
+                videoId: youtubeVideoId,
+                playerVars: {
+                    'autoplay': 0,
+                    'controls': 0,
+                    'disablekb': 1,
+                    'fs': 0,
+                    'iv_load_policy': 3,
+                    'loop': 0,
+                    'modestbranding': 1,
+                    'playsinline': 1,
+                    'rel': 0,
+                    'showinfo': 0,
+                    'mute': 1,
+                    'origin': window.location.origin
+                },
+                events: {
+                    'onReady': onYTPlayerReady,
+                    'onStateChange': onYTPlayerStateChange
+                }
+            });
+        }
+        
+        function onYTPlayerReady(event) {
+            ytReady = true;
+            ytPlayer.mute(); // Ensure muted
+            console.log('YouTube player ready');
+        }
+        
+        function onYTPlayerStateChange(event) {
+            // Keep YouTube in sync - if it ends, loop if needed
+            if (event.data === YT.PlayerState.ENDED && isLooping) {
+                ytPlayer.seekTo(0);
+                ytPlayer.playVideo();
+            }
+        }
         
         // Initialize
         initPlayer();
@@ -599,27 +900,47 @@
                 videoBackground.classList.toggle('hidden', !videoEnabled);
                 videoToggleBtn.classList.toggle('active', videoEnabled);
                 
-                if (videoEnabled && !audio.paused) {
-                    video.currentTime = audio.currentTime;
-                    video.play();
-                } else {
-                    video.pause();
+                if (useYouTube && ytReady) {
+                    if (videoEnabled && !audio.paused) {
+                        ytPlayer.seekTo(audio.currentTime, true);
+                        ytPlayer.playVideo();
+                    } else {
+                        ytPlayer.pauseVideo();
+                    }
+                } else if (video) {
+                    if (videoEnabled && !audio.paused) {
+                        video.currentTime = audio.currentTime;
+                        video.play();
+                    } else {
+                        video.pause();
+                    }
                 }
             });
             
-            // Keep video in sync with audio
-            video.addEventListener('loadedmetadata', () => {
-                console.log('Video loaded, duration:', video.duration);
-            });
+            // For local video: Keep video in sync with audio
+            if (video) {
+                video.addEventListener('loadedmetadata', () => {
+                    console.log('Video loaded, duration:', video.duration);
+                });
+            }
         }
         
         function syncVideo() {
             if (!hasVideo || !videoEnabled) return;
             
-            // Sync video time with audio (allow small drift)
-            const drift = Math.abs(video.currentTime - audio.currentTime);
-            if (drift > 0.3) {
-                video.currentTime = audio.currentTime;
+            if (useYouTube && ytReady && ytPlayer) {
+                // Sync YouTube player with audio
+                const ytTime = ytPlayer.getCurrentTime ? ytPlayer.getCurrentTime() : 0;
+                const drift = Math.abs(ytTime - audio.currentTime);
+                if (drift > 0.5) {
+                    ytPlayer.seekTo(audio.currentTime, true);
+                }
+            } else if (video) {
+                // Sync local video with audio
+                const drift = Math.abs(video.currentTime - audio.currentTime);
+                if (drift > 0.3) {
+                    video.currentTime = audio.currentTime;
+                }
             }
         }
         
@@ -648,27 +969,45 @@
             
             audio.addEventListener('play', () => {
                 if (hasVideo && videoEnabled) {
-                    video.currentTime = audio.currentTime;
-                    video.play();
+                    if (useYouTube && ytReady && ytPlayer) {
+                        ytPlayer.seekTo(audio.currentTime, true);
+                        ytPlayer.playVideo();
+                    } else if (video) {
+                        video.currentTime = audio.currentTime;
+                        video.play();
+                    }
                 }
             });
             
             audio.addEventListener('pause', () => {
                 if (hasVideo) {
-                    video.pause();
+                    if (useYouTube && ytReady && ytPlayer) {
+                        ytPlayer.pauseVideo();
+                    } else if (video) {
+                        video.pause();
+                    }
                 }
             });
             
             audio.addEventListener('seeked', () => {
                 if (hasVideo && videoEnabled) {
-                    video.currentTime = audio.currentTime;
+                    if (useYouTube && ytReady && ytPlayer) {
+                        ytPlayer.seekTo(audio.currentTime, true);
+                    } else if (video) {
+                        video.currentTime = audio.currentTime;
+                    }
                 }
             });
             
             audio.addEventListener('ended', () => {
                 if (hasVideo) {
-                    video.pause();
-                    video.currentTime = 0;
+                    if (useYouTube && ytReady && ytPlayer) {
+                        ytPlayer.pauseVideo();
+                        ytPlayer.seekTo(0, true);
+                    } else if (video) {
+                        video.pause();
+                        video.currentTime = 0;
+                    }
                 }
                 if (isLooping) {
                     audio.currentTime = 0;

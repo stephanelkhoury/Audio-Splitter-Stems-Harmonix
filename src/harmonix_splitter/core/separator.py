@@ -19,6 +19,7 @@ logger = logging.getLogger(__name__)
 
 class QualityMode(Enum):
     """Processing quality presets"""
+    DRAFT = "draft"      # Ultra-fast for previews (~3x faster)
     FAST = "fast"
     BALANCED = "balanced"
     STUDIO = "studio"
@@ -38,6 +39,8 @@ class SeparationConfig:
     mode: SeparationMode = SeparationMode.GROUPED
     target_instruments: Optional[List[str]] = None
     use_gpu: bool = True
+    preview_mode: bool = False  # Process only first 30 seconds
+    preview_duration: int = 30  # Seconds for preview mode
     sample_rate: int = 44100
     preserve_sample_rate: bool = True  # Keep original sample rate if possible
     segment_duration: Optional[int] = None  # Auto-segment for long files
@@ -147,6 +150,7 @@ class HarmonixSeparator:
     def _get_model_name(self) -> str:
         """Get Demucs model name based on quality setting"""
         quality_map = {
+            QualityMode.DRAFT: "htdemucs",      # Same model, but minimal processing
             QualityMode.FAST: "htdemucs",       # Standard model, fast
             QualityMode.BALANCED: "htdemucs_ft", # Fine-tuned, better quality
             QualityMode.STUDIO: "htdemucs_6s"   # 6-source model, highest quality
@@ -155,7 +159,14 @@ class HarmonixSeparator:
     
     def _get_separation_params(self) -> Dict:
         """Get separation parameters based on quality mode"""
-        if self.config.quality == QualityMode.FAST:
+        if self.config.quality == QualityMode.DRAFT:
+            return {
+                'shifts': 0,           # No augmentation
+                'overlap': 0.05,       # Minimal overlap
+                'split': True,
+                'segment': 5.0,        # Very short segments for speed
+            }
+        elif self.config.quality == QualityMode.FAST:
             return {
                 'shifts': 0,           # No augmentation
                 'overlap': 0.1,        # Minimal overlap
@@ -274,6 +285,13 @@ class HarmonixSeparator:
             
             # Store original sample rate for output
             self._original_sample_rate = sr
+            
+            # PREVIEW MODE: Trim to preview_duration seconds
+            if self.config.preview_mode:
+                max_samples = int(self.config.preview_duration * sr)
+                if audio_np.shape[-1] > max_samples:
+                    audio_np = audio_np[..., :max_samples]
+                    logger.info(f"Preview mode: Trimmed to {self.config.preview_duration}s ({max_samples} samples)")
             
             # Convert to tensor
             if audio_np.ndim == 1:
