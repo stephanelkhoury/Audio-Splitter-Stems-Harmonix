@@ -6,7 +6,7 @@
     "role": "admin",
     "name": "Admin Harmonix",
     "created_at": "2025-12-30T00:16:33.894633",
-    "last_login": "2026-01-14T22:25:22.007373",
+    "last_login": "2026-01-15T14:57:46.419531",
     "is_active": true,
     "plan": "studio",
     "usage": {
@@ -20,19 +20,19 @@
   },
   "stephanelkhoury2000_b18d2480": {
     "email": "stephanelkhoury2000@gmail.com",
-    "password_hash": "0a67c814db7caa67f636eb00f1b19e6e1afe3cd4218ae5e6849ac914ab9ac4d3",
-    "salt": "c6bbfda85d5613e5192e8c64e0a8566a",
+    "password_hash": "c734712a367d469405a06e4e52ec0aa69b4742f3c513b3cc15b7ca95940aca0e",
+    "salt": "14494d57ae87b530a7455d69336fe322",
     "role": "user",
     "name": "Stephan El Khoury",
     "created_at": "2025-12-30T00:16:33.929822",
-    "last_login": "2025-12-30T13:37:40.250442",
+    "last_login": "2026-01-15T14:58:38.806721",
     "is_active": true,
-    "plan": "free",
+    "plan": "creator",
     "usage": {
-      "songs_processed": 3,
+      "songs_processed": 4,
       "stems_downloaded": 0,
       "monthly": {
-        "2026-01": 3
+        "2026-01": 4
       }
     },
     "avatar": "/avatars/stephanelkhoury2000_b18d2480_8776875a.jpg"

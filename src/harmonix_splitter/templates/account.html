@@ -873,15 +873,15 @@
         <form id="passwordForm">
             <div class="form-group">
                 <label>Current Password</label>
-                <input type="password" class="form-control" id="currentPassword" name="currentPassword" required>
+                <input type="password" class="form-control" id="currentPassword" name="currentPassword" required autocomplete="current-password">
             </div>
             <div class="form-group">
                 <label>New Password</label>
-                <input type="password" class="form-control" id="newPassword" name="newPassword" required minlength="6">
+                <input type="password" class="form-control" id="newPassword" name="newPassword" required minlength="6" autocomplete="new-password">
             </div>
             <div class="form-group">
                 <label>Confirm New Password</label>
-                <input type="password" class="form-control" id="confirmPassword" name="confirmPassword" required>
+                <input type="password" class="form-control" id="confirmPassword" name="confirmPassword" required autocomplete="new-password">
             </div>
             <div id="passwordMessage" style="display: none; padding: 10px; border-radius: 8px; margin-bottom: 15px;"></div>
             <div class="modal-actions">
@@ -957,7 +957,7 @@
             <form id="deleteForm">
                 <div class="form-group">
                     <label>Enter your password to confirm</label>
-                    <input type="password" class="form-control" id="deletePassword" name="deletePassword" required placeholder="Your password">
+                    <input type="password" class="form-control" id="deletePassword" name="deletePassword" required placeholder="Your password" autocomplete="current-password">
                 </div>
                 <div id="deleteMessage" style="display: none; padding: 10px; border-radius: 8px; margin-bottom: 15px;"></div>
             </form>

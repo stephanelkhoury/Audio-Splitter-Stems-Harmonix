@@ -163,7 +163,8 @@ class LyricsExtractor:
     def __init__(
         self,
         model_size: str = "medium",
-        device: Optional[str] = None
+        device: Optional[str] = None,
+        num_threads: Optional[int] = None
     ):
         """
         Initialize lyrics extractor
@@ -171,36 +172,52 @@ class LyricsExtractor:
         Args:
             model_size: Whisper model size (tiny/base/small/medium/large)
             device: Device to use (cuda/cpu/auto)
+            num_threads: Number of CPU threads to use (None = auto-detect max)
         """
         self.model_size = self.MODEL_SIZES.get(model_size, model_size)
         self.device = device
+        self.num_threads = num_threads
         self.model = None
         self._loaded = False
         
     def _load_model(self):
-        """Lazy load Whisper model"""
+        """Lazy load Whisper model with maximum performance settings"""
         if self._loaded:
             return
             
         try:
             import whisper
+            import torch
+            import os
+            
+            # Set maximum threads for CPU operations (only if not already started)
+            max_threads = self.num_threads or os.cpu_count() or 8
+            try:
+                torch.set_num_threads(max_threads)
+            except RuntimeError:
+                pass  # Already set or parallel work started
+            
+            # Enable optimizations
+            if hasattr(torch, 'set_float32_matmul_precision'):
+                torch.set_float32_matmul_precision('high')
             
             logger.info(f"Loading Whisper model: {self.model_size}")
+            logger.info(f"Using {max_threads} CPU threads for maximum performance")
             
-            # Determine device - prefer MPS (Apple Silicon) > CUDA > CPU
+            # Determine device - MPS has float64 issues, prefer CUDA > CPU > MPS
             if self.device is None:
-                import torch
                 if torch.cuda.is_available():
                     self.device = "cuda"
-                elif hasattr(torch.backends, 'mps') and torch.backends.mps.is_available():
-                    # Note: Whisper may have issues with MPS, fallback to CPU if needed
-                    try:
-                        self.device = "cpu"  # MPS support in whisper is limited, use CPU for stability
-                        logger.info("Using CPU for Whisper (MPS support is experimental)")
-                    except Exception:
-                        self.device = "cpu"
+                    # Enable TF32 for faster GPU computation
+                    torch.backends.cuda.matmul.allow_tf32 = True
+                    torch.backends.cudnn.allow_tf32 = True
+                    torch.backends.cudnn.benchmark = True
+                    logger.info("CUDA enabled with TF32 optimizations")
                 else:
+                    # MPS (Apple Silicon) has float64 dtype issues with Whisper
+                    # Using CPU for better compatibility
                     self.device = "cpu"
+                    logger.info("Using CPU with maximum thread optimization")
             
             self.model = whisper.load_model(self.model_size, device=self.device)
             self._loaded = True
@@ -330,6 +347,7 @@ class LyricsExtractor:
         logger.info(f"Language: {language}, Task: {task}")
         
         # MAXIMUM QUALITY settings for lyrics extraction
+        # Optimized for speed while maintaining quality
         options = {
             'task': task,
             'word_timestamps': word_timestamps,
@@ -341,14 +359,14 @@ class LyricsExtractor:
             'logprob_threshold': -0.5,            # Stricter than default -1.0, filters low confidence
             'no_speech_threshold': 0.5,           # Stricter silence detection
             
-            # === QUALITY SETTINGS ===
+            # === SPEED + QUALITY SETTINGS ===
             'temperature': 0,                     # Deterministic output (no randomness)
-            'best_of': 5,                         # Consider 5 beams for best result
-            'beam_size': 5,                       # Beam search width
-            'patience': 1.0,                      # Wait for full beam search
+            'best_of': 1,                         # Reduced from 5 for speed (with temp=0, 1 is enough)
+            'beam_size': 3,                       # Reduced from 5 for speed (3 is good balance)
+            'patience': None,                     # Use default patience for faster completion
             
-            # === SEGMENTATION ===
-            'fp16': False,                        # Use fp32 for accuracy on CPU
+            # === GPU/CPU OPTIMIZATION ===
+            'fp16': self.device in ['cuda', 'mps'],  # Use fp16 on GPU for 2x speed
             'without_timestamps': False,          # We want timestamps
             
             # === INITIAL PROMPT (helps with style) ===

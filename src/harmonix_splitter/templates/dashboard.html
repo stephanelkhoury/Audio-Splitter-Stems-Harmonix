@@ -4473,6 +4473,10 @@
                 '<option value="fr">French</option>' +
                 '<option value="es">Spanish</option>' +
                 '</select>' +
+                '<select class="language-select" id="lyricsModel" title="Model Quality">' +
+                '<option value="medium">⚡ Fast (~30s)</option>' +
+                '<option value="large">🎯 Quality (~2min)</option>' +
+                '</select>' +
                 '<button class="btn btn-secondary" id="toggleLyricsBtn" style="display: none;">' +
                 '<i class="fas fa-closed-captioning"></i> Show Lyrics' +
                 '</button>' +
@@ -4854,7 +4858,8 @@
             // Lyrics extraction
             document.getElementById('extractLyricsBtn').addEventListener('click', function() {
                 var language = document.getElementById('lyricsLanguage').value;
-                extractLyrics(jobId, language);
+                var model = document.getElementById('lyricsModel').value;
+                extractLyrics(jobId, language, model);
             });
             
             // Toggle lyrics display
@@ -5076,17 +5081,19 @@
         }
         
         // ==================== LYRICS ====================
-        function extractLyrics(jobId, language) {
+        function extractLyrics(jobId, language, model) {
             var btn = document.getElementById('extractLyricsBtn');
             btn.disabled = true;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Extracting...';
+            var modelLabel = model === 'large' ? 'Quality' : 'Fast';
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Extracting (' + modelLabel + ')...';
             
-            showToast('Extracting lyrics (this may take a minute)...');
+            var timeEstimate = model === 'large' ? '1-2 minutes' : '20-40 seconds';
+            showToast('Extracting lyrics with ' + modelLabel + ' model (est. ' + timeEstimate + ')...');
             
             fetch('/extract-lyrics/' + jobId, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({language: language})
+                body: JSON.stringify({language: language || 'auto', model: model || 'medium'})
             })
             .then(function(response) {
                 return response.json();

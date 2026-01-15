@@ -184,8 +184,8 @@ def scan_existing_outputs(username: str | None = None):
                 # Get modification time
                 mod_time = datetime.fromtimestamp(job_dir.stat().st_mtime)
                 
-                # Check if lyrics exist
-                lyrics_files = list(job_dir.glob("*_lyrics.json"))
+                # Check if lyrics exist (check both naming conventions)
+                lyrics_files = list(job_dir.glob("*_lyrics_*.json")) or list(job_dir.glob("*_lyrics.json"))
                 has_lyrics = len(lyrics_files) > 0
                 
                 # Update existing job or create new record
@@ -2229,8 +2229,8 @@ def get_job_report(job_id):
                     'duration': duration
                 }
         
-        # Check for lyrics file
-        lyrics_files = list(job_dir.glob("*_lyrics.json"))
+        # Check for lyrics file (check both naming conventions)
+        lyrics_files = list(job_dir.glob("*_lyrics_*.json")) or list(job_dir.glob("*_lyrics.json"))
         if lyrics_files:
             report['has_lyrics'] = True
             try:
@@ -2681,6 +2681,11 @@ def extract_lyrics(job_id):
         # Get parameters
         data = request.get_json() or {}
         language = data.get('language', 'auto')
+        model_size = data.get('model', 'medium')  # 'medium' (fast) or 'large' (quality)
+        
+        # Validate model size
+        if model_size not in ['tiny', 'base', 'small', 'medium', 'large']:
+            model_size = 'medium'
         
         # Use user-specific output directory
         user_output_dir = get_user_output_dir(job_owner)
@@ -2707,27 +2712,28 @@ def extract_lyrics(job_id):
         logger.info(f"Using {audio_file.name} for lyrics extraction")
         
         # Check for cached lyrics (use base name without stem type for cache)
+        # Include model in cache key so different models have separate caches
         base_name = audio_file.stem.rsplit('_', 1)[0]  # Remove _original or _vocals suffix
-        lyrics_cache = job_dir / f"{base_name}_lyrics.json"
+        lyrics_cache = job_dir / f"{base_name}_lyrics_{model_size}.json"
         if lyrics_cache.exists():
             # Check if language matches
             with open(lyrics_cache, 'r', encoding='utf-8') as f:
                 cached = json.load(f)
                 if language == 'auto' or cached.get('language') == language:
-                    logger.info(f"Serving cached lyrics for job {job_id}")
+                    logger.info(f"Serving cached lyrics for job {job_id} (model: {model_size})")
                     return jsonify(cached)
         
         # Extract lyrics
-        logger.info(f"Extracting lyrics from {audio_file} (language: {language})")
+        logger.info(f"Extracting lyrics from {audio_file} (language: {language}, model: {model_size})")
         
         try:
-            # Use "large" model for highest accuracy lyrics detection
-            # Download size ~2.9GB but provides best transcription quality
-            extractor = LyricsExtractor(model_size="large")
+            # Use user-selected model size
+            extractor = LyricsExtractor(model_size=model_size)
             result = extractor.extract(audio_file, language=language)
             
             # Save to cache
             result_dict = result.to_dict()
+            result_dict['model'] = model_size  # Include model info in response
             with open(lyrics_cache, 'w', encoding='utf-8') as f:
                 json.dump(result_dict, f, ensure_ascii=False, indent=2)
             
@@ -2783,8 +2789,11 @@ def get_lyrics(job_id):
         if not job_dir.exists():
             return jsonify({'error': 'Job directory not found', 'available': False}), 404
         
-        # Find lyrics file
-        lyrics_files = list(job_dir.glob("*_lyrics.json"))
+        # Find lyrics file - check both naming conventions
+        # Old format: *_lyrics.json, New format with model: *_lyrics_*.json
+        lyrics_files = list(job_dir.glob("*_lyrics_*.json"))  # New format with model name
+        if not lyrics_files:
+            lyrics_files = list(job_dir.glob("*_lyrics.json"))  # Legacy format
         if not lyrics_files:
             # Return 200 with available=false so frontend doesn't see console error
             return jsonify({'available': False, 'message': 'Lyrics not extracted yet'})
@@ -2868,8 +2877,8 @@ def save_lyrics(job_id):
         if not job_dir.exists():
             return jsonify({'error': 'Job directory not found'}), 404
         
-        # Find existing lyrics files
-        json_files = list(job_dir.glob("*_lyrics.json"))
+        # Find existing lyrics files (check both naming conventions)
+        json_files = list(job_dir.glob("*_lyrics_*.json")) or list(job_dir.glob("*_lyrics.json"))
         lrc_files = list(job_dir.glob("*_lyrics.lrc"))
         
         if not json_files:

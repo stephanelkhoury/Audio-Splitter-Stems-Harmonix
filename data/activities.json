@@ -25,7 +25,49 @@
     {
       "type": "login",
       "description": "Chrome on macOS",
+      "timestamp": "2026-01-15T14:57:46.420380",
+      "metadata": {
+        "browser": "Chrome",
+        "os": "macOS",
+        "ip": "127.0.0.1"
+      }
+    },
+    {
+      "type": "login",
+      "description": "Chrome on macOS",
       "timestamp": "2026-01-14T22:25:22.008026",
+      "metadata": {
+        "browser": "Chrome",
+        "os": "macOS",
+        "ip": "127.0.0.1"
+      }
+    }
+  ],
+  "stephanelkhoury2000_b18d2480": [
+    {
+      "type": "login",
+      "description": "Chrome on macOS",
+      "timestamp": "2026-01-15T14:58:38.808327",
+      "metadata": {
+        "browser": "Chrome",
+        "os": "macOS",
+        "ip": "127.0.0.1"
+      }
+    },
+    {
+      "type": "login",
+      "description": "Chrome on macOS",
+      "timestamp": "2026-01-15T00:55:47.661659",
+      "metadata": {
+        "browser": "Chrome",
+        "os": "macOS",
+        "ip": "127.0.0.1"
+      }
+    },
+    {
+      "type": "login",
+      "description": "Chrome on macOS",
+      "timestamp": "2026-01-15T00:54:55.224594",
       "metadata": {
         "browser": "Chrome",
         "os": "macOS",
