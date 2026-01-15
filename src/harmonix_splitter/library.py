@@ -84,6 +84,17 @@ def save_user_links(username: str, links_data: Dict[str, Any]) -> bool:
         return False
 
 
+def get_user_library_links(username: str) -> Dict[str, Any]:
+    """
+    Get user's library links (just the links dictionary).
+    Returns a dict mapping youtube_id -> link_info.
+    """
+    if not username:
+        return {}
+    links_data = load_user_links(username)
+    return links_data.get("links", {})
+
+
 def check_library_exists(youtube_id: str) -> Optional[Dict[str, Any]]:
     """
     Check if content already exists in the shared library.

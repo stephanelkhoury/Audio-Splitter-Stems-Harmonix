@@ -1,0 +1,28 @@
+{
+  "youtube_id": "kJQP7kiw5Fk",
+  "display_name": "Luis_Fonsi_-_Despacito_ft._Daddy_Yankee",
+  "title": "Luis Fonsi - Despacito ft. Daddy Yankee",
+  "duration": 282,
+  "source_url": "https://www.youtube.com/watch?v=kJQP7kiw5Fk",
+  "music_info": {
+    "tempo": {
+      "bpm": 89.1,
+      "confidence": 0.0
+    },
+    "key": {
+      "key": "D",
+      "scale": "Major"
+    },
+    "duration": 281.50714285714287
+  },
+  "cached": true,
+  "cached_at": "2026-01-15T17:23:59.432942",
+  "processing_time": 250.19977498054504,
+  "stems": [
+    "drums",
+    "bass",
+    "other",
+    "vocals"
+  ],
+  "usage_count": 0
+}

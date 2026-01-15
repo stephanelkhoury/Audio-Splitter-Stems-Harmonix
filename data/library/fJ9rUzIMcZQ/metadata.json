@@ -1,0 +1,28 @@
+{
+  "youtube_id": "fJ9rUzIMcZQ",
+  "display_name": "Queen_Bohemian_Rhapsody_Official_Video_Remastered",
+  "title": "Queen – Bohemian Rhapsody (Official Video Remastered)",
+  "duration": 359,
+  "source_url": "https://www.youtube.com/watch?v=fJ9rUzIMcZQ",
+  "music_info": {
+    "tempo": {
+      "bpm": 143.6,
+      "confidence": 1.0
+    },
+    "key": {
+      "key": "A#",
+      "scale": "Major"
+    },
+    "duration": 359.4453514739229
+  },
+  "cached": true,
+  "cached_at": "2026-01-15T17:06:20.447639",
+  "processing_time": 351.25383973121643,
+  "stems": [
+    "drums",
+    "bass",
+    "other",
+    "vocals"
+  ],
+  "usage_count": 0
+}

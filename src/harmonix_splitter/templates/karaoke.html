@@ -100,11 +100,58 @@
             font-size: 18px;
             font-weight: 600;
             color: var(--text);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
         }
         
         .track-title i {
             color: var(--primary);
             margin-right: 10px;
+        }
+        
+        /* Music Info Badges */
+        .music-info-badges {
+            display: flex;
+            gap: 8px;
+            margin-left: 15px;
+        }
+        
+        .music-badge {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            padding: 4px 10px;
+            background: rgba(124, 58, 237, 0.2);
+            border: 1px solid rgba(124, 58, 237, 0.4);
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--primary);
+        }
+        
+        .music-badge i {
+            font-size: 10px;
+            margin-right: 2px;
+        }
+        
+        .music-badge.bpm {
+            background: rgba(6, 182, 212, 0.2);
+            border-color: rgba(6, 182, 212, 0.4);
+            color: var(--secondary);
+        }
+        
+        .music-badge.key {
+            background: rgba(34, 197, 94, 0.2);
+            border-color: rgba(34, 197, 94, 0.4);
+            color: #22c55e;
+        }
+        
+        .music-badge.time-sig {
+            background: rgba(251, 191, 36, 0.2);
+            border-color: rgba(251, 191, 36, 0.4);
+            color: #fbbf24;
         }
         
         .header-controls {
@@ -261,6 +308,83 @@
         
         .lyric-line.current .word.sung {
             color: var(--primary);
+        }
+        
+        /* Transpose Control */
+        .transpose-control {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(124, 58, 237, 0.25);
+            border: 2px solid rgba(124, 58, 237, 0.5);
+            border-radius: 25px;
+            padding: 8px 14px;
+            margin: 0 10px;
+        }
+        
+        .transpose-control .label {
+            font-size: 12px;
+            color: var(--text);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+        }
+        
+        .transpose-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: var(--text);
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            font-weight: 700;
+        }
+        
+        .transpose-btn:hover {
+            background: var(--primary);
+            transform: scale(1.1);
+        }
+        
+        .transpose-btn:active {
+            transform: scale(0.95);
+        }
+        
+        .transpose-value {
+            min-width: 45px;
+            text-align: center;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--primary);
+        }
+        
+        .transpose-value.positive {
+            color: #22c55e;
+        }
+        
+        .transpose-value.negative {
+            color: #ef4444;
+        }
+        
+        .transpose-reset {
+            font-size: 10px;
+            padding: 4px 8px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: var(--text-dim);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .transpose-reset:hover {
+            background: rgba(255, 255, 255, 0.2);
+            color: var(--text);
         }
         
         /* Progress bar at bottom */
@@ -472,9 +596,6 @@
                 font-size: 14px;
                 flex: 1;
                 min-width: 0;
-                overflow: hidden;
-                text-overflow: ellipsis;
-                white-space: nowrap;
             }
             
             .track-title i {
@@ -483,6 +604,18 @@
             
             .instrumental-badge {
                 display: none;
+            }
+            
+            .music-info-badges {
+                margin-left: 0;
+                margin-top: 5px;
+                width: 100%;
+                justify-content: flex-start;
+            }
+            
+            .music-badge {
+                padding: 3px 8px;
+                font-size: 11px;
             }
             
             .header-controls {
@@ -554,6 +687,31 @@
                 display: none; /* Hide on mobile, use hardware volume */
             }
             
+            .transpose-control {
+                order: 9;
+                padding: 4px 10px;
+            }
+            
+            .transpose-control .label {
+                font-size: 10px;
+            }
+            
+            .transpose-btn {
+                width: 24px;
+                height: 24px;
+                font-size: 12px;
+            }
+            
+            .transpose-value {
+                min-width: 35px;
+                font-size: 12px;
+            }
+            
+            .transpose-reset {
+                font-size: 9px;
+                padding: 3px 6px;
+            }
+            
             .time-display {
                 font-size: 12px;
             }
@@ -576,6 +734,14 @@
             .track-title {
                 font-size: 13px;
                 max-width: 150px;
+            }
+            
+            .transpose-control .label {
+                display: none;
+            }
+            
+            .transpose-reset {
+                display: none;
             }
             
             .btn-icon {
@@ -747,6 +913,29 @@
             <span class="instrumental-badge">
                 <i class="fas fa-music"></i> Instrumental
             </span>
+            <!-- Music Info Badges -->
+            {% if music_info %}
+            <div class="music-info-badges">
+                {% if music_info.tempo and music_info.tempo.bpm %}
+                <span class="music-badge bpm" title="Tempo (Beats Per Minute)">
+                    <i class="fas fa-drum"></i>
+                    {{ music_info.tempo.bpm|round|int }} BPM
+                </span>
+                {% endif %}
+                {% if music_info.key and music_info.key.key %}
+                <span class="music-badge key" title="Musical Key">
+                    <i class="fas fa-music"></i>
+                    {{ music_info.key.key }} {{ music_info.key.scale }}
+                </span>
+                {% endif %}
+                {% if music_info.time_signature %}
+                <span class="music-badge time-sig" title="Time Signature">
+                    <i class="fas fa-clock"></i>
+                    {{ music_info.time_signature }}
+                </span>
+                {% endif %}
+            </div>
+            {% endif %}
         </div>
         <div class="header-controls">
             <div class="sync-status">
@@ -784,6 +973,15 @@
                     <i class="fas fa-volume-up"></i>
                 </button>
                 <input type="range" class="volume-slider" id="volumeSlider" min="0" max="100" value="80">
+            </div>
+            
+            <!-- Transpose Control -->
+            <div class="transpose-control" title="Transpose pitch ±6 semitones (also adjusts tempo slightly)">
+                <span class="label">Key</span>
+                <button class="transpose-btn" id="transposeDown" title="Lower pitch (-1 semitone)">−</button>
+                <span class="transpose-value" id="transposeValue">0</span>
+                <button class="transpose-btn" id="transposeUp" title="Raise pitch (+1 semitone)">+</button>
+                <button class="transpose-reset" id="transposeReset" title="Reset to original key">Reset</button>
             </div>
             
             <button class="control-btn" id="prevBtn" title="Restart">
@@ -825,6 +1023,12 @@
         let ytPlayer = null;
         let ytReady = false;
         
+        // Transpose state
+        let transposeValue = 0;
+        let audioContext = null;
+        let sourceNode = null;
+        let gainNode = null;
+        
         // Audio player
         const audio = document.getElementById('audioPlayer');
         const video = useYouTube ? null : document.getElementById('backgroundVideo');
@@ -842,6 +1046,12 @@
         const currentTimeEl = document.getElementById('currentTime');
         const totalTimeEl = document.getElementById('totalTime');
         const syncText = document.getElementById('syncText');
+        
+        // Transpose controls
+        const transposeUpBtn = document.getElementById('transposeUp');
+        const transposeDownBtn = document.getElementById('transposeDown');
+        const transposeResetBtn = document.getElementById('transposeReset');
+        const transposeValueEl = document.getElementById('transposeValue');
         
         // YouTube IFrame API callback
         function onYouTubeIframeAPIReady() {
@@ -884,9 +1094,95 @@
             }
         }
         
+        // Transpose functions using Web Audio API with PitchShifter
+        // Note: True pitch shifting without tempo change requires complex DSP
+        // We use playbackRate which changes both - acceptable for small transpositions
+        // For best quality, regenerate the track at a different pitch server-side
+        
+        function initAudioContext() {
+            if (audioContext) return;
+            
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            sourceNode = audioContext.createMediaElementSource(audio);
+            gainNode = audioContext.createGain();
+            
+            sourceNode.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+        }
+        
+        function updateTranspose(semitones) {
+            transposeValue = Math.max(-6, Math.min(6, semitones)); // Limit to ±6 for quality
+            
+            // Update display
+            transposeValueEl.textContent = transposeValue > 0 ? `+${transposeValue}` : transposeValue.toString();
+            transposeValueEl.className = 'transpose-value';
+            if (transposeValue > 0) transposeValueEl.classList.add('positive');
+            else if (transposeValue < 0) transposeValueEl.classList.add('negative');
+            
+            // Calculate playback rate for pitch shift
+            // Each semitone is a factor of 2^(1/12) ≈ 1.0595
+            const pitchRatio = Math.pow(2, transposeValue / 12);
+            
+            // Disable browser's pitch preservation so playbackRate affects pitch
+            audio.preservesPitch = false;
+            audio.mozPreservesPitch = false;  // Firefox
+            audio.webkitPreservesPitch = false;  // Safari/Chrome older
+            
+            audio.playbackRate = pitchRatio;
+            
+            // Adjust video playback to match audio speed
+            if (hasVideo && videoEnabled) {
+                if (useYouTube && ytReady && ytPlayer) {
+                    ytPlayer.setPlaybackRate(pitchRatio);
+                } else if (video) {
+                    video.playbackRate = pitchRatio;
+                }
+            }
+            
+            // Update the current key display
+            updateKeyDisplay();
+            
+            console.log(`Transpose: ${transposeValue} semitones, playback rate: ${pitchRatio.toFixed(3)}`);
+        }
+        
+        function updateKeyDisplay() {
+            // Update the key badge to show transposed key
+            const keyBadge = document.querySelector('.music-badge.key');
+            if (keyBadge && transposeValue !== 0) {
+                const originalKey = keyBadge.getAttribute('data-original-key');
+                if (!originalKey) {
+                    keyBadge.setAttribute('data-original-key', keyBadge.textContent.trim());
+                }
+                const stored = keyBadge.getAttribute('data-original-key');
+                keyBadge.innerHTML = `<i class="fas fa-music"></i> ${stored} <span style="opacity:0.7">(${transposeValue > 0 ? '+' : ''}${transposeValue})</span>`;
+            } else if (keyBadge && transposeValue === 0) {
+                const originalKey = keyBadge.getAttribute('data-original-key');
+                if (originalKey) {
+                    keyBadge.innerHTML = `<i class="fas fa-music"></i> ${originalKey}`;
+                }
+            }
+        }
+        
+        function initTransposeControls() {
+            transposeUpBtn.addEventListener('click', () => {
+                initAudioContext();
+                updateTranspose(transposeValue + 1);
+            });
+            
+            transposeDownBtn.addEventListener('click', () => {
+                initAudioContext();
+                updateTranspose(transposeValue - 1);
+            });
+            
+            transposeResetBtn.addEventListener('click', () => {
+                updateTranspose(0);
+            });
+        }
+        
         // Initialize
         initPlayer();
         initVideo();
+        initTransposeControls();
         fetchLyrics();
         
         function initVideo() {

@@ -6,6 +6,7 @@ Flask-based web interface for audio stem separation
 import os
 import uuid
 import json
+import time
 import secrets
 from pathlib import Path
 from datetime import datetime, timedelta
@@ -96,8 +97,42 @@ jobs_lock = threading.Lock()
 batch_queues = {}  # username -> list of pending jobs
 batch_queue_lock = threading.Lock()
 
+# Active job cancellation flags
+cancel_flags = {}  # job_id -> threading.Event (set = cancel requested)
+cancel_flags_lock = threading.Lock()
+
 # Allowed extensions
 ALLOWED_EXTENSIONS = {'.mp3', '.wav', '.flac', '.m4a', '.ogg', '.aac'}
+
+
+def request_job_cancel(job_id: str) -> bool:
+    """Request cancellation of a job"""
+    with cancel_flags_lock:
+        if job_id in cancel_flags:
+            cancel_flags[job_id].set()
+            return True
+        return False
+
+
+def is_job_cancelled(job_id: str) -> bool:
+    """Check if a job has been cancelled"""
+    with cancel_flags_lock:
+        if job_id in cancel_flags:
+            return cancel_flags[job_id].is_set()
+        return False
+
+
+def register_job_cancel_flag(job_id: str) -> threading.Event:
+    """Register a cancellation flag for a job"""
+    with cancel_flags_lock:
+        cancel_flags[job_id] = threading.Event()
+        return cancel_flags[job_id]
+
+
+def cleanup_cancel_flag(job_id: str):
+    """Clean up cancellation flag after job completes"""
+    with cancel_flags_lock:
+        cancel_flags.pop(job_id, None)
 
 
 def get_user_output_dir(username: str | None) -> Path:
@@ -284,6 +319,7 @@ def process_audio_async(job_id, audio_path, quality, mode, instruments, display_
                     'confidence': analysis.key.confidence,
                     'camelot': analyzer.get_camelot_wheel(analysis.key.key, analysis.key.scale)
                 },
+                'time_signature': f"{analysis.tempo.time_signature[0]}/{analysis.tempo.time_signature[1]}",
                 'duration': analysis.duration
             }
             
@@ -2228,9 +2264,16 @@ def process_batch_queue(username):
 
 def download_and_process_url(job_id, url, quality, mode, instruments, output_name, username=None, preview_mode=False):
     """Background task to download audio from URL and process it"""
+    # Register cancellation flag for this job
+    cancel_flag = register_job_cancel_flag(job_id)
+    
     try:
         import yt_dlp
         import re
+        
+        # Check for cancellation
+        if cancel_flag.is_set():
+            raise Exception("Job cancelled by admin")
         
         # Check if this is a YouTube URL and extract video ID
         is_youtube = 'youtube.com' in url.lower() or 'youtu.be' in url.lower()
@@ -2395,6 +2438,10 @@ def process_downloaded_audio(job_id, audio_path, quality, mode, instruments, dis
     preview_label = " (30s preview)" if preview_mode else ""
     
     try:
+        # Check for cancellation before analysis
+        if is_job_cancelled(job_id):
+            raise Exception("Job cancelled by admin")
+        
         # Step 1: Analyze audio for tempo/key
         music_info = {}
         try:
@@ -2412,6 +2459,7 @@ def process_downloaded_audio(job_id, audio_path, quality, mode, instruments, dis
                     'confidence': analysis.key.confidence,
                     'camelot': analyzer.get_camelot_wheel(analysis.key.key, analysis.key.scale)
                 },
+                'time_signature': f"{analysis.tempo.time_signature[0]}/{analysis.tempo.time_signature[1]}",
                 'duration': analysis.duration
             }
             
@@ -2423,6 +2471,10 @@ def process_downloaded_audio(job_id, audio_path, quality, mode, instruments, dis
             logger.info(f"Job {job_id}: Detected {analysis.tempo.bpm} BPM, {analysis.key.key} {analysis.key.scale}")
         except Exception as e:
             logger.warning(f"Job {job_id}: Music analysis failed - {e}")
+        
+        # Check for cancellation before separation (expensive operation)
+        if is_job_cancelled(job_id):
+            raise Exception("Job cancelled by admin")
         
         # Step 2: Start separation
         with jobs_lock:
@@ -2526,13 +2578,28 @@ def process_downloaded_audio(job_id, audio_path, quality, mode, instruments, dis
             raise Exception(result.metadata.get('error', 'Unknown error'))
             
     except Exception as e:
-        logger.error(f"Job {job_id}: Processing failed - {e}")
-        with jobs_lock:
-            jobs_storage[job_id].update({
-                'status': 'failed',
-                'error': str(e),
-                'stage': f'Processing failed: {str(e)}'
-            })
+        error_msg = str(e)
+        is_cancelled = 'cancelled' in error_msg.lower()
+        
+        if is_cancelled:
+            logger.info(f"Job {job_id}: Cancelled by admin")
+            with jobs_lock:
+                jobs_storage[job_id].update({
+                    'status': 'cancelled',
+                    'error': 'Cancelled by admin',
+                    'stage': 'Cancelled by admin'
+                })
+        else:
+            logger.error(f"Job {job_id}: Processing failed - {e}")
+            with jobs_lock:
+                jobs_storage[job_id].update({
+                    'status': 'failed',
+                    'error': error_msg,
+                    'stage': f'Processing failed: {error_msg}'
+                })
+    finally:
+        # Clean up cancellation flag
+        cleanup_cancel_flag(job_id)
 
 
 @app.route('/status/<job_id>')
@@ -2831,6 +2898,73 @@ def list_jobs():
     jobs.sort(key=lambda x: x.get('created_at', ''), reverse=True)
     
     return jsonify({'jobs': jobs[:50]})  # Limit to 50 most recent
+
+
+@app.route('/admin/cancel/<job_id>', methods=['POST'])
+def cancel_job(job_id):
+    """Admin endpoint to cancel a running job"""
+    user_role = session.get('user_role')
+    
+    # Only admins can cancel jobs
+    if user_role != 'admin':
+        return jsonify({'error': 'Admin access required'}), 403
+    
+    with jobs_lock:
+        job = jobs_storage.get(job_id)
+        if not job:
+            return jsonify({'error': 'Job not found'}), 404
+        
+        status = job.get('status')
+        if status == 'completed':
+            return jsonify({'error': 'Job already completed'}), 400
+        if status == 'failed':
+            return jsonify({'error': 'Job already failed'}), 400
+        if status == 'cancelled':
+            return jsonify({'error': 'Job already cancelled'}), 400
+    
+    # Request cancellation
+    if request_job_cancel(job_id):
+        with jobs_lock:
+            jobs_storage[job_id]['status'] = 'cancelling'
+            jobs_storage[job_id]['stage'] = 'Cancellation requested...'
+        
+        logger.info(f"Job {job_id}: Cancellation requested by admin")
+        return jsonify({
+            'success': True,
+            'message': 'Cancellation requested',
+            'job_id': job_id
+        })
+    else:
+        # Job might not be actively processing
+        with jobs_lock:
+            jobs_storage[job_id]['status'] = 'cancelled'
+            jobs_storage[job_id]['stage'] = 'Cancelled by admin'
+        
+        return jsonify({
+            'success': True,
+            'message': 'Job cancelled',
+            'job_id': job_id
+        })
+
+
+@app.route('/admin/jobs/active', methods=['GET'])
+def get_active_jobs():
+    """Admin endpoint to get all active (processing) jobs"""
+    user_role = session.get('user_role')
+    
+    if user_role != 'admin':
+        return jsonify({'error': 'Admin access required'}), 403
+    
+    with jobs_lock:
+        active_jobs = [
+            job for job in jobs_storage.values()
+            if job.get('status') in ['processing', 'queued', 'downloading', 'analyzing', 'cancelling']
+        ]
+    
+    return jsonify({
+        'jobs': active_jobs,
+        'count': len(active_jobs)
+    })
 
 
 @app.route('/delete/<job_id>', methods=['DELETE'])
@@ -3577,12 +3711,16 @@ def karaoke_page(job_id):
             video_files = list(job_dir.glob('*_video.*')) if job_dir.exists() else []
             has_video = len(video_files) > 0
         
+        # Get music info for display
+        music_info = job.get('music_info', {})
+        
         return render_template('karaoke.html', 
                                job_id=job_id, 
                                job_name=job_name,
                                job_owner=job_owner,
                                has_video=has_video,
-                               youtube_video_id=youtube_video_id)
+                               youtube_video_id=youtube_video_id,
+                               music_info=music_info)
         
     except Exception as e:
         logger.error(f"Failed to load karaoke page: {e}")

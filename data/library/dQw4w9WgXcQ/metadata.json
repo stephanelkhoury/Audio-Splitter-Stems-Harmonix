@@ -1,0 +1,28 @@
+{
+  "youtube_id": "dQw4w9WgXcQ",
+  "display_name": "Rick_Astley_-_Never_Gonna_Give_You_Up_Official_Video_4K_Remaster",
+  "title": "Rick Astley - Never Gonna Give You Up (Official Video) (4K Remaster)",
+  "duration": 213,
+  "source_url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+  "music_info": {
+    "tempo": {
+      "bpm": 114.8,
+      "confidence": 0.0
+    },
+    "key": {
+      "key": "C#",
+      "scale": "Major"
+    },
+    "duration": 213.04310657596372
+  },
+  "cached": true,
+  "cached_at": "2026-01-15T16:59:37.560343",
+  "processing_time": 207.83662796020508,
+  "stems": [
+    "drums",
+    "bass",
+    "other",
+    "vocals"
+  ],
+  "usage_count": 0
+}

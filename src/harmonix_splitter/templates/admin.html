@@ -351,6 +351,14 @@
         from { opacity: 0; transform: scale(0.95) translateY(-20px); }
         to { opacity: 1; transform: scale(1) translateY(0); }
     }
+    @keyframes slideIn {
+        from { opacity: 0; transform: translateX(100px); }
+        to { opacity: 1; transform: translateX(0); }
+    }
+    @keyframes slideOut {
+        from { opacity: 1; transform: translateX(0); }
+        to { opacity: 0; transform: translateX(100px); }
+    }
     .modal-header {
         display: flex;
         justify-content: space-between;
@@ -586,6 +594,10 @@
         <div class="admin-nav-item" data-section="users" onclick="showSection('users')">
             <i class="fas fa-users"></i> Users
             <span class="admin-nav-badge">{{ stats.total_users }}</span>
+        </div>
+        <div class="admin-nav-item" data-section="jobs" onclick="showSection('jobs')">
+            <i class="fas fa-tasks"></i> Active Jobs
+            <span class="admin-nav-badge" id="activeJobsCount">0</span>
         </div>
         <div class="admin-nav-item" data-section="contacts" onclick="showSection('contacts')">
             <i class="fas fa-envelope"></i> Messages
@@ -856,6 +868,132 @@
                 </div>
                 {% endif %}
             </div>
+        </div>
+        
+        <!-- Active Jobs Section -->
+        <div id="section-jobs" class="admin-section">
+            <div class="admin-header">
+                <h1><i class="fas fa-tasks"></i> Active Jobs</h1>
+                <div class="header-actions">
+                    <button class="btn btn-secondary" onclick="refreshActiveJobs()">
+                        <i class="fas fa-sync-alt"></i> Refresh
+                    </button>
+                </div>
+            </div>
+            
+            <div class="data-card">
+                <div class="data-card-header">
+                    <h2>Currently Processing Jobs</h2>
+                    <div class="data-card-actions">
+                        <span class="auto-refresh-label"><i class="fas fa-clock"></i> Auto-refresh every 5s</span>
+                    </div>
+                </div>
+                <table id="activeJobsTable">
+                    <thead>
+                        <tr>
+                            <th>Job ID</th>
+                            <th>User</th>
+                            <th>Song</th>
+                            <th>Status</th>
+                            <th>Progress</th>
+                            <th>Started</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="activeJobsBody">
+                        <tr>
+                            <td colspan="7" style="text-align: center; padding: 40px;">
+                                <i class="fas fa-spinner fa-spin" style="font-size: 24px; color: var(--primary);"></i>
+                                <p style="margin-top: 10px; color: var(--text-secondary);">Loading active jobs...</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <style>
+                .auto-refresh-label {
+                    font-size: 12px;
+                    color: var(--text-secondary);
+                    display: flex;
+                    align-items: center;
+                    gap: 6px;
+                }
+                .progress-bar-container {
+                    width: 100px;
+                    height: 8px;
+                    background: rgba(255,255,255,0.1);
+                    border-radius: 4px;
+                    overflow: hidden;
+                }
+                .progress-bar-fill {
+                    height: 100%;
+                    background: linear-gradient(90deg, var(--primary), var(--secondary));
+                    border-radius: 4px;
+                    transition: width 0.3s ease;
+                }
+                .btn-cancel {
+                    background: linear-gradient(135deg, #ef4444, #dc2626);
+                    color: white;
+                    border: none;
+                    padding: 6px 12px;
+                    border-radius: 6px;
+                    cursor: pointer;
+                    font-size: 12px;
+                    display: flex;
+                    align-items: center;
+                    gap: 4px;
+                    transition: all 0.2s ease;
+                }
+                .btn-cancel:hover {
+                    transform: translateY(-1px);
+                    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+                }
+                .btn-cancel:disabled {
+                    opacity: 0.5;
+                    cursor: not-allowed;
+                    transform: none;
+                }
+                .job-status {
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 6px;
+                    padding: 4px 10px;
+                    border-radius: 20px;
+                    font-size: 12px;
+                    font-weight: 500;
+                }
+                .job-status.downloading {
+                    background: rgba(59, 130, 246, 0.2);
+                    color: #60a5fa;
+                }
+                .job-status.processing {
+                    background: rgba(168, 85, 247, 0.2);
+                    color: #c084fc;
+                }
+                .job-status.separating {
+                    background: rgba(234, 179, 8, 0.2);
+                    color: #fbbf24;
+                }
+                .job-status.queued {
+                    background: rgba(107, 114, 128, 0.2);
+                    color: #9ca3af;
+                }
+                .empty-jobs {
+                    text-align: center;
+                    padding: 60px 20px;
+                    color: var(--text-secondary);
+                }
+                .empty-jobs i {
+                    font-size: 48px;
+                    margin-bottom: 15px;
+                    opacity: 0.5;
+                }
+                .empty-jobs h3 {
+                    margin: 0 0 10px 0;
+                    color: var(--text-primary);
+                }
+            </style>
         </div>
         
         <!-- Backup Section -->
@@ -1477,5 +1615,170 @@
     if (tab) {
         showSection(tab);
     }
+    
+    // Active Jobs Management
+    var activeJobsInterval = null;
+    
+    function refreshActiveJobs() {
+        fetch('/admin/jobs/active')
+            .then(response => response.json())
+            .then(data => {
+                var tbody = document.getElementById('activeJobsBody');
+                var badge = document.getElementById('activeJobsCount');
+                
+                if (data.jobs && data.jobs.length > 0) {
+                    badge.textContent = data.jobs.length;
+                    badge.style.display = 'flex';
+                    
+                    var html = '';
+                    data.jobs.forEach(function(job) {
+                        var statusClass = job.status.toLowerCase().replace(/[^a-z]/g, '');
+                        var progress = job.progress || 0;
+                        var startedTime = job.started_at ? new Date(job.started_at * 1000).toLocaleTimeString() : 'N/A';
+                        
+                        html += `
+                            <tr id="job-row-${job.job_id}">
+                                <td><code style="font-size: 11px;">${job.job_id.substring(0, 8)}...</code></td>
+                                <td>
+                                    <div class="user-cell">
+                                        <div class="user-avatar" style="background: linear-gradient(135deg, var(--primary), var(--secondary)); width: 30px; height: 30px; font-size: 12px;">${job.username[0].toUpperCase()}</div>
+                                        <span>${job.username}</span>
+                                    </div>
+                                </td>
+                                <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${job.song_name || 'Processing...'}</td>
+                                <td><span class="job-status ${statusClass}"><i class="fas fa-circle fa-xs"></i> ${job.status}</span></td>
+                                <td>
+                                    <div class="progress-bar-container">
+                                        <div class="progress-bar-fill" style="width: ${progress}%;"></div>
+                                    </div>
+                                    <span style="font-size: 11px; color: var(--text-secondary);">${progress}%</span>
+                                </td>
+                                <td style="font-size: 12px; color: var(--text-secondary);">${startedTime}</td>
+                                <td>
+                                    <button class="btn-cancel" onclick="cancelJob('${job.job_id}')" id="cancel-btn-${job.job_id}">
+                                        <i class="fas fa-stop-circle"></i> Cancel
+                                    </button>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                    tbody.innerHTML = html;
+                } else {
+                    badge.textContent = '0';
+                    badge.style.display = 'none';
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="7">
+                                <div class="empty-jobs">
+                                    <i class="fas fa-check-circle"></i>
+                                    <h3>No Active Jobs</h3>
+                                    <p>All processing jobs have completed. New jobs will appear here when users start processing.</p>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                }
+            })
+            .catch(err => {
+                console.error('Failed to load active jobs:', err);
+            });
+    }
+    
+    function cancelJob(jobId) {
+        var btn = document.getElementById('cancel-btn-' + jobId);
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Cancelling...';
+        }
+        
+        fetch('/admin/cancel/' + jobId, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showNotification('Job cancelled successfully', 'success');
+                // Remove the row with animation
+                var row = document.getElementById('job-row-' + jobId);
+                if (row) {
+                    row.style.opacity = '0.5';
+                    row.style.textDecoration = 'line-through';
+                    setTimeout(function() {
+                        refreshActiveJobs();
+                    }, 1000);
+                }
+            } else {
+                showNotification(data.error || 'Failed to cancel job', 'error');
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-stop-circle"></i> Cancel';
+                }
+            }
+        })
+        .catch(err => {
+            showNotification('Error cancelling job: ' + err.message, 'error');
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-stop-circle"></i> Cancel';
+            }
+        });
+    }
+    
+    function showNotification(message, type) {
+        var notification = document.createElement('div');
+        notification.className = 'admin-notification ' + type;
+        notification.innerHTML = `
+            <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i>
+            <span>${message}</span>
+        `;
+        notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: ${type === 'success' ? 'linear-gradient(135deg, #10b981, #34d399)' : 'linear-gradient(135deg, #ef4444, #dc2626)'};
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            z-index: 10000;
+            animation: slideIn 0.3s ease;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        `;
+        document.body.appendChild(notification);
+        
+        setTimeout(function() {
+            notification.style.animation = 'slideOut 0.3s ease forwards';
+            setTimeout(function() {
+                notification.remove();
+            }, 300);
+        }, 3000);
+    }
+    
+    // Start auto-refresh when jobs section is shown
+    var originalShowSection = showSection;
+    showSection = function(sectionName) {
+        originalShowSection(sectionName);
+        
+        if (sectionName === 'jobs') {
+            refreshActiveJobs();
+            // Start auto-refresh every 5 seconds
+            if (activeJobsInterval) clearInterval(activeJobsInterval);
+            activeJobsInterval = setInterval(refreshActiveJobs, 5000);
+        } else {
+            // Stop auto-refresh when leaving jobs section
+            if (activeJobsInterval) {
+                clearInterval(activeJobsInterval);
+                activeJobsInterval = null;
+            }
+        }
+    };
+    
+    // Initial load of active jobs count
+    refreshActiveJobs();
 </script>
 {% endblock %}

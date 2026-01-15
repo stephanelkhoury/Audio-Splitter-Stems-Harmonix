@@ -47,6 +47,16 @@
     {
       "type": "login",
       "description": "Chrome on macOS",
+      "timestamp": "2026-01-15T16:51:53.428971",
+      "metadata": {
+        "browser": "Chrome",
+        "os": "macOS",
+        "ip": "127.0.0.1"
+      }
+    },
+    {
+      "type": "login",
+      "description": "Chrome on macOS",
       "timestamp": "2026-01-15T14:58:38.808327",
       "metadata": {
         "browser": "Chrome",

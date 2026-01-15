@@ -1,0 +1,28 @@
+{
+  "youtube_id": "7PCkvCPvDXk",
+  "display_name": "Meghan_Trainor_-_All_About_That_Bass_Official_Video",
+  "title": "Meghan Trainor - All About That Bass (Official Video)",
+  "duration": 190,
+  "source_url": "https://www.youtube.com/watch?v=7PCkvCPvDXk",
+  "music_info": {
+    "tempo": {
+      "bpm": 89.1,
+      "confidence": 0.0
+    },
+    "key": {
+      "key": "A",
+      "scale": "Major"
+    },
+    "duration": 189.9044217687075
+  },
+  "cached": true,
+  "cached_at": "2026-01-15T17:14:34.411804",
+  "processing_time": 188.61904001235962,
+  "stems": [
+    "drums",
+    "bass",
+    "other",
+    "vocals"
+  ],
+  "usage_count": 0
+}
