@@ -1,28 +1,24 @@
 {
   "youtube_id": "L0MK7qz13bU",
+  "created_at": "2026-01-15T17:11:00.743640",
+  "usage_count": 0,
+  "source_url": "https://www.youtube.com/watch?v=L0MK7qz13bU",
+  "quality": "balanced",
+  "mode": "stems",
   "display_name": "FROZEN__Let_It_Go_Sing-along__Official_Disney_UK",
   "title": "FROZEN | Let It Go Sing-along | Official Disney UK",
   "duration": 243,
-  "source_url": "https://www.youtube.com/watch?v=L0MK7qz13bU",
+  "is_youtube": true,
+  "youtube_video_id": "L0MK7qz13bU",
+  "has_video": true,
+  "processed_at": "2026-01-15T17:11:00.743640",
   "music_info": {
-    "tempo": {
-      "bpm": 136.0,
-      "confidence": 1.0
-    },
-    "key": {
-      "key": "G#",
-      "scale": "Major"
-    },
+    "tempo": {"bpm": 136.0, "confidence": 1.0},
+    "key": {"key": "G#", "scale": "Major"},
     "duration": 242.62532879818593
   },
+  "stems": ["original", "drums", "bass", "other", "vocals"],
+  "clean_title": "FROZEN__Let_It_Go_Sing-along__Official_Disney_UK",
   "cached": true,
-  "cached_at": "2026-01-15T17:11:00.743640",
-  "processing_time": 247.9592001438141,
-  "stems": [
-    "drums",
-    "bass",
-    "other",
-    "vocals"
-  ],
-  "usage_count": 0
+  "processing_time": 247.96
 }

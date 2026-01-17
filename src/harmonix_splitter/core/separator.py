@@ -572,6 +572,7 @@ class HarmonixSeparator:
             if output_format == 'mp3':
                 # Save as MP3 (compressed)
                 mp3_path = output_dir / f"{clean_name}_{name}.mp3"
+                logger.info(f"Saving stem to: {mp3_path}")
                 
                 import tempfile
                 import subprocess
@@ -580,25 +581,27 @@ class HarmonixSeparator:
                     tmp_wav_path = tmp.name
                 
                 # Save temporary WAV at full quality
+                logger.debug(f"Writing temp WAV: {tmp_wav_path}")
                 sf.write(
                     tmp_wav_path,
                     stem.audio.T,
                     stem.sample_rate,
                     subtype=subtype
                 )
+                logger.debug(f"Temp WAV written, converting to MP3...")
                 
-                # Convert to MP3 using ffmpeg
+                # Convert to MP3 using ffmpeg with timeout
                 try:
                     subprocess.run([
-                        'ffmpeg', '-y', '-i', tmp_wav_path,
+                        'ffmpeg', '-y', '-loglevel', 'quiet', '-i', tmp_wav_path,
                         '-codec:a', 'libmp3lame',
                         '-b:a', f'{mp3_bitrate}k',
                         '-q:a', '0',
                         str(mp3_path)
-                    ], check=True, capture_output=True)
+                    ], check=True, capture_output=True, timeout=300, stdin=subprocess.DEVNULL)
                     
                     Path(tmp_wav_path).unlink()
-                    logger.debug(f"Saved MP3 ({mp3_bitrate}kbps): {mp3_path}")
+                    logger.info(f"Saved MP3 ({mp3_bitrate}kbps): {mp3_path}")
                 except (subprocess.CalledProcessError, FileNotFoundError) as e:
                     logger.warning(f"FFmpeg not available, saving as WAV: {e}")
                     wav_path = output_dir / f"{clean_name}_{name}.wav"

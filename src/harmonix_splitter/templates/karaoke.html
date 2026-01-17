@@ -1015,6 +1015,10 @@
         const hasVideo = {{ 'true' if has_video else 'false' }};
         const youtubeVideoId = '{{ youtube_video_id or "" }}';
         const useYouTube = youtubeVideoId.length > 0;
+        const isLibraryItem = {{ 'true' if is_library_item else 'false' }};
+        
+        // Build base URL for stems - library items use /library/, regular jobs use /download/
+        const stemBaseUrl = isLibraryItem ? `/library/${jobId}` : `/download/${jobId}`;
         
         let lyrics = null;
         let currentLineIndex = -1;
@@ -1075,7 +1079,8 @@
                 },
                 events: {
                     'onReady': onYTPlayerReady,
-                    'onStateChange': onYTPlayerStateChange
+                    'onStateChange': onYTPlayerStateChange,
+                    'onError': onYTPlayerError
                 }
             });
         }
@@ -1084,6 +1089,25 @@
             ytReady = true;
             ytPlayer.mute(); // Ensure muted
             console.log('YouTube player ready');
+        }
+        
+        function onYTPlayerError(event) {
+            // YouTube video unavailable for embedding - hide video and continue with audio only
+            console.warn('YouTube video unavailable:', event.data);
+            const videoBackground = document.getElementById('videoBackground');
+            if (videoBackground) {
+                videoBackground.style.display = 'none';
+            }
+            // Update UI to indicate audio-only mode
+            const syncText = document.getElementById('syncText');
+            if (syncText) {
+                syncText.textContent = 'Video unavailable - Audio only mode';
+            }
+            // Disable video toggle
+            const videoToggleBtn = document.getElementById('videoToggleBtn');
+            if (videoToggleBtn) {
+                videoToggleBtn.style.display = 'none';
+            }
         }
         
         function onYTPlayerStateChange(event) {
@@ -1242,7 +1266,7 @@
         
         function initPlayer() {
             // Load instrumental track (vocals removed)
-            audio.src = `/download/${jobId}/instrumental`;
+            audio.src = `${stemBaseUrl}/instrumental`;
             audio.volume = 0.8;
             
             // Audio events

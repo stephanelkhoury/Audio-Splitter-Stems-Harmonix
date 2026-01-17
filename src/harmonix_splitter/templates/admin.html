@@ -607,6 +607,9 @@
         </div>
         
         <div class="admin-nav-title">System</div>
+        <div class="admin-nav-item" data-section="batch" onclick="showSection('batch')">
+            <i class="fas fa-list-ul"></i> Batch Import
+        </div>
         <div class="admin-nav-item" data-section="backup" onclick="showSection('backup')">
             <i class="fas fa-download"></i> Backup & Export
         </div>
@@ -997,6 +1000,157 @@
         </div>
         
         <!-- Backup Section -->
+        <!-- Batch Import Section -->
+        <div id="section-batch" class="admin-section">
+            <div class="admin-header">
+                <h1><i class="fas fa-list-ul"></i> Batch Import</h1>
+            </div>
+            
+            <div class="data-card">
+                <div class="data-card-header">
+                    <h2><i class="fab fa-youtube" style="color: #ff0000;"></i> Import YouTube Playlist</h2>
+                </div>
+                <div style="padding: 30px;">
+                    <p style="color: var(--text-muted); margin-bottom: 20px;">
+                        Paste a YouTube playlist or radio mix URL to import multiple songs at once. 
+                        Each song will be downloaded, processed for stems (karaoke mode), analyzed, and have lyrics extracted automatically.
+                    </p>
+                    
+                    <!-- URL Input -->
+                    <div style="margin-bottom: 20px;">
+                        <label style="display: block; margin-bottom: 8px; font-weight: 500;">Playlist URL</label>
+                        <div style="display: flex; gap: 10px;">
+                            <input type="text" id="playlistUrl" placeholder="https://www.youtube.com/watch?v=...&list=..." 
+                                   style="flex: 1; padding: 12px 16px; background: var(--bg-darker); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 14px;">
+                            <button onclick="parsePlaylist()" class="btn btn-primary" id="parseBtn">
+                                <i class="fas fa-search"></i> Parse Playlist
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Options -->
+                    <div style="display: flex; flex-wrap: wrap; gap: 20px; margin-bottom: 20px; align-items: center;">
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                            <input type="checkbox" id="skipExisting" checked style="width: 18px; height: 18px; accent-color: var(--primary);">
+                            <span>Skip songs already in library</span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                            <input type="checkbox" id="extractLyrics" checked style="width: 18px; height: 18px; accent-color: var(--primary);">
+                            <span>Auto-extract lyrics</span>
+                        </label>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <label for="lyricsLanguage"><i class="fas fa-language"></i> Language:</label>
+                            <select id="lyricsLanguage" style="padding: 8px 12px; background: var(--bg-darker); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-size: 14px;">
+                                <option value="auto">🌐 Auto-detect</option>
+                                <option value="en">🇬🇧 English</option>
+                                <option value="ar">🇱🇧 Arabic</option>
+                                <option value="fr">🇫🇷 French</option>
+                                <option value="es">🇪🇸 Spanish</option>
+                                <option value="de">🇩🇪 German</option>
+                                <option value="it">🇮🇹 Italian</option>
+                                <option value="pt">🇵🇹 Portuguese</option>
+                                <option value="ru">🇷🇺 Russian</option>
+                                <option value="ja">🇯🇵 Japanese</option>
+                                <option value="ko">🇰🇷 Korean</option>
+                                <option value="zh">🇨🇳 Chinese</option>
+                                <option value="hi">🇮🇳 Hindi</option>
+                                <option value="tr">🇹🇷 Turkish</option>
+                                <option value="el">🇬🇷 Greek</option>
+                            </select>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <label for="lyricsModel"><i class="fas fa-microchip"></i> Model:</label>
+                            <select id="lyricsModel" style="padding: 8px 12px; background: var(--bg-darker); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-size: 14px;">
+                                <option value="tiny">⚡ Tiny (fastest)</option>
+                                <option value="base">🚀 Base (fast)</option>
+                                <option value="small">⚖️ Small (balanced)</option>
+                                <option value="medium" selected>🎯 Medium (recommended)</option>
+                                <option value="large">🏆 Large (best quality)</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <!-- Parse Results -->
+                    <div id="parseResults" style="display: none; margin-top: 20px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                            <h3 style="margin: 0;"><i class="fas fa-music"></i> Found <span id="videoCount">0</span> videos</h3>
+                            <div>
+                                <span id="libraryCount" style="color: var(--text-muted); margin-right: 15px;">0 already in library</span>
+                                <button onclick="startBatchImport()" class="btn btn-success" id="startImportBtn">
+                                    <i class="fas fa-play"></i> Start Import
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div id="videoList" style="max-height: 300px; overflow-y: auto; border: 1px solid var(--border); border-radius: 8px; background: var(--bg-darker);">
+                            <!-- Videos will be listed here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Progress Section -->
+            <div id="batchProgress" class="data-card" style="display: none;">
+                <div class="data-card-header">
+                    <h2><i class="fas fa-cog fa-spin"></i> Import Progress</h2>
+                    <button onclick="stopBatchImport()" class="btn btn-danger btn-sm" id="stopImportBtn">
+                        <i class="fas fa-stop"></i> Stop Import
+                    </button>
+                </div>
+                <div style="padding: 30px;">
+                    <!-- Progress Bar -->
+                    <div style="margin-bottom: 20px;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                            <span id="progressText">Processing...</span>
+                            <span id="progressPercent">0%</span>
+                        </div>
+                        <div style="height: 8px; background: var(--bg-darker); border-radius: 4px; overflow: hidden;">
+                            <div id="progressBar" style="height: 100%; background: linear-gradient(90deg, var(--primary), var(--secondary)); width: 0%; transition: width 0.3s;"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- Stats -->
+                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 20px;">
+                        <div style="background: var(--bg-darker); padding: 15px; border-radius: 8px; text-align: center;">
+                            <div style="font-size: 24px; font-weight: 700; color: var(--primary);" id="statProcessed">0</div>
+                            <div style="font-size: 12px; color: var(--text-muted);">Processed</div>
+                        </div>
+                        <div style="background: var(--bg-darker); padding: 15px; border-radius: 8px; text-align: center;">
+                            <div style="font-size: 24px; font-weight: 700; color: #f59e0b;" id="statSkipped">0</div>
+                            <div style="font-size: 12px; color: var(--text-muted);">Skipped</div>
+                        </div>
+                        <div style="background: var(--bg-darker); padding: 15px; border-radius: 8px; text-align: center;">
+                            <div style="font-size: 24px; font-weight: 700; color: var(--danger);" id="statFailed">0</div>
+                            <div style="font-size: 12px; color: var(--text-muted);">Failed</div>
+                        </div>
+                        <div style="background: var(--bg-darker); padding: 15px; border-radius: 8px; text-align: center;">
+                            <div style="font-size: 24px; font-weight: 700;" id="statTotal">0</div>
+                            <div style="font-size: 12px; color: var(--text-muted);">Total</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Current Song -->
+                    <div id="currentSongInfo" style="background: var(--bg-darker); padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <i class="fas fa-spinner fa-spin" style="color: var(--primary);"></i>
+                            <div>
+                                <div id="currentSongTitle" style="font-weight: 500;">Waiting...</div>
+                                <div id="currentSongStep" style="font-size: 13px; color: var(--text-muted);">Initializing...</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Log -->
+                    <div>
+                        <h4 style="margin: 0 0 10px;"><i class="fas fa-terminal"></i> Activity Log</h4>
+                        <div id="batchLog" style="height: 200px; overflow-y: auto; background: #0d0d0d; border-radius: 8px; padding: 15px; font-family: monospace; font-size: 12px; line-height: 1.6;">
+                            <div style="color: var(--text-muted);">Waiting for batch import to start...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
         <div id="section-backup" class="admin-section">
             <div class="admin-header">
                 <h1><i class="fas fa-download"></i> Backup & Export</h1>
@@ -1776,9 +1930,217 @@
                 activeJobsInterval = null;
             }
         }
+        
+        // Start batch status polling when in batch section
+        if (sectionName === 'batch') {
+            pollBatchStatus();
+        }
     };
     
     // Initial load of active jobs count
     refreshActiveJobs();
+    
+    // ==================== BATCH IMPORT FUNCTIONS ====================
+    
+    var batchVideos = [];
+    var batchStatusInterval = null;
+    
+    function parsePlaylist() {
+        var url = document.getElementById('playlistUrl').value.trim();
+        if (!url) {
+            showNotification('Please enter a playlist URL', 'error');
+            return;
+        }
+        
+        var btn = document.getElementById('parseBtn');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Parsing...';
+        
+        fetch('/admin/batch/parse-playlist', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({url: url})
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-search"></i> Parse Playlist';
+            
+            if (data.error) {
+                showNotification(data.error, 'error');
+                return;
+            }
+            
+            batchVideos = data.videos;
+            document.getElementById('videoCount').textContent = data.total;
+            document.getElementById('libraryCount').textContent = data.in_library + ' already in library';
+            
+            // Build video list
+            var listHtml = '';
+            data.videos.forEach(function(video, idx) {
+                var inLibrary = video.in_library;
+                var duration = video.duration ? Math.floor(video.duration / 60) + ':' + String(video.duration % 60).padStart(2, '0') : '--:--';
+                listHtml += '<div style="display: flex; align-items: center; padding: 12px 15px; border-bottom: 1px solid var(--border); ' + (inLibrary ? 'opacity: 0.5;' : '') + '">';
+                listHtml += '<span style="width: 30px; color: var(--text-muted);">' + (idx + 1) + '</span>';
+                listHtml += '<span style="flex: 1;">' + video.title + '</span>';
+                listHtml += '<span style="width: 60px; color: var(--text-muted); text-align: center;">' + duration + '</span>';
+                if (inLibrary) {
+                    listHtml += '<span style="width: 100px; text-align: center;"><span style="background: rgba(16, 185, 129, 0.2); color: #10b981; padding: 4px 10px; border-radius: 4px; font-size: 11px;"><i class="fas fa-check"></i> In Library</span></span>';
+                } else {
+                    listHtml += '<span style="width: 100px; text-align: center;"><span style="background: rgba(124, 58, 237, 0.2); color: var(--primary-light); padding: 4px 10px; border-radius: 4px; font-size: 11px;">New</span></span>';
+                }
+                listHtml += '</div>';
+            });
+            
+            document.getElementById('videoList').innerHTML = listHtml;
+            document.getElementById('parseResults').style.display = 'block';
+            
+            showNotification('Found ' + data.total + ' videos (' + data.to_process + ' to process)', 'success');
+        })
+        .catch(function(err) {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-search"></i> Parse Playlist';
+            showNotification('Failed to parse playlist: ' + err, 'error');
+        });
+    }
+    
+    function startBatchImport() {
+        if (batchVideos.length === 0) {
+            showNotification('No videos to import', 'error');
+            return;
+        }
+        
+        var skipExisting = document.getElementById('skipExisting').checked;
+        var extractLyrics = document.getElementById('extractLyrics').checked;
+        var lyricsLanguage = document.getElementById('lyricsLanguage').value;
+        var lyricsModel = document.getElementById('lyricsModel').value;
+        
+        var btn = document.getElementById('startImportBtn');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Starting...';
+        
+        fetch('/admin/batch/start', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                videos: batchVideos,
+                skip_existing: skipExisting,
+                extract_lyrics: extractLyrics,
+                lyrics_language: lyricsLanguage,
+                lyrics_model: lyricsModel,
+                playlist_url: document.getElementById('playlistUrl').value
+            })
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-play"></i> Start Import';
+            
+            if (data.error) {
+                showNotification(data.error, 'error');
+                return;
+            }
+            
+            // Show progress section
+            document.getElementById('batchProgress').style.display = 'block';
+            document.getElementById('parseResults').style.display = 'none';
+            
+            // Start polling for status
+            pollBatchStatus();
+            
+            showNotification('Batch import started!', 'success');
+        })
+        .catch(function(err) {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-play"></i> Start Import';
+            showNotification('Failed to start batch import: ' + err, 'error');
+        });
+    }
+    
+    function stopBatchImport() {
+        if (!confirm('Are you sure you want to stop the batch import?')) return;
+        
+        fetch('/admin/batch/stop', {
+            method: 'POST'
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (data.error) {
+                showNotification(data.error, 'error');
+                return;
+            }
+            showNotification('Batch import will stop after current song', 'warning');
+        });
+    }
+    
+    function pollBatchStatus() {
+        if (batchStatusInterval) clearInterval(batchStatusInterval);
+        
+        function updateStatus() {
+            fetch('/admin/batch/status')
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                if (data.error) return;
+                
+                // Update stats
+                document.getElementById('statProcessed').textContent = data.processed;
+                document.getElementById('statSkipped').textContent = data.skipped;
+                document.getElementById('statFailed').textContent = data.failed;
+                document.getElementById('statTotal').textContent = data.total;
+                
+                // Update progress
+                var total = data.total || 1;
+                var done = data.processed + data.skipped + data.failed;
+                var percent = Math.round((done / total) * 100);
+                document.getElementById('progressBar').style.width = percent + '%';
+                document.getElementById('progressPercent').textContent = percent + '%';
+                document.getElementById('progressText').textContent = done + ' of ' + total + ' completed';
+                
+                // Update current song
+                if (data.current_video) {
+                    document.getElementById('currentSongTitle').textContent = data.current_video.title || 'Processing...';
+                    document.getElementById('currentSongStep').textContent = data.current_step || '';
+                } else if (!data.active && data.completed_at) {
+                    document.getElementById('currentSongTitle').textContent = 'Import Complete!';
+                    document.getElementById('currentSongStep').textContent = 'All songs have been processed.';
+                }
+                
+                // Update log
+                if (data.log && data.log.length > 0) {
+                    var logHtml = '';
+                    data.log.forEach(function(entry) {
+                        var color = 'var(--text-muted)';
+                        if (entry.level === 'success') color = '#10b981';
+                        else if (entry.level === 'error') color = 'var(--danger)';
+                        else if (entry.level === 'warning') color = '#f59e0b';
+                        logHtml += '<div style="color: ' + color + ';">[' + entry.time + '] ' + entry.message + '</div>';
+                    });
+                    document.getElementById('batchLog').innerHTML = logHtml;
+                    // Auto-scroll to bottom
+                    var logDiv = document.getElementById('batchLog');
+                    logDiv.scrollTop = logDiv.scrollHeight;
+                }
+                
+                // Show/hide stop button
+                document.getElementById('stopImportBtn').style.display = data.active ? 'inline-flex' : 'none';
+                
+                // If not active, show progress section but allow new imports
+                if (!data.active) {
+                    if (batchStatusInterval) {
+                        clearInterval(batchStatusInterval);
+                        batchStatusInterval = null;
+                    }
+                }
+                
+                // Show progress section if there's data
+                if (data.total > 0) {
+                    document.getElementById('batchProgress').style.display = 'block';
+                }
+            });
+        }
+        
+        updateStatus();
+        batchStatusInterval = setInterval(updateStatus, 2000);
+    }
 </script>
 {% endblock %}

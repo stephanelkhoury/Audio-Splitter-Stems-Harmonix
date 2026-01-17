@@ -4125,6 +4125,12 @@
         var currentReportJobId = null;
 
         function openReportModal(jobId) {
+            // Guard against undefined jobId
+            if (!jobId) {
+                console.warn('openReportModal called with undefined jobId');
+                return;
+            }
+            
             currentReportJobId = jobId;
             var modal = document.getElementById('reportModal');
             var body = document.getElementById('reportModalBody');
@@ -4349,12 +4355,18 @@
 
         // ==================== PLAYER ====================
         function loadPlayer(jobId) {
+            // Guard against undefined jobId
+            if (!jobId) {
+                console.warn('loadPlayer called with undefined jobId');
+                return;
+            }
+            
             console.log('loadPlayer called with jobId:', jobId);
-            console.log('allTracks:', allTracks);
             
             var track = null;
             for (var i = 0; i < allTracks.length; i++) {
-                if (allTracks[i].job_id === jobId) {
+                // Match by job_id or id
+                if (allTracks[i].job_id === jobId || allTracks[i].id === jobId) {
                     track = allTracks[i];
                     break;
                 }
@@ -4551,7 +4563,7 @@
                             interact: true
                         });
 
-                        ws.load('/download/' + jobId + '/' + stemName);
+                        ws.load(currentTrack.stems[stemName] || '/download/' + jobId + '/' + stemName);
 
                         ws.on('ready', function() {
                             loadedCount++;
@@ -4812,7 +4824,7 @@
             document.querySelectorAll('.convert-midi-btn').forEach(function(btn) {
                 btn.addEventListener('click', function() {
                     var stemName = btn.getAttribute('data-stem');
-                    var stemUrl = '/download/' + jobId + '/' + stemName;
+                    var stemUrl = currentTrack.stems[stemName] || '/download/' + jobId + '/' + stemName;
                     convertStemToMidi(stemUrl, stemName);
                 });
             });
@@ -4987,7 +4999,7 @@
                 
                 // Initialize players for each stem
                 var initPromises = stemKeys.map(function(stemName) {
-                    var audioUrl = '/download/' + jobId + '/' + stemName;
+                    var audioUrl = currentTrack.stems[stemName] || '/download/' + jobId + '/' + stemName;
                     return initToneForStem(stemName, audioUrl);
                 });
                 
@@ -6116,7 +6128,7 @@
         function downloadStem(jobId, stemName) {
             var track = null;
             for (var i = 0; i < allTracks.length; i++) {
-                if (allTracks[i].job_id === jobId) {
+                if (allTracks[i].job_id === jobId || allTracks[i].id === jobId) {
                     track = allTracks[i];
                     break;
                 }
@@ -6124,7 +6136,8 @@
             var displayName = track ? (track.display_name || track.filename.replace(/\.[^/.]+$/, '')) : 'track';
             
             var a = document.createElement('a');
-            a.href = '/download/' + jobId + '/' + stemName;
+            // Use stem URL from track if available (for library items)
+            a.href = (track && track.stems && track.stems[stemName]) || '/download/' + jobId + '/' + stemName;
             a.download = displayName + '_' + stemName + '.mp3';
             document.body.appendChild(a);
             a.click();
@@ -6135,7 +6148,7 @@
         function downloadAllStems(jobId) {
             var track = null;
             for (var i = 0; i < allTracks.length; i++) {
-                if (allTracks[i].job_id === jobId) {
+                if (allTracks[i].job_id === jobId || allTracks[i].id === jobId) {
                     track = allTracks[i];
                     break;
                 }

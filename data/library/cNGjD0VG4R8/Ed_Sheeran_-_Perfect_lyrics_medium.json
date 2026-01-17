@@ -1,0 +1,979 @@
+{
+  "text": "I found a love for me Darling just dive right in Follow my lead I found a girl beautiful and sweet When you said you looked a mess I whispered underneath my breath You heard it, darling, you look perfect tonight Well, I found a woman Stronger than anyone I know Fighting against all odds I know we'll be alright It's time Darling just hold my hand Be my girl, I'll be your man I see my future in your eyes Maybe I'm dancing in the dark With you between my arms Barefoot on the grass Listening to our favorite song When I saw you in that dress Looking so beautiful I don't deserve this Darling, you look perfect tonight Baby, I'm dancing in the dark With you between my arms",
+  "lines": [
+    {
+      "text": "I found a love for me",
+      "start": 1.779999999999999,
+      "end": 9.0,
+      "confidence": 0.07476809620857239,
+      "words": [
+        {
+          "word": " I",
+          "start": 1.779999999999999,
+          "end": 3.06,
+          "confidence": 0.12172399461269379
+        },
+        {
+          "word": " found",
+          "start": 3.06,
+          "end": 3.58,
+          "confidence": 0.7430201768875122
+        },
+        {
+          "word": " a",
+          "start": 3.58,
+          "end": 4.0,
+          "confidence": 0.8105379939079285
+        },
+        {
+          "word": " love",
+          "start": 4.0,
+          "end": 4.36,
+          "confidence": 0.5256727337837219
+        },
+        {
+          "word": " for",
+          "start": 4.36,
+          "end": 7.14,
+          "confidence": 0.7754396796226501
+        },
+        {
+          "word": " me",
+          "start": 7.14,
+          "end": 9.0,
+          "confidence": 0.9861224293708801
+        }
+      ]
+    },
+    {
+      "text": "Darling just dive right in",
+      "start": 10.06,
+      "end": 13.0,
+      "confidence": 0.07476809620857239,
+      "words": [
+        {
+          "word": " Darling",
+          "start": 10.06,
+          "end": 11.02,
+          "confidence": 0.4942925274372101
+        },
+        {
+          "word": " just",
+          "start": 11.02,
+          "end": 11.52,
+          "confidence": 0.7075777649879456
+        },
+        {
+          "word": " dive",
+          "start": 11.52,
+          "end": 12.08,
+          "confidence": 0.9745116233825684
+        },
+        {
+          "word": " right",
+          "start": 12.08,
+          "end": 12.56,
+          "confidence": 0.9981239438056946
+        },
+        {
+          "word": " in",
+          "start": 12.56,
+          "end": 13.200000000000001,
+          "confidence": 0.9937839508056641
+        }
+      ]
+    },
+    {
+      "text": "Follow my lead",
+      "start": 14.08,
+      "end": 16.56,
+      "confidence": 0.07476809620857239,
+      "words": [
+        {
+          "word": " Follow",
+          "start": 14.08,
+          "end": 14.72,
+          "confidence": 0.43080729246139526
+        },
+        {
+          "word": " my",
+          "start": 14.72,
+          "end": 15.32,
+          "confidence": 0.9940967559814453
+        },
+        {
+          "word": " lead",
+          "start": 15.32,
+          "end": 16.56,
+          "confidence": 0.9902837872505188
+        }
+      ]
+    },
+    {
+      "text": "I found a girl beautiful and sweet",
+      "start": 16.56,
+      "end": 24.3,
+      "confidence": 0.07476809620857239,
+      "words": [
+        {
+          "word": " I",
+          "start": 16.56,
+          "end": 18.36,
+          "confidence": 0.8529524207115173
+        },
+        {
+          "word": " found",
+          "start": 18.36,
+          "end": 18.78,
+          "confidence": 0.9843473434448242
+        },
+        {
+          "word": " a",
+          "start": 18.78,
+          "end": 19.32,
+          "confidence": 0.9831123948097229
+        },
+        {
+          "word": " girl",
+          "start": 19.32,
+          "end": 20.78,
+          "confidence": 0.9897604584693909
+        },
+        {
+          "word": " beautiful",
+          "start": 20.78,
+          "end": 22.96,
+          "confidence": 0.25849491357803345
+        },
+        {
+          "word": " and",
+          "start": 22.96,
+          "end": 23.74,
+          "confidence": 0.9925746917724609
+        },
+        {
+          "word": " sweet",
+          "start": 23.74,
+          "end": 24.3,
+          "confidence": 0.9983671307563782
+        }
+      ]
+    },
+    {
+      "text": "When you said you looked a mess I whispered underneath my breath",
+      "start": 80.6,
+      "end": 87.88,
+      "confidence": 0.11931665986776352,
+      "words": [
+        {
+          "word": " When",
+          "start": 80.6,
+          "end": 80.6,
+          "confidence": 0.12741993367671967
+        },
+        {
+          "word": " you",
+          "start": 80.6,
+          "end": 81.68,
+          "confidence": 0.9871644973754883
+        },
+        {
+          "word": " said",
+          "start": 81.68,
+          "end": 82.1,
+          "confidence": 0.9932647943496704
+        },
+        {
+          "word": " you",
+          "start": 82.1,
+          "end": 82.58,
+          "confidence": 0.9570512771606445
+        },
+        {
+          "word": " looked",
+          "start": 82.58,
+          "end": 83.22,
+          "confidence": 0.9755643010139465
+        },
+        {
+          "word": " a",
+          "start": 83.22,
+          "end": 83.62,
+          "confidence": 0.977674126625061
+        },
+        {
+          "word": " mess",
+          "start": 83.62,
+          "end": 84.08,
+          "confidence": 0.9947338104248047
+        },
+        {
+          "word": " I",
+          "start": 84.08,
+          "end": 84.72,
+          "confidence": 0.6296228766441345
+        },
+        {
+          "word": " whispered",
+          "start": 84.72,
+          "end": 85.86,
+          "confidence": 0.998188853263855
+        },
+        {
+          "word": " underneath",
+          "start": 85.86,
+          "end": 86.76,
+          "confidence": 0.9769697189331055
+        },
+        {
+          "word": " my",
+          "start": 86.76,
+          "end": 87.38,
+          "confidence": 0.9855857491493225
+        },
+        {
+          "word": " breath",
+          "start": 87.38,
+          "end": 87.88,
+          "confidence": 0.9905774593353271
+        }
+      ]
+    },
+    {
+      "text": "You heard it, darling, you look perfect tonight",
+      "start": 87.88,
+      "end": 95.54,
+      "confidence": 0.11931665986776352,
+      "words": [
+        {
+          "word": " You",
+          "start": 87.88,
+          "end": 89.02,
+          "confidence": 0.13806386291980743
+        },
+        {
+          "word": " heard",
+          "start": 89.02,
+          "end": 90.08,
+          "confidence": 0.9827073216438293
+        },
+        {
+          "word": " it,",
+          "start": 90.08,
+          "end": 90.7,
+          "confidence": 0.9882972836494446
+        },
+        {
+          "word": " darling,",
+          "start": 90.8,
+          "end": 91.02,
+          "confidence": 0.7624319791793823
+        },
+        {
+          "word": " you",
+          "start": 91.1,
+          "end": 92.0,
+          "confidence": 0.9461939334869385
+        },
+        {
+          "word": " look",
+          "start": 92.0,
+          "end": 92.72,
+          "confidence": 0.7131125926971436
+        },
+        {
+          "word": " perfect",
+          "start": 92.72,
+          "end": 94.46,
+          "confidence": 0.9716485142707825
+        },
+        {
+          "word": " tonight",
+          "start": 94.46,
+          "end": 95.54,
+          "confidence": 0.9918742775917053
+        }
+      ]
+    },
+    {
+      "text": "Well, I found a woman Stronger than anyone I know",
+      "start": 100.26,
+      "end": 107.92,
+      "confidence": 0.11931665986776352,
+      "words": [
+        {
+          "word": " Well,",
+          "start": 100.26,
+          "end": 101.5,
+          "confidence": 0.5733398795127869
+        },
+        {
+          "word": " I",
+          "start": 101.5,
+          "end": 101.74,
+          "confidence": 0.9983093738555908
+        },
+        {
+          "word": " found",
+          "start": 101.74,
+          "end": 102.12,
+          "confidence": 0.9108706116676331
+        },
+        {
+          "word": " a",
+          "start": 102.12,
+          "end": 102.54,
+          "confidence": 0.9975584745407104
+        },
+        {
+          "word": " woman",
+          "start": 102.54,
+          "end": 104.22,
+          "confidence": 0.9980356097221375
+        },
+        {
+          "word": " Stronger",
+          "start": 104.22,
+          "end": 105.92,
+          "confidence": 0.8909991681575775
+        },
+        {
+          "word": " than",
+          "start": 105.92,
+          "end": 106.42,
+          "confidence": 0.9984960556030273
+        },
+        {
+          "word": " anyone",
+          "start": 106.42,
+          "end": 107.1,
+          "confidence": 0.9967857599258423
+        },
+        {
+          "word": " I",
+          "start": 107.1,
+          "end": 107.5,
+          "confidence": 0.9866986274719238
+        },
+        {
+          "word": " know",
+          "start": 107.5,
+          "end": 107.92,
+          "confidence": 0.9958512783050537
+        }
+      ]
+    },
+    {
+      "text": "Fighting against all odds",
+      "start": 135.34,
+      "end": 139.02,
+      "confidence": 0.2847204804420471,
+      "words": [
+        {
+          "word": " Fighting",
+          "start": 135.34,
+          "end": 136.18,
+          "confidence": 0.3835831582546234
+        },
+        {
+          "word": " against",
+          "start": 136.18,
+          "end": 137.64,
+          "confidence": 0.9501817226409912
+        },
+        {
+          "word": " all",
+          "start": 137.64,
+          "end": 138.62,
+          "confidence": 0.9376546144485474
+        },
+        {
+          "word": " odds",
+          "start": 138.62,
+          "end": 139.02,
+          "confidence": 0.99483323097229
+        }
+      ]
+    },
+    {
+      "text": "I know we'll be alright",
+      "start": 139.02,
+      "end": 142.84,
+      "confidence": 0.2847204804420471,
+      "words": [
+        {
+          "word": " I",
+          "start": 139.02,
+          "end": 139.74,
+          "confidence": 0.6903210282325745
+        },
+        {
+          "word": " know",
+          "start": 139.74,
+          "end": 140.18,
+          "confidence": 0.9966514706611633
+        },
+        {
+          "word": " we'll",
+          "start": 140.18,
+          "end": 140.48,
+          "confidence": 0.7779577076435089
+        },
+        {
+          "word": " be",
+          "start": 140.48,
+          "end": 141.52,
+          "confidence": 0.9970976114273071
+        },
+        {
+          "word": " alright",
+          "start": 141.52,
+          "end": 142.84,
+          "confidence": 0.9121347665786743
+        }
+      ]
+    },
+    {
+      "text": "It's time",
+      "start": 142.84,
+      "end": 146.5,
+      "confidence": 0.2847204804420471,
+      "words": [
+        {
+          "word": " It's",
+          "start": 142.84,
+          "end": 144.24,
+          "confidence": 0.7125760912895203
+        },
+        {
+          "word": " time",
+          "start": 144.24,
+          "end": 146.5,
+          "confidence": 0.9923416376113892
+        }
+      ]
+    },
+    {
+      "text": "Darling just hold my hand",
+      "start": 146.5,
+      "end": 150.32,
+      "confidence": 0.2847204804420471,
+      "words": [
+        {
+          "word": " Darling",
+          "start": 146.5,
+          "end": 147.46,
+          "confidence": 0.29695072770118713
+        },
+        {
+          "word": " just",
+          "start": 147.46,
+          "end": 147.92,
+          "confidence": 0.6563029885292053
+        },
+        {
+          "word": " hold",
+          "start": 147.92,
+          "end": 148.78,
+          "confidence": 0.9956400394439697
+        },
+        {
+          "word": " my",
+          "start": 148.78,
+          "end": 149.84,
+          "confidence": 0.9974875450134277
+        },
+        {
+          "word": " hand",
+          "start": 149.84,
+          "end": 150.32,
+          "confidence": 0.9974144697189331
+        }
+      ]
+    },
+    {
+      "text": "Be my girl, I'll be your man",
+      "start": 150.32,
+      "end": 154.02,
+      "confidence": 0.2847204804420471,
+      "words": [
+        {
+          "word": " Be",
+          "start": 150.32,
+          "end": 150.68,
+          "confidence": 0.8949423432350159
+        },
+        {
+          "word": " my",
+          "start": 150.68,
+          "end": 151.08,
+          "confidence": 0.9978832602500916
+        },
+        {
+          "word": " girl,",
+          "start": 151.08,
+          "end": 151.42,
+          "confidence": 0.9831079244613647
+        },
+        {
+          "word": " I'll",
+          "start": 151.42,
+          "end": 152.0,
+          "confidence": 0.9483101069927216
+        },
+        {
+          "word": " be",
+          "start": 152.0,
+          "end": 152.74,
+          "confidence": 0.9972389936447144
+        },
+        {
+          "word": " your",
+          "start": 152.74,
+          "end": 153.6,
+          "confidence": 0.997568666934967
+        },
+        {
+          "word": " man",
+          "start": 153.6,
+          "end": 154.02,
+          "confidence": 0.993367612361908
+        }
+      ]
+    },
+    {
+      "text": "I see my future in your eyes",
+      "start": 154.02,
+      "end": 160.18,
+      "confidence": 0.2847204804420471,
+      "words": [
+        {
+          "word": " I",
+          "start": 154.02,
+          "end": 154.82,
+          "confidence": 0.9823562502861023
+        },
+        {
+          "word": " see",
+          "start": 154.82,
+          "end": 155.14,
+          "confidence": 0.8742825984954834
+        },
+        {
+          "word": " my",
+          "start": 155.14,
+          "end": 155.46,
+          "confidence": 0.9424771070480347
+        },
+        {
+          "word": " future",
+          "start": 155.46,
+          "end": 157.06,
+          "confidence": 0.9989765882492065
+        },
+        {
+          "word": " in",
+          "start": 157.06,
+          "end": 158.3,
+          "confidence": 0.9909244179725647
+        },
+        {
+          "word": " your",
+          "start": 158.3,
+          "end": 158.84,
+          "confidence": 0.959064781665802
+        },
+        {
+          "word": " eyes",
+          "start": 158.84,
+          "end": 160.18,
+          "confidence": 0.9039671421051025
+        }
+      ]
+    },
+    {
+      "text": "Maybe I'm dancing in the dark",
+      "start": 160.18,
+      "end": 167.78,
+      "confidence": 0.4515966475009918,
+      "words": [
+        {
+          "word": " Maybe",
+          "start": 160.18,
+          "end": 162.16,
+          "confidence": 0.08835801482200623
+        },
+        {
+          "word": " I'm",
+          "start": 162.16,
+          "end": 164.86,
+          "confidence": 0.8074298799037933
+        },
+        {
+          "word": " dancing",
+          "start": 164.86,
+          "end": 165.76,
+          "confidence": 0.5468807816505432
+        },
+        {
+          "word": " in",
+          "start": 165.76,
+          "end": 166.58,
+          "confidence": 0.9938358664512634
+        },
+        {
+          "word": " the",
+          "start": 166.58,
+          "end": 166.98,
+          "confidence": 0.9981385469436646
+        },
+        {
+          "word": " dark",
+          "start": 166.98,
+          "end": 167.78,
+          "confidence": 0.9975185394287109
+        }
+      ]
+    },
+    {
+      "text": "With you between my arms",
+      "start": 167.78,
+      "end": 172.08,
+      "confidence": 0.4515966475009918,
+      "words": [
+        {
+          "word": " With",
+          "start": 167.78,
+          "end": 168.68,
+          "confidence": 0.46292412281036377
+        },
+        {
+          "word": " you",
+          "start": 168.68,
+          "end": 169.38,
+          "confidence": 0.9294994473457336
+        },
+        {
+          "word": " between",
+          "start": 169.38,
+          "end": 170.22,
+          "confidence": 0.9853519797325134
+        },
+        {
+          "word": " my",
+          "start": 170.22,
+          "end": 170.86,
+          "confidence": 0.9979745745658875
+        },
+        {
+          "word": " arms",
+          "start": 170.86,
+          "end": 172.08,
+          "confidence": 0.9990573525428772
+        }
+      ]
+    },
+    {
+      "text": "Barefoot on the grass",
+      "start": 172.08,
+      "end": 175.36,
+      "confidence": 0.4515966475009918,
+      "words": [
+        {
+          "word": " Barefoot",
+          "start": 172.08,
+          "end": 173.54,
+          "confidence": 0.974400132894516
+        },
+        {
+          "word": " on",
+          "start": 173.54,
+          "end": 174.12,
+          "confidence": 0.9959568381309509
+        },
+        {
+          "word": " the",
+          "start": 174.12,
+          "end": 174.5,
+          "confidence": 0.9984838366508484
+        },
+        {
+          "word": " grass",
+          "start": 174.5,
+          "end": 175.36,
+          "confidence": 0.821550726890564
+        }
+      ]
+    },
+    {
+      "text": "Listening to our favorite song",
+      "start": 176.18,
+      "end": 179.2,
+      "confidence": 0.4515966475009918,
+      "words": [
+        {
+          "word": " Listening",
+          "start": 176.18,
+          "end": 176.94,
+          "confidence": 0.9007526636123657
+        },
+        {
+          "word": " to",
+          "start": 176.94,
+          "end": 177.84,
+          "confidence": 0.9983331561088562
+        },
+        {
+          "word": " our",
+          "start": 177.84,
+          "end": 178.14,
+          "confidence": 0.9516620635986328
+        },
+        {
+          "word": " favorite",
+          "start": 178.14,
+          "end": 178.7,
+          "confidence": 0.8066572546958923
+        },
+        {
+          "word": " song",
+          "start": 178.7,
+          "end": 179.2,
+          "confidence": 0.9377210736274719
+        }
+      ]
+    },
+    {
+      "text": "When I saw you in that dress",
+      "start": 179.2,
+      "end": 182.74,
+      "confidence": 0.4515966475009918,
+      "words": [
+        {
+          "word": " When",
+          "start": 179.2,
+          "end": 179.72,
+          "confidence": 0.9484884142875671
+        },
+        {
+          "word": " I",
+          "start": 179.72,
+          "end": 180.1,
+          "confidence": 0.9890099167823792
+        },
+        {
+          "word": " saw",
+          "start": 180.1,
+          "end": 180.58,
+          "confidence": 0.994462788105011
+        },
+        {
+          "word": " you",
+          "start": 180.58,
+          "end": 181.16,
+          "confidence": 0.9972673654556274
+        },
+        {
+          "word": " in",
+          "start": 181.16,
+          "end": 181.7,
+          "confidence": 0.9882975220680237
+        },
+        {
+          "word": " that",
+          "start": 181.7,
+          "end": 182.14,
+          "confidence": 0.9398818612098694
+        },
+        {
+          "word": " dress",
+          "start": 182.14,
+          "end": 182.74,
+          "confidence": 0.9970396161079407
+        }
+      ]
+    },
+    {
+      "text": "Looking so beautiful",
+      "start": 182.74,
+      "end": 185.32,
+      "confidence": 0.4515966475009918,
+      "words": [
+        {
+          "word": " Looking",
+          "start": 182.74,
+          "end": 183.36,
+          "confidence": 0.4484054148197174
+        },
+        {
+          "word": " so",
+          "start": 183.36,
+          "end": 184.0,
+          "confidence": 0.9982182383537292
+        },
+        {
+          "word": " beautiful",
+          "start": 184.0,
+          "end": 185.32,
+          "confidence": 0.9986257553100586
+        }
+      ]
+    },
+    {
+      "text": "I don't deserve this",
+      "start": 185.32,
+      "end": 188.98,
+      "confidence": 0.4515966475009918,
+      "words": [
+        {
+          "word": " I",
+          "start": 185.32,
+          "end": 185.76,
+          "confidence": 0.6761844158172607
+        },
+        {
+          "word": " don't",
+          "start": 185.76,
+          "end": 187.06,
+          "confidence": 0.9972863495349884
+        },
+        {
+          "word": " deserve",
+          "start": 187.06,
+          "end": 188.58,
+          "confidence": 0.997092604637146
+        },
+        {
+          "word": " this",
+          "start": 188.58,
+          "end": 188.98,
+          "confidence": 0.9955720901489258
+        }
+      ]
+    },
+    {
+      "text": "Darling, you look perfect tonight",
+      "start": 188.98,
+      "end": 193.98,
+      "confidence": 0.13317467272281647,
+      "words": [
+        {
+          "word": " Darling,",
+          "start": 188.98,
+          "end": 189.6,
+          "confidence": 0.1825983226299286
+        },
+        {
+          "word": " you",
+          "start": 190.44,
+          "end": 190.54,
+          "confidence": 0.9790586829185486
+        },
+        {
+          "word": " look",
+          "start": 190.54,
+          "end": 191.42,
+          "confidence": 0.9562041759490967
+        },
+        {
+          "word": " perfect",
+          "start": 191.42,
+          "end": 192.98,
+          "confidence": 0.9702878594398499
+        },
+        {
+          "word": " tonight",
+          "start": 192.98,
+          "end": 193.98,
+          "confidence": 0.9775019288063049
+        }
+      ]
+    },
+    {
+      "text": "Baby, I'm dancing in the dark",
+      "start": 207.73999999999998,
+      "end": 213.26,
+      "confidence": 0.13317467272281647,
+      "words": [
+        {
+          "word": " Baby,",
+          "start": 207.73999999999998,
+          "end": 209.14,
+          "confidence": 0.33373695611953735
+        },
+        {
+          "word": " I'm",
+          "start": 209.14,
+          "end": 210.54,
+          "confidence": 0.9770230352878571
+        },
+        {
+          "word": " dancing",
+          "start": 210.54,
+          "end": 211.28,
+          "confidence": 0.9076851010322571
+        },
+        {
+          "word": " in",
+          "start": 211.28,
+          "end": 212.06,
+          "confidence": 0.9973830580711365
+        },
+        {
+          "word": " the",
+          "start": 212.06,
+          "end": 212.48,
+          "confidence": 0.9992160797119141
+        },
+        {
+          "word": " dark",
+          "start": 212.48,
+          "end": 213.26,
+          "confidence": 0.9981802701950073
+        }
+      ]
+    },
+    {
+      "text": "With you between my arms",
+      "start": 213.26,
+      "end": 217.06,
+      "confidence": 0.13317467272281647,
+      "words": [
+        {
+          "word": " With",
+          "start": 213.26,
+          "end": 214.18,
+          "confidence": 0.6590778231620789
+        },
+        {
+          "word": " you",
+          "start": 214.18,
+          "end": 214.82,
+          "confidence": 0.9980486631393433
+        },
+        {
+          "word": " between",
+          "start": 214.82,
+          "end": 215.84,
+          "confidence": 0.9846360683441162
+        },
+        {
+          "word": " my",
+          "start": 215.84,
+          "end": 216.32,
+          "confidence": 0.9740963578224182
+        },
+        {
+          "word": " arms",
+          "start": 216.32,
+          "end": 217.06,
+          "confidence": 0.9995138645172119
+        }
+      ]
+    }
+  ],
+  "language": "en",
+  "language_confidence": 0.9252319037914276,
+  "duration": 217.06,
+  "model": "medium"
+}

@@ -1,0 +1,36 @@
+{
+  "youtube_id": "cNGjD0VG4R8",
+  "created_at": "2026-01-15T18:15:49.693415",
+  "usage_count": 2,
+  "source_url": "https://youtu.be/cNGjD0VG4R8?si=_mZVwHt1CL4_m-5_",
+  "quality": "balanced",
+  "mode": "karaoke",
+  "display_name": "Ed_Sheeran_-_Perfect",
+  "title": "Ed Sheeran - Perfect",
+  "duration": 264,
+  "is_youtube": true,
+  "youtube_video_id": "cNGjD0VG4R8",
+  "has_video": true,
+  "processed_at": "2026-01-15T18:15:56.268328",
+  "music_info": {
+    "tempo": {
+      "bpm": 95.7,
+      "confidence": 0.23
+    },
+    "key": {
+      "key": "G#",
+      "scale": "Major",
+      "confidence": 0.98,
+      "camelot": "4B"
+    },
+    "time_signature": "4/4",
+    "duration": 263.69743764172335
+  },
+  "stems": [
+    "vocals",
+    "instrumental",
+    "original"
+  ],
+  "processing_time": 235.26695609092712,
+  "last_usage_update": "2026-01-15T18:59:27.088997"
+}

@@ -4,10 +4,12 @@ Flask-based web interface for audio stem separation
 """
 
 import os
+import sys
 import uuid
 import json
 import time
 import secrets
+import shutil
 from pathlib import Path
 from datetime import datetime, timedelta
 from flask import Flask, render_template, request, jsonify, send_file, send_from_directory, url_for, session, redirect, flash
@@ -47,6 +49,21 @@ from harmonix_splitter.config.settings import Settings
 
 # Import shared library module
 from harmonix_splitter import library as shared_library
+
+
+def get_ytdlp_path():
+    """Get the path to yt-dlp, checking venv first"""
+    # Check if yt-dlp is in the same venv as this Python
+    venv_ytdlp = Path(sys.executable).parent / 'yt-dlp'
+    if venv_ytdlp.exists():
+        return str(venv_ytdlp)
+    # Fall back to system PATH
+    system_ytdlp = shutil.which('yt-dlp')
+    if system_ytdlp:
+        return system_ytdlp
+    # Last resort - just return the name and hope it's in PATH
+    return 'yt-dlp'
+
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -1028,6 +1045,458 @@ def admin_cache_status():
         'last_refresh': config.get('last_refresh'),
         'cached_count': len(cached_songs),
         'cached_songs': cached_songs
+    })
+
+
+# ==================== BATCH IMPORT ====================
+
+# Batch import state
+batch_import_state = {
+    'active': False,
+    'playlist_url': None,
+    'videos': [],
+    'current_index': 0,
+    'processed': 0,
+    'skipped': 0,
+    'failed': 0,
+    'total': 0,
+    'current_video': None,
+    'current_step': None,
+    'log': [],
+    'started_at': None,
+    'completed_at': None
+}
+batch_import_lock = threading.Lock()
+
+
+def add_batch_log(message, level='info'):
+    """Add a log entry to batch import state"""
+    with batch_import_lock:
+        timestamp = datetime.now().strftime('%H:%M:%S')
+        batch_import_state['log'].append({
+            'time': timestamp,
+            'message': message,
+            'level': level
+        })
+        # Keep only last 100 log entries
+        if len(batch_import_state['log']) > 100:
+            batch_import_state['log'] = batch_import_state['log'][-100:]
+
+
+@app.route('/admin/batch/parse-playlist', methods=['POST'])
+def admin_parse_playlist():
+    """Parse a YouTube playlist URL and return list of videos"""
+    if 'user_id' not in session or session.get('user_role') != 'admin':
+        return jsonify({'error': 'Unauthorized'}), 403
+    
+    try:
+        data = request.get_json()
+        playlist_url = data.get('url', '').strip()
+        
+        if not playlist_url:
+            return jsonify({'error': 'No URL provided'}), 400
+        
+        # Use yt-dlp to extract playlist info
+        import subprocess
+        
+        # Extract playlist info (flat extraction - just metadata, no download)
+        cmd = [
+            get_ytdlp_path(),
+            '--flat-playlist',
+            '--dump-json',
+            '--no-warnings',
+            playlist_url
+        ]
+        
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=60)
+        
+        if result.returncode != 0:
+            return jsonify({'error': f'Failed to parse playlist: {result.stderr}'}), 400
+        
+        videos = []
+        for line in result.stdout.strip().split('\n'):
+            if line:
+                try:
+                    video_info = json.loads(line)
+                    video_id = video_info.get('id')
+                    title = video_info.get('title', 'Unknown')
+                    duration = video_info.get('duration', 0)
+                    
+                    # Check if already in library
+                    library_path = shared_library.get_library_path(video_id)
+                    in_library = library_path.exists()
+                    
+                    videos.append({
+                        'id': video_id,
+                        'title': title,
+                        'duration': duration,
+                        'url': f'https://www.youtube.com/watch?v={video_id}',
+                        'in_library': in_library
+                    })
+                except json.JSONDecodeError:
+                    continue
+        
+        if not videos:
+            return jsonify({'error': 'No videos found in playlist'}), 400
+        
+        # Count how many are already in library
+        in_library_count = sum(1 for v in videos if v['in_library'])
+        
+        return jsonify({
+            'success': True,
+            'videos': videos,
+            'total': len(videos),
+            'in_library': in_library_count,
+            'to_process': len(videos) - in_library_count
+        })
+        
+    except subprocess.TimeoutExpired:
+        return jsonify({'error': 'Playlist parsing timed out'}), 408
+    except Exception as e:
+        logger.error(f"Failed to parse playlist: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/admin/batch/start', methods=['POST'])
+def admin_batch_start():
+    """Start batch import of a playlist"""
+    if 'user_id' not in session or session.get('user_role') != 'admin':
+        return jsonify({'error': 'Unauthorized'}), 403
+    
+    global batch_import_state
+    
+    with batch_import_lock:
+        if batch_import_state['active']:
+            return jsonify({'error': 'Batch import already in progress'}), 400
+    
+    try:
+        data = request.get_json()
+        videos = data.get('videos', [])
+        skip_existing = data.get('skip_existing', True)
+        extract_lyrics = data.get('extract_lyrics', True)
+        lyrics_language = data.get('lyrics_language', 'auto')
+        lyrics_model = data.get('lyrics_model', 'medium')
+        
+        if not videos:
+            return jsonify({'error': 'No videos to process'}), 400
+        
+        # Filter out existing if requested
+        if skip_existing:
+            videos = [v for v in videos if not v.get('in_library', False)]
+        
+        if not videos:
+            return jsonify({'error': 'All videos already in library'}), 400
+        
+        # Initialize batch state
+        with batch_import_lock:
+            batch_import_state = {
+                'active': True,
+                'playlist_url': data.get('playlist_url'),
+                'videos': videos,
+                'current_index': 0,
+                'processed': 0,
+                'skipped': 0,
+                'failed': 0,
+                'total': len(videos),
+                'current_video': None,
+                'current_step': 'Starting...',
+                'log': [],
+                'started_at': datetime.now().isoformat(),
+                'completed_at': None,
+                'extract_lyrics': extract_lyrics,
+                'lyrics_language': lyrics_language,
+                'lyrics_model': lyrics_model
+            }
+        
+        # Start processing thread
+        thread = threading.Thread(target=process_batch_import, daemon=True)
+        thread.start()
+        
+        add_batch_log(f'🚀 Batch import started with {len(videos)} videos', 'success')
+        
+        return jsonify({
+            'success': True,
+            'message': f'Started processing {len(videos)} videos',
+            'total': len(videos)
+        })
+        
+    except Exception as e:
+        logger.error(f"Failed to start batch import: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+def process_batch_import():
+    """Background thread to process batch import"""
+    global batch_import_state
+    
+    try:
+        videos = batch_import_state['videos']
+        extract_lyrics = batch_import_state.get('extract_lyrics', True)
+        lyrics_language = batch_import_state.get('lyrics_language', 'auto')
+        lyrics_model = batch_import_state.get('lyrics_model', 'medium')
+        
+        for i, video in enumerate(videos):
+            with batch_import_lock:
+                if not batch_import_state['active']:
+                    add_batch_log('⏹️ Batch import cancelled', 'warning')
+                    break
+                batch_import_state['current_index'] = i
+                batch_import_state['current_video'] = video
+            
+            video_id = video['id']
+            title = video['title']
+            url = video['url']
+            
+            add_batch_log(f'📥 [{i+1}/{len(videos)}] Processing: {title}')
+            
+            try:
+                # Check if already in library (double-check)
+                library_path = shared_library.get_library_path(video_id)
+                if library_path.exists():
+                    add_batch_log(f'⏭️ Skipped (already in library): {title}', 'info')
+                    with batch_import_lock:
+                        batch_import_state['skipped'] += 1
+                    continue
+                
+                # Step 1: Download
+                with batch_import_lock:
+                    batch_import_state['current_step'] = 'Downloading...'
+                add_batch_log(f'⬇️ Downloading: {title}')
+                
+                # Create temp job for processing
+                job_id = str(uuid.uuid4())
+                temp_dir = Path(OUTPUT_DIR) / 'temp' / job_id
+                temp_dir.mkdir(parents=True, exist_ok=True)
+                
+                # Download audio with yt-dlp
+                import subprocess
+                audio_file = temp_dir / f"{video_id}.mp3"
+                
+                cookies_file = Path(__file__).parent.parent.parent / 'cookies.txt'
+                cmd = [
+                    get_ytdlp_path(),
+                    '-x', '--audio-format', 'mp3',
+                    '--audio-quality', '0',
+                    '-o', str(audio_file),
+                    '--no-playlist',
+                ]
+                if cookies_file.exists():
+                    cmd.extend(['--cookies', str(cookies_file)])
+                cmd.append(url)
+                
+                result = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
+                
+                if result.returncode != 0 or not audio_file.exists():
+                    # Try alternate filename patterns
+                    for f in temp_dir.glob('*.mp3'):
+                        audio_file = f
+                        break
+                
+                if not audio_file.exists():
+                    raise Exception(f"Download failed: {result.stderr}")
+                
+                # Step 2: Create library entry
+                with batch_import_lock:
+                    batch_import_state['current_step'] = 'Processing stems...'
+                add_batch_log(f'🎵 Processing stems: {title}')
+                
+                # Create library directory
+                library_path.mkdir(parents=True, exist_ok=True)
+                
+                # Use clean display name for file naming (matching single download behavior)
+                clean_title = title.replace('/', '-').replace('\\', '-').replace(':', '-').replace('"', "'")
+                clean_title = ''.join(c for c in clean_title if c.isalnum() or c in ' -_').strip()
+                if not clean_title:
+                    clean_title = video_id
+                
+                # Copy original to library with proper naming
+                import shutil
+                original_dest = library_path / f"{clean_title}_original.mp3"
+                shutil.copy2(audio_file, original_dest)
+                
+                # Step 3: Process stems (karaoke mode gives instrumental + vocals)
+                orchestrator = create_orchestrator(auto_route=True)
+                
+                # Note: orchestrator creates a subfolder with job_id, so pass parent directory
+                result = orchestrator.process(
+                    audio_path=str(audio_file),
+                    job_id=video_id,
+                    quality='balanced',
+                    mode='karaoke',  # Gets instrumental and vocals
+                    output_dir=str(library_path.parent),  # Parent dir since orchestrator creates job_id subfolder
+                    custom_name=clean_title
+                )
+                
+                if result.status != "completed":
+                    raise Exception(f"Processing failed: {result.error or 'Unknown error'}")
+                
+                # Find all generated stems
+                stems_list = ['original']
+                for stem_name in result.stems.keys():
+                    stems_list.append(stem_name)
+                
+                # Step 4: Analyze music info
+                with batch_import_lock:
+                    batch_import_state['current_step'] = 'Analyzing audio...'
+                add_batch_log(f'🔍 Analyzing: {title}')
+                
+                music_info = {}
+                try:
+                    analyzer = MusicAnalyzer()
+                    music_info = analyzer.analyze(str(original_dest))
+                except Exception as ae:
+                    logger.warning(f"Music analysis failed for {title}: {ae}")
+                
+                # Get duration
+                duration = video.get('duration', 0)
+                if not duration and librosa:
+                    try:
+                        y, sr = librosa.load(str(original_dest), duration=10)
+                        duration = librosa.get_duration(y=y, sr=sr)
+                    except:
+                        pass
+                
+                # Step 5: Save metadata - find stems with clean_title naming
+                stems_list = ['original']  # Original is always there
+                for stem_name in result.stems.keys():
+                    # Verify the stem file exists
+                    stem_file = library_path / f"{clean_title}_{stem_name}.mp3"
+                    if not stem_file.exists():
+                        stem_file = library_path / f"{clean_title}_{stem_name}.wav"
+                    if stem_file.exists():
+                        stems_list.append(stem_name)
+                
+                metadata = {
+                    'youtube_id': video_id,
+                    'created_at': datetime.now().isoformat(),
+                    'usage_count': 0,
+                    'source_url': url,
+                    'quality': 'balanced',
+                    'mode': 'karaoke',
+                    'display_name': clean_title,
+                    'title': title,
+                    'duration': duration,
+                    'is_youtube': True,
+                    'youtube_video_id': video_id,
+                    'has_video': True,
+                    'processed_at': datetime.now().isoformat(),
+                    'music_info': music_info,
+                    'stems': stems_list,
+                    'clean_title': clean_title,  # Store for file lookups
+                    'batch_import': True
+                }
+                
+                metadata_file = library_path / 'metadata.json'
+                with open(metadata_file, 'w', encoding='utf-8') as f:
+                    json.dump(metadata, f, indent=2, ensure_ascii=False)
+                
+                # Step 6: Extract lyrics if requested
+                if extract_lyrics:
+                    with batch_import_lock:
+                        batch_import_state['current_step'] = f'Extracting lyrics ({lyrics_language})...'
+                    lang_display = lyrics_language if lyrics_language != 'auto' else 'auto-detect'
+                    model_display = lyrics_model
+                    add_batch_log(f'🎤 Extracting lyrics ({lang_display}, {model_display}): {title}')
+                    
+                    try:
+                        extractor = LyricsExtractor(model_size=lyrics_model)
+                        lyrics_result = extractor.extract(original_dest, language=lyrics_language)
+                        
+                        # Save lyrics
+                        lyrics_file = library_path / f"{video_id}_lyrics_{lyrics_model}.json"
+                        with open(lyrics_file, 'w', encoding='utf-8') as f:
+                            json.dump(lyrics_result.to_dict(), f, ensure_ascii=False, indent=2)
+                        
+                        # Save LRC format
+                        lrc_file = library_path / f"{video_id}_lyrics.lrc"
+                        with open(lrc_file, 'w', encoding='utf-8') as f:
+                            f.write(lyrics_result.to_lrc())
+                        
+                        add_batch_log(f'✅ Lyrics extracted: {title}', 'success')
+                    except Exception as le:
+                        add_batch_log(f'⚠️ Lyrics extraction failed: {str(le)}', 'warning')
+                
+                # Cleanup temp dir
+                shutil.rmtree(temp_dir, ignore_errors=True)
+                
+                add_batch_log(f'✅ Completed: {title}', 'success')
+                
+                with batch_import_lock:
+                    batch_import_state['processed'] += 1
+                
+            except Exception as e:
+                add_batch_log(f'❌ Failed: {title} - {str(e)}', 'error')
+                logger.error(f"Batch import failed for {video_id}: {e}")
+                with batch_import_lock:
+                    batch_import_state['failed'] += 1
+                
+                # Cleanup on failure
+                try:
+                    temp_dir = Path(OUTPUT_DIR) / 'temp' / job_id
+                    if temp_dir.exists():
+                        import shutil
+                        shutil.rmtree(temp_dir, ignore_errors=True)
+                except:
+                    pass
+        
+        # Mark as completed
+        with batch_import_lock:
+            batch_import_state['active'] = False
+            batch_import_state['completed_at'] = datetime.now().isoformat()
+            batch_import_state['current_step'] = 'Completed'
+            batch_import_state['current_video'] = None
+        
+        processed = batch_import_state['processed']
+        skipped = batch_import_state['skipped']
+        failed = batch_import_state['failed']
+        add_batch_log(f'🎉 Batch import complete! Processed: {processed}, Skipped: {skipped}, Failed: {failed}', 'success')
+        
+    except Exception as e:
+        logger.error(f"Batch import thread error: {e}")
+        add_batch_log(f'💥 Batch import error: {str(e)}', 'error')
+        with batch_import_lock:
+            batch_import_state['active'] = False
+            batch_import_state['completed_at'] = datetime.now().isoformat()
+
+
+@app.route('/admin/batch/status', methods=['GET'])
+def admin_batch_status():
+    """Get current batch import status"""
+    if 'user_id' not in session or session.get('user_role') != 'admin':
+        return jsonify({'error': 'Unauthorized'}), 403
+    
+    with batch_import_lock:
+        return jsonify({
+            'active': batch_import_state['active'],
+            'current_index': batch_import_state['current_index'],
+            'processed': batch_import_state['processed'],
+            'skipped': batch_import_state['skipped'],
+            'failed': batch_import_state['failed'],
+            'total': batch_import_state['total'],
+            'current_video': batch_import_state['current_video'],
+            'current_step': batch_import_state['current_step'],
+            'log': batch_import_state['log'][-20:],  # Last 20 log entries
+            'started_at': batch_import_state['started_at'],
+            'completed_at': batch_import_state['completed_at']
+        })
+
+
+@app.route('/admin/batch/stop', methods=['POST'])
+def admin_batch_stop():
+    """Stop the current batch import"""
+    if 'user_id' not in session or session.get('user_role') != 'admin':
+        return jsonify({'error': 'Unauthorized'}), 403
+    
+    with batch_import_lock:
+        if not batch_import_state['active']:
+            return jsonify({'error': 'No batch import in progress'}), 400
+        batch_import_state['active'] = False
+    
+    add_batch_log('⏹️ Batch import stop requested', 'warning')
+    
+    return jsonify({
+        'success': True,
+        'message': 'Batch import will stop after current song completes'
     })
 
 
@@ -2869,6 +3338,7 @@ def list_jobs():
                         stem_urls = {stem: f"/library/{youtube_id}/{stem}" for stem in stems.keys()}
                         
                         jobs_storage[job_id] = {
+                            'job_id': job_id,
                             'id': job_id,
                             'status': 'completed',
                             'user': username,
@@ -2881,6 +3351,7 @@ def list_jobs():
                             'stems': stem_urls,
                             'youtube_video_id': youtube_id,
                             'is_library_link': True,
+                            'has_video': True,
                             'music_info': library_metadata.get('music_info', {}),
                             'source_url': library_metadata.get('source_url', f'https://youtube.com/watch?v={youtube_id}')
                         }
@@ -3392,15 +3863,6 @@ def extract_lyrics(job_id):
         current_user = session.get('user_id')
         is_admin = session.get('user_role') == 'admin'
         
-        with jobs_lock:
-            job = jobs_storage.get(job_id)
-            if not job:
-                return jsonify({'error': 'Job not found'}), 404
-            
-            job_owner = job.get('user')  # Job stores username as 'user'
-            if not is_admin and job_owner != current_user:
-                return jsonify({'error': 'You do not have permission to extract lyrics for this job'}), 403
-        
         # Get parameters
         data = request.get_json() or {}
         language = data.get('language', 'auto')
@@ -3410,12 +3872,37 @@ def extract_lyrics(job_id):
         if model_size not in ['tiny', 'base', 'small', 'medium', 'large']:
             model_size = 'medium'
         
-        # Use user-specific output directory
-        user_output_dir = get_user_output_dir(job_owner)
-        job_dir = user_output_dir / job_id
+        # Check if this is a library item (YouTube ID)
+        library_path = shared_library.get_library_path(job_id)
+        if library_path.exists():
+            # It's a library item - check user has access
+            user_links = shared_library.get_user_library_links(current_user)
+            if not is_admin and job_id not in user_links:
+                return jsonify({'error': 'Permission denied'}), 403
+            
+            job_dir = library_path
+        else:
+            # Regular job - check ownership
+            with jobs_lock:
+                job = jobs_storage.get(job_id)
+                if not job:
+                    return jsonify({'error': 'Job not found'}), 404
+                
+                job_owner = job.get('user')  # Job stores username as 'user'
+                if not is_admin and job_owner != current_user:
+                    return jsonify({'error': 'You do not have permission to extract lyrics for this job'}), 403
+            
+            # Use user-specific output directory
+            user_output_dir = get_user_output_dir(job_owner)
+            job_dir = user_output_dir / job_id
+            
+            if not job_dir.exists():
+                logger.error(f"Job directory not found: {job_dir}")
+                return jsonify({'error': 'Job directory not found'}), 404
         
-        if not job_dir.exists():
-            return jsonify({'error': 'Job directory not found'}), 404
+        # Log what files exist in the directory
+        all_files = list(job_dir.glob("*"))
+        logger.info(f"Files in job directory: {[f.name for f in all_files]}")
         
         # First try to find original audio file (from URL downloads)
         audio_files = list(job_dir.glob("*_original.mp3"))
@@ -3428,7 +3915,14 @@ def extract_lyrics(job_id):
         if not audio_files:
             audio_files = list(job_dir.glob("*_vocals.wav"))
         
+        # Fallback to any mp3 or wav file
         if not audio_files:
+            audio_files = list(job_dir.glob("*.mp3"))
+        if not audio_files:
+            audio_files = list(job_dir.glob("*.wav"))
+        
+        if not audio_files:
+            logger.error(f"No audio files found in {job_dir}")
             return jsonify({'error': 'No audio file found for lyrics extraction'}), 404
         
         audio_file = audio_files[0]
@@ -3485,6 +3979,26 @@ def get_lyrics(job_id):
         # Get current user and check ownership
         current_user = session.get('user_id')
         is_admin = session.get('user_role') == 'admin'
+        
+        # Check if this is a library item (YouTube ID)
+        library_path = shared_library.get_library_path(job_id)
+        if library_path.exists():
+            # It's a library item - check user has access
+            user_links = shared_library.get_user_library_links(current_user)
+            if not is_admin and job_id not in user_links:
+                return jsonify({'error': 'Permission denied', 'available': False}), 403
+            
+            # Look for lyrics in library
+            lyrics_files = list(library_path.glob("*_lyrics_*.json"))
+            if not lyrics_files:
+                lyrics_files = list(library_path.glob("*_lyrics.json"))
+            if not lyrics_files:
+                return jsonify({'available': False, 'message': 'Lyrics not extracted yet'})
+            
+            with open(lyrics_files[0], 'r', encoding='utf-8') as f:
+                lyrics = json.load(f)
+            lyrics['available'] = True
+            return jsonify(lyrics)
         
         # Scan for the user's jobs if not already in storage
         if job_id not in jobs_storage:
@@ -3674,45 +4188,72 @@ def karaoke_page(job_id):
         current_user = session.get('user_id')
         is_admin = session.get('user_role') == 'admin'
         
-        # Scan for the user's jobs if not already in storage
-        if job_id not in jobs_storage:
-            scan_existing_outputs(current_user)
+        # Check if this is a library item (YouTube ID)
+        library_path = shared_library.get_library_path(job_id)
+        is_library_item = library_path.exists()
         
-        with jobs_lock:
-            job = jobs_storage.get(job_id)
-            if not job:
-                # Try one more scan of all outputs for admin
-                if is_admin:
-                    scan_existing_outputs()
-                    job = jobs_storage.get(job_id)
-                
-                if not job:
-                    return "Job not found", 404
-            
-            job_owner = job.get('user')
-            if not is_admin and job_owner != current_user:
+        if is_library_item:
+            # It's a library item - check user has access
+            user_links = shared_library.get_user_library_links(current_user)
+            if not is_admin and job_id not in user_links:
                 return "Permission denied", 403
-        
-        # Get job details for display - try multiple fields for name
-        job_name = job.get('original_name') or job.get('display_name') or job.get('filename', 'Unknown Track')
-        # Clean up the name (remove extension if present)
-        if job_name.endswith(('.mp3', '.wav', '.flac', '.m4a', '.ogg')):
-            job_name = job_name.rsplit('.', 1)[0]
-        
-        # Get YouTube video ID if available (for embedded video background)
-        youtube_video_id = job.get('youtube_video_id')
-        
-        # Check if video is available - either YouTube embed or local file
-        has_video = youtube_video_id is not None
-        if not has_video:
-            # Fallback: check if local video file exists on disk (legacy support)
-            user_output_dir = get_user_output_dir(job_owner)
-            job_dir = user_output_dir / job_id
-            video_files = list(job_dir.glob('*_video.*')) if job_dir.exists() else []
-            has_video = len(video_files) > 0
-        
-        # Get music info for display
-        music_info = job.get('music_info', {})
+            
+            # Load metadata from library
+            metadata_file = library_path / "metadata.json"
+            if metadata_file.exists():
+                with open(metadata_file, 'r', encoding='utf-8') as f:
+                    metadata = json.load(f)
+                    job_name = metadata.get('title', 'Unknown Track')
+                    youtube_video_id = metadata.get('youtube_video_id') or job_id
+                    music_info = metadata.get('music_info', {})
+            else:
+                job_name = 'Unknown Track'
+                youtube_video_id = job_id
+                music_info = {}
+            
+            has_video = True  # Library items from YouTube always have video
+            job_owner = current_user
+        else:
+            # Regular job - check ownership
+            # Scan for the user's jobs if not already in storage
+            if job_id not in jobs_storage:
+                scan_existing_outputs(current_user)
+            
+            with jobs_lock:
+                job = jobs_storage.get(job_id)
+                if not job:
+                    # Try one more scan of all outputs for admin
+                    if is_admin:
+                        scan_existing_outputs()
+                        job = jobs_storage.get(job_id)
+                    
+                    if not job:
+                        return "Job not found", 404
+                
+                job_owner = job.get('user')
+                if not is_admin and job_owner != current_user:
+                    return "Permission denied", 403
+            
+            # Get job details for display - try multiple fields for name
+            job_name = job.get('original_name') or job.get('display_name') or job.get('filename', 'Unknown Track')
+            # Clean up the name (remove extension if present)
+            if job_name.endswith(('.mp3', '.wav', '.flac', '.m4a', '.ogg')):
+                job_name = job_name.rsplit('.', 1)[0]
+            
+            # Get YouTube video ID if available (for embedded video background)
+            youtube_video_id = job.get('youtube_video_id')
+            
+            # Check if video is available - either YouTube embed or local file
+            has_video = youtube_video_id is not None
+            if not has_video:
+                # Fallback: check if local video file exists on disk (legacy support)
+                user_output_dir = get_user_output_dir(job_owner)
+                job_dir = user_output_dir / job_id
+                video_files = list(job_dir.glob('*_video.*')) if job_dir.exists() else []
+                has_video = len(video_files) > 0
+            
+            # Get music info for display
+            music_info = job.get('music_info', {})
         
         return render_template('karaoke.html', 
                                job_id=job_id, 
@@ -3720,7 +4261,8 @@ def karaoke_page(job_id):
                                job_owner=job_owner,
                                has_video=has_video,
                                youtube_video_id=youtube_video_id,
-                               music_info=music_info)
+                               music_info=music_info,
+                               is_library_item=is_library_item)
         
     except Exception as e:
         logger.error(f"Failed to load karaoke page: {e}")

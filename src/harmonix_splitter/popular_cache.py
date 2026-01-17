@@ -218,20 +218,28 @@ def cache_song(youtube_id: str, title: str) -> bool:
             custom_name=display_name
         )
         
-        # Update metadata
+        # Update metadata with ALL required fields
         metadata_file = job_output_dir / 'metadata.json'
         metadata = {
             'youtube_id': youtube_id,
+            'created_at': datetime.now().isoformat(),
+            'usage_count': 0,
+            'source_url': url,
+            'quality': 'balanced',
+            'mode': 'grouped',
             'display_name': display_name,
             'title': video_title,
             'duration': duration,
-            'source_url': url,
+            'is_youtube': True,
+            'youtube_video_id': youtube_id,
+            'has_video': True,
+            'processed_at': datetime.now().isoformat(),
             'music_info': music_info,
+            'stems': ['original'] + list(result.stems.keys()),
+            'clean_title': display_name,
             'cached': True,
             'cached_at': datetime.now().isoformat(),
-            'processing_time': result.processing_time,
-            'stems': list(result.stems.keys()),
-            'usage_count': 0
+            'processing_time': result.processing_time
         }
         
         with open(metadata_file, 'w', encoding='utf-8') as f:
