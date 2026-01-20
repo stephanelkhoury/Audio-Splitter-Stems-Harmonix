@@ -1,99 +1,237 @@
-# Harmonix Documentation Index
+# 📚 Harmonix Documentation Index
 
-**Last Updated:** December 30, 2025
+**Complete Documentation for Harmonix Audio Splitter**
+
+**Last Updated:** January 2026
 
 ---
 
-## Documentation Structure
-
-This folder contains all technical documentation for the Harmonix Audio Splitter project.
-
-### Quick Links
+## 🚀 Getting Started
 
 | Document | Description |
 |----------|-------------|
-| [DOCUMENTATION.md](../DOCUMENTATION.md) | **Main documentation** - Complete project overview |
-| [API_REFERENCE.md](API_REFERENCE.md) | REST API endpoints and usage |
-| [DEVELOPER_GUIDE.md](DEVELOPER_GUIDE.md) | Guide for developers/contributors |
-| [DESIGN_SYSTEM.md](DESIGN_SYSTEM.md) | UI/UX design system and components |
+| [Installation](./INSTALLATION.md) | Complete installation guide for all platforms |
+| [Quickstart](./QUICKSTART.md) | 5-minute getting started guide |
+| [Configuration](./CONFIGURATION.md) | Configuration options and settings |
 
 ---
 
-## Document Summaries
+## 🎵 Core Features
 
-### 📖 Main Documentation (DOCUMENTATION.md)
+| Document | Description |
+|----------|-------------|
+| [Stem Separation](./STEM_SEPARATION.md) | How audio stem separation works |
+| [Quality Modes](./QUALITY_MODES.md) | Quality vs speed tradeoffs |
+| [Instrument Detection](./INSTRUMENT_DETECTION.md) | AI-powered instrument detection |
+| [Music Analysis](./MUSIC_ANALYSIS.md) | BPM, key detection, Camelot wheel |
+| [Lyrics Extraction](./LYRICS_EXTRACTION.md) | Whisper-powered lyrics extraction |
+| [Audio Processing](./AUDIO_PROCESSING.md) | Pitch shifting and audio manipulation |
 
-The comprehensive project documentation covering:
+---
 
-- Project overview and features
-- System requirements
-- Installation guide (manual, Docker)
-- Architecture overview
-- Project structure
-- Configuration reference
-- Authentication system
-- API reference summary
-- Frontend design system
-- Dashboard application guide
-- Audio processing details
-- Database schema
-- Deployment guide
+## 🖥️ Interfaces
+
+| Document | Description |
+|----------|-------------|
+| [Dashboard](./DASHBOARD.md) | Web dashboard user guide |
+| [CLI Guide](./CLI_GUIDE.md) | Command-line interface reference |
+| [API Reference](./API_REFERENCE.md) | REST API endpoints and usage |
+
+---
+
+## 👥 Users & Integration
+
+| Document | Description |
+|----------|-------------|
+| [User Management](./USER_MANAGEMENT.md) | Authentication, plans, profiles |
+| [YouTube Integration](./YOUTUBE_INTEGRATION.md) | Processing YouTube URLs |
+| [Supported Formats](./SUPPORTED_FORMATS.md) | Input/output audio formats |
+
+---
+
+## 🏗️ Technical Documentation
+
+| Document | Description |
+|----------|-------------|
+| [Architecture](./ARCHITECTURE.md) | System architecture deep dive |
+| [Developer Guide](./DEVELOPER_GUIDE.md) | Contributing and development |
+| [Design System](./DESIGN_SYSTEM.md) | UI/UX design system |
+
+---
+
+## 🚢 Deployment
+
+| Document | Description |
+|----------|-------------|
+| [Docker](./DOCKER.md) | Docker and container deployment |
+| [Deployment](../DEPLOYMENT.md) | Production deployment guide |
+| [Troubleshooting](./TROUBLESHOOTING.md) | Common issues and solutions |
+
+---
+
+## 📋 Document Overview
+
+### Getting Started Guides
+
+#### 📦 [Installation](./INSTALLATION.md)
+Complete installation guide covering:
+- System requirements (Python, FFmpeg, GPU)
+- Installation methods (pip, source, Docker)
+- GPU setup (NVIDIA CUDA, Apple MPS)
+- Verification and first run
+
+#### ⚡ [Quickstart](./QUICKSTART.md)
+Get running in 5 minutes:
+- Quick install commands
+- First stem separation
+- Dashboard overview
+- Next steps
+
+#### ⚙️ [Configuration](./CONFIGURATION.md)
+All configuration options:
+- Environment variables
+- YAML configuration
+- Pydantic settings
+- Runtime options
+
+---
+
+### Core Feature Documentation
+
+#### 🎚️ [Stem Separation](./STEM_SEPARATION.md)
+Deep dive into stem separation:
+- Demucs model overview
+- Separation modes (grouped, per-instrument, karaoke)
+- Quality modes explained
+- Output organization
+
+#### 🎯 [Quality Modes](./QUALITY_MODES.md)
+Understanding quality/speed tradeoffs:
+- Draft, Fast, Balanced, Studio modes
+- When to use each mode
+- Technical parameters
+- Benchmarks
+
+#### 🎸 [Instrument Detection](./INSTRUMENT_DETECTION.md)
+AI-powered detection system:
+- Supported instruments
+- Detection methods (ML, heuristic)
+- Confidence scores
+- API usage
+
+#### 🎵 [Music Analysis](./MUSIC_ANALYSIS.md)
+BPM and key detection:
+- Tempo analysis
+- Key detection (Krumhansl-Kessler)
+- Camelot wheel for DJs
+- API integration
+
+#### 🎤 [Lyrics Extraction](./LYRICS_EXTRACTION.md)
+Whisper-powered transcription:
+- Multi-language support (99+ languages)
+- Export formats (LRC, SRT, JSON)
+- Synchronization options
+- Accuracy optimization
+
+#### 🔧 [Audio Processing](./AUDIO_PROCESSING.md)
+Audio manipulation features:
+- Pitch shifting with formant preservation
+- Time stretching
+- Audio normalization
+- Format conversion
+
+---
+
+### Interface Documentation
+
+#### 🌐 [Dashboard](./DASHBOARD.md)
+Web dashboard guide:
+- Interface overview
+- Upload and processing
+- Playback controls
+- User features
+
+#### 💻 [CLI Guide](./CLI_GUIDE.md)
+Command-line reference:
+- All commands and options
+- Examples and workflows
+- Batch processing
+- Scripting
+
+#### 🔌 [API Reference](./API_REFERENCE.md)
+REST API documentation:
+- Authentication
+- Processing endpoints
+- Analysis endpoints
+- Code examples
+
+---
+
+### User & Integration Docs
+
+#### 👤 [User Management](./USER_MANAGEMENT.md)
+Authentication system:
+- Registration and login
+- Plan tiers (Free, Creator, Studio)
+- Profile management
+- Activity tracking
+
+#### 📺 [YouTube Integration](./YOUTUBE_INTEGRATION.md)
+YouTube URL processing:
+- Supported URL formats
+- Shared library system
+- Cookies configuration
+- Rate limiting
+
+#### 📁 [Supported Formats](./SUPPORTED_FORMATS.md)
+Audio format guide:
+- Input formats (MP3, WAV, FLAC, etc.)
+- Output formats and quality
+- Sample rate and bit depth
+- Format conversion
+
+---
+
+### Technical Documentation
+
+#### 🏛️ [Architecture](./ARCHITECTURE.md)
+System architecture:
+- Module structure
+- Data flow
+- Processing pipeline
+- Dependency graph
+
+#### 👨‍💻 [Developer Guide](./DEVELOPER_GUIDE.md)
+For contributors:
+- Development setup
+- Code architecture
+- Adding features
+- Testing guidelines
+
+#### 🎨 [Design System](./DESIGN_SYSTEM.md)
+UI/UX documentation:
+- Color palette
+- Typography
+- Components
+- Accessibility
+
+---
+
+### Deployment & Operations
+
+#### 🐳 [Docker](./DOCKER.md)
+Container deployment:
+- Docker Compose options
+- GPU support
+- Production configuration
 - Troubleshooting
 
-**Location:** [../DOCUMENTATION.md](../DOCUMENTATION.md)
-
----
-
-### 🔌 API Reference (API_REFERENCE.md)
-
-Complete REST API documentation including:
-
-- Authentication endpoints (login, register, logout)
-- Audio processing (upload, status, download, delete)
-- Lyrics extraction and analysis
-- User and account management
-- Admin endpoints
-- Error codes and rate limiting
-- Code examples (Python, JavaScript, cURL)
-
-**Location:** [API_REFERENCE.md](API_REFERENCE.md)
-
----
-
-### 👨‍💻 Developer Guide (DEVELOPER_GUIDE.md)
-
-Guide for developers contributing to the project:
-
-- Development environment setup
-- Code architecture and modules
-- Adding new features (pages, APIs, components)
-- Frontend development (CSS, JS, Jinja2)
-- Backend development (routes, decorators, jobs)
-- Testing guidelines
-- Code style guide
-- Git workflow
-- Debugging tips
-- Performance optimization
-
-**Location:** [DEVELOPER_GUIDE.md](DEVELOPER_GUIDE.md)
-
----
-
-### 🎨 Design System (DESIGN_SYSTEM.md)
-
-Complete UI/UX design system documentation:
-
-- Color palette (primary, secondary, status, stems)
-- Typography (fonts, sizes, weights)
-- Spacing scale (4px grid)
-- Shadows and effects
-- Component library (buttons, cards, forms, badges)
-- Layout patterns (container, grid, flexbox)
-- Responsive design breakpoints
-- Accessibility guidelines
-- Animation guidelines
-
-**Location:** [DESIGN_SYSTEM.md](DESIGN_SYSTEM.md)
+#### 🚨 [Troubleshooting](./TROUBLESHOOTING.md)
+Common issues:
+- Installation problems
+- GPU/CUDA issues
+- Audio processing errors
+- Memory issues
 
 ---
 
